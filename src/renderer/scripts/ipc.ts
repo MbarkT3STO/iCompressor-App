@@ -38,6 +38,10 @@ export const ipc: {
   getHomeDir: () => Promise<string>;
   readDir: (path: string) => Promise<{ success: boolean; entries?: FileEntry[]; error?: string }>;
   openExternal: (url: string) => Promise<{ success: boolean }>;
+  minimizeWindow: () => void;
+  maximizeWindow: () => void;
+  closeWindow: () => void;
+  getPlatform: () => string;
 } = {
   selectFiles: () => api.selectFiles(),
   selectFolder: () => api.selectFolder(),
@@ -64,4 +68,8 @@ export const ipc: {
   getHomeDir: () => api.getHomeDir(),
   readDir: (path: string) => api.readDir(path),
   openExternal: (url: string) => api.openExternal(url),
+  minimizeWindow: () => api.minimizeWindow(),
+  maximizeWindow: () => api.maximizeWindow(),
+  closeWindow: () => api.closeWindow(),
+  getPlatform: () => api.getPlatform(),
 };

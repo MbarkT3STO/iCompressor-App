@@ -10,6 +10,20 @@
 </head>
 <body>
   <div id="app" class="app">
+    <div class="custom-titlebar" id="titlebar">
+      <div class="titlebar-drag-region"></div>
+      <div class="titlebar-controls">
+        <button type="button" class="titlebar-btn minimize" id="btn-window-minimize" aria-label="Minimize">
+          <svg viewBox="0 0 10 1" fill="currentColor"><rect width="10" height="1"/></svg>
+        </button>
+        <button type="button" class="titlebar-btn maximize" id="btn-window-maximize" aria-label="Maximize">
+          <svg viewBox="0 0 10 10" fill="currentColor" fill-rule="evenodd"><path d="M1 1h8v8H1V1zm1 1v6h6V2H2z"/></svg>
+        </button>
+        <button type="button" class="titlebar-btn close" id="btn-window-close" aria-label="Close">
+          <svg viewBox="0 0 10 10" fill="currentColor"><path d="M10.2.7L9.3-.2 5 4.1.7-.2-.2.7 4.1 5-.2 9.3l.9.9L5 5.9l4.3 4.3.9-.9L5.9 5 10.2.7z"/></svg>
+        </button>
+      </div>
+    </div>
     <header class="header" role="banner">
       <div class="header-brand">
         <svg class="logo-icon" viewBox="0 0 24 24" aria-hidden="true">

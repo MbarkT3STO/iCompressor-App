@@ -17,7 +17,8 @@ function createWindow(): void {
     minWidth: 800,
     minHeight: 600,
     show: false,
-    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    frame: false,
+    titleBarStyle: 'hidden',
     trafficLightPosition: { x: 16, y: 16 },
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.js'),
@@ -29,6 +30,11 @@ function createWindow(): void {
 
   const rendererPath = `file://${path.join(__dirname, '../renderer/index.html')}`;
   mainWindow.loadURL(rendererPath);
+
+  // Force hide macOS native traffic lights since we built our own
+  if (process.platform === 'darwin') {
+    mainWindow.setWindowButtonVisibility(false);
+  }
 
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show();
@@ -227,6 +233,23 @@ function registerIpcHandlers(): void {
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
     }
+  });
+
+  // Window Controls
+  ipcMain.on(IPC_CHANNELS.WINDOW_MINIMIZE, () => {
+    mainWindow?.minimize();
+  });
+
+  ipcMain.on(IPC_CHANNELS.WINDOW_MAXIMIZE, () => {
+    if (mainWindow?.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow?.maximize();
+    }
+  });
+
+  ipcMain.on(IPC_CHANNELS.WINDOW_CLOSE, () => {
+    mainWindow?.close();
   });
 }
 

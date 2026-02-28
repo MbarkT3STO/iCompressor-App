@@ -22,6 +22,9 @@ const IPC_CHANNELS = {
   READ_DIR: 'fs:read-dir',
   GET_HOME_DIR: 'fs:get-home-dir',
   OPEN_EXTERNAL: 'shell:open-external',
+  WINDOW_MINIMIZE: 'window:minimize',
+  WINDOW_MAXIMIZE: 'window:maximize',
+  WINDOW_CLOSE: 'window:close',
 } as const;
 
 const PROGRESS_CHANNEL = 'compressor:progress';
@@ -51,6 +54,10 @@ export interface ICompressorAPI {
   getHomeDir: () => Promise<string>;
   readDir: (path: string) => Promise<{ success: boolean; entries?: FileEntry[]; error?: string }>;
   openExternal: (url: string) => Promise<{ success: boolean }>;
+  minimizeWindow: () => void;
+  maximizeWindow: () => void;
+  closeWindow: () => void;
+  getPlatform: () => string;
 }
 
 export interface AppSettings {
@@ -101,6 +108,10 @@ const api: ICompressorAPI = {
   getHomeDir: () => ipcRenderer.invoke(IPC_CHANNELS.GET_HOME_DIR),
   readDir: (path: string) => ipcRenderer.invoke(IPC_CHANNELS.READ_DIR, path),
   openExternal: (url: string) => ipcRenderer.invoke(IPC_CHANNELS.OPEN_EXTERNAL, url),
+  minimizeWindow: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_MINIMIZE),
+  maximizeWindow: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_MAXIMIZE),
+  closeWindow: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_CLOSE),
+  getPlatform: () => process.platform,
 };
 
 contextBridge.exposeInMainWorld('compressorAPI', api);

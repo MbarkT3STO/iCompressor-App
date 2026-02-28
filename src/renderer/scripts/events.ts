@@ -433,8 +433,58 @@ function setupExtractDropZoneClick(): void {
   });
 }
 
+// Titlebar
+function setupTitlebar(): void {
+  const platform = ipc.getPlatform();
+  const titlebar = document.getElementById('titlebar');
+  const controls = document.querySelector('.titlebar-controls') as HTMLElement;
+
+  if (titlebar && controls) {
+    if (platform === 'darwin') {
+      // macOS: Traffic lights on the left
+      titlebar.style.justifyContent = 'flex-start';
+      titlebar.style.paddingLeft = '12px';
+      controls.classList.add('mac-controls');
+      
+      // On macOS, with titleBarStyle 'hidden', we usually don't need custom buttons 
+      // because the OS traffic lights are still visible. However, if frame: false has removed them, 
+      // we need to inject our own custom styled ones. Let's ensure the order is Close, Minimize, Maximize
+      const closeBtn = document.getElementById('btn-window-close');
+      const minBtn = document.getElementById('btn-window-minimize');
+      const maxBtn = document.getElementById('btn-window-maximize');
+      
+      if (closeBtn && minBtn && maxBtn) {
+        controls.innerHTML = '';
+        controls.appendChild(closeBtn);
+        controls.appendChild(minBtn);
+        controls.appendChild(maxBtn);
+      }
+      
+      // Physically move controls to be the FIRST child of titlebar for macOS
+      if (titlebar.firstElementChild !== controls) {
+        titlebar.insertBefore(controls, titlebar.firstChild);
+      }
+    } else {
+      // Windows / Linux: Standard controls on the right
+      titlebar.style.justifyContent = 'flex-end';
+      controls.classList.add('win-controls');
+    }
+  }
+
+  document.getElementById('btn-window-minimize')?.addEventListener('click', () => {
+    ipc.minimizeWindow();
+  });
+  document.getElementById('btn-window-maximize')?.addEventListener('click', () => {
+    ipc.maximizeWindow();
+  });
+  document.getElementById('btn-window-close')?.addEventListener('click', () => {
+    ipc.closeWindow();
+  });
+}
+
 // Init - call when DOM ready
 export function init(): void {
+  setupTitlebar();
   setupNavigation();
   setupBrowse();
   setupCompress();

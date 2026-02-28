@@ -19,6 +19,9 @@ export const IPC_CHANNELS = {
   READ_DIR: 'fs:read-dir',
   GET_HOME_DIR: 'fs:get-home-dir',
   OPEN_EXTERNAL: 'shell:open-external',
+  WINDOW_MINIMIZE: 'window:minimize',
+  WINDOW_MAXIMIZE: 'window:maximize',
+  WINDOW_CLOSE: 'window:close',
 } as const;
 
 export const PROGRESS_CHANNEL = 'compressor:progress';

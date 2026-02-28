@@ -26,6 +26,118 @@ body {
   transition: background var(--transition-normal), color var(--transition-normal);
 }
 
+/* Custom Titlebar (macOS) */
+.custom-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 32px;
+  background: var(--color-bg-sidebar);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 9999;
+}
+
+.titlebar-drag-region {
+  flex: 1;
+  height: 100%;
+  -webkit-app-region: drag;
+  /* This makes the window draggable */
+}
+
+/* Controls - placed on the right, but keep styling simple */
+.titlebar-controls {
+  display: flex;
+  height: 100%;
+  -webkit-app-region: no-drag;
+  /* Buttons remain clickable */
+}
+
+/* Base Win controls */
+.titlebar-btn {
+  width: 46px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.titlebar-btn svg {
+  width: 10px;
+  height: 10px;
+}
+
+.titlebar-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text);
+}
+
+.titlebar-btn.close:hover {
+  background: #e81123;
+  color: white;
+}
+
+/* Mac Controls (Traffic Lights) */
+.titlebar-controls.mac-controls {
+  gap: 8px;
+  align-items: center;
+}
+
+.mac-controls .titlebar-btn {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: transparent;
+}
+
+.mac-controls .titlebar-btn svg {
+  width: 6px;
+  height: 6px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.mac-controls:hover .titlebar-btn svg {
+  opacity: 1;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.mac-controls .titlebar-btn.close {
+  background: #ff5f56;
+}
+
+.mac-controls .titlebar-btn.close:hover {
+  background: #ff5f56;
+}
+
+.mac-controls .titlebar-btn.minimize {
+  background: #ffbd2e;
+}
+
+.mac-controls .titlebar-btn.minimize:hover {
+  background: #ffbd2e;
+}
+
+.mac-controls .titlebar-btn.maximize {
+  background: #27c93f;
+}
+
+.mac-controls .titlebar-btn.maximize:hover {
+  background: #27c93f;
+}
+
 /* Global Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
