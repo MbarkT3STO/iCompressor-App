@@ -45,8 +45,8 @@ function createWindow(): void {
   const { width, height } = primaryDisplay.workAreaSize;
 
   const mainWindowState = windowStateKeeper({
-    defaultWidth: width,
-    defaultHeight: height
+    defaultWidth: 800,
+    defaultHeight: 600
   });
 
   mainWindow = new BrowserWindow({
