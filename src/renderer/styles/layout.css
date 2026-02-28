@@ -158,11 +158,19 @@ body {
   display: grid;
   grid-template-columns: 1fr minmax(320px, 400px);
   gap: 24px;
-  align-items: start;
+  align-items: stretch;
+  grid-auto-rows: 1fr;
 }
 
 .panel-full {
   max-width: 100%;
+}
+
+.panel-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100%;
 }
 
 .panel-head {
@@ -187,7 +195,7 @@ body {
   margin-top: 4px;
 }
 
-/* Cards - base */
+/* Cards - base - consistent height */
 .card {
   background: var(--color-bg-glass);
   backdrop-filter: blur(20px);
@@ -197,6 +205,9 @@ body {
   overflow: hidden;
   transition: all var(--transition-normal);
   box-shadow: 0 4px 24px rgba(58, 12, 163, 0.08);
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
 }
 
 .card:hover {
@@ -218,6 +229,7 @@ body {
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
 }
 
 .card-footer {
@@ -225,17 +237,37 @@ body {
   flex-direction: column;
   gap: 14px;
   border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+/* Actions card - files list fills space, stretches to match card-drop */
+.panel-actions > .card {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.panel-actions .files-list {
+  flex: 1;
+  min-height: 120px;
 }
 
 /* Card drop - drop zone card */
 .card-drop {
-  min-height: 0;
+  min-height: 320px;
 }
 
 .card-drop .card-body {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-height: 0;
+}
+
+.card-drop .drop-zone {
+  flex: 1;
+  min-height: 160px;
 }
 
 .card-drop .panel-title {
@@ -590,7 +622,7 @@ body {
   }
 }
 
-/* History - cards */
+/* History - cards - consistent height */
 .history-grid {
   grid-template-columns: 1fr;
 }
@@ -605,11 +637,13 @@ body {
 
 .history-list li {
   padding: 18px 22px;
+  min-height: 88px;
   background: var(--color-bg-glass);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 6px;
   transition: all var(--transition-fast);
   backdrop-filter: blur(12px);
@@ -644,6 +678,10 @@ body {
 
 .history-empty {
   padding: 48px 28px;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   color: var(--color-text-muted);
   font-size: 1rem;
@@ -652,14 +690,21 @@ body {
   border: 2px dashed var(--color-border);
 }
 
-/* Settings - card grid */
+/* Settings - card grid - equal height cards per row */
 .settings-grid {
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-auto-rows: minmax(100px, auto);
+  align-items: stretch;
   gap: 20px;
 }
 
 .setting-card {
   padding: 20px 24px;
+  min-height: 100px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .setting-card label {
@@ -735,14 +780,24 @@ body {
 
   .panel-split {
     grid-template-columns: 1fr;
+    grid-auto-rows: auto;
   }
 
   .panel-actions {
     order: 1;
   }
 
+  .panel-actions > .card {
+    min-height: 320px;
+  }
+
   .card-drop {
     order: 2;
+    min-height: 280px;
+  }
+
+  .card {
+    min-height: 280px;
   }
 }
 
@@ -787,7 +842,11 @@ body {
 
   .drop-zone {
     padding: 32px 20px;
-    min-height: 160px;
+    min-height: 140px;
+  }
+
+  .card-drop .drop-zone {
+    min-height: 140px;
   }
 
   .drop-icon {
@@ -795,8 +854,22 @@ body {
     height: 42px;
   }
 
+  .card,
+  .card-drop,
+  .panel-actions > .card {
+    min-height: 260px;
+  }
+
   .settings-grid {
     grid-template-columns: 1fr;
+  }
+
+  .setting-card {
+    min-height: 90px;
+  }
+
+  .history-list li {
+    min-height: 76px;
   }
 
   .setting-card select {
@@ -845,5 +918,28 @@ body {
 
   .input-group .input-path {
     min-width: 0;
+  }
+
+  .card,
+  .card-drop,
+  .panel-actions > .card {
+    min-height: 240px;
+  }
+
+  .card-drop .drop-zone {
+    min-height: 120px;
+  }
+
+  .setting-card {
+    min-height: 80px;
+  }
+
+  .history-list li {
+    min-height: 72px;
+  }
+
+  .history-empty {
+    min-height: 100px;
+    padding: 32px 20px;
   }
 }
