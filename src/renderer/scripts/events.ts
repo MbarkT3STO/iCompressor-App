@@ -561,10 +561,31 @@ function setupExtract(): void {
 
     if (result.success && result.files) {
       // Normalize slashes for windows archives
-      currentViewerFiles = result.files.map(f => ({
-        ...f,
-        path: f.path.replace(/\\/g, '/')
-      }));
+      const map = new Map<string, any>();
+      
+      result.files.forEach(f => {
+        const normalizedPath = f.path.replace(/\\/g, '/');
+        map.set(normalizedPath, { ...f, path: normalizedPath });
+        
+        // Synthesize missing parent directories
+        const parts = normalizedPath.split('/');
+        let currentParent = '';
+        for (let i = 0; i < parts.length - 1; i++) {
+          currentParent += (i === 0 ? '' : '/') + parts[i];
+          if (!map.has(currentParent)) {
+            map.set(currentParent, {
+              name: parts[i],
+              path: currentParent,
+              isDirectory: true,
+              size: 0,
+              packedSize: 0,
+              modified: f.modified || ''
+            });
+          }
+        }
+      });
+      
+      currentViewerFiles = Array.from(map.values());
       updateViewerUI();
     } else {
       setArchiveViewerState('error', result.error);
