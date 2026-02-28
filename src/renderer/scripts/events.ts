@@ -37,6 +37,8 @@ function dirname(p: string): string {
   return parts.join('/') || '/';
 }
 
+export let globalOpenArchiveHandler: ((path: string) => Promise<void>) | null = null;
+
 // Drag & drop
 function setupDropZone(
   zoneId: string,
@@ -227,8 +229,10 @@ function setupBrowse() {
   document.getElementById('btn-browse-extract')?.addEventListener('click', () => {
     if (selectedBrowsePaths.size === 1) {
       const path = Array.from(selectedBrowsePaths)[0];
-      setSingleFile('extract-files-list', path);
       showPanel('extract');
+      if (globalOpenArchiveHandler) {
+        globalOpenArchiveHandler(path);
+      }
     }
   });
 }
@@ -317,10 +321,6 @@ function setupCompress(): void {
 
 // Extract
 function setupExtract(): void {
-  setupDropZone('drop-zone-extract', 'extract', (paths) => {
-    const archive = paths.find((p) => /\.(zip|7z|rar|tar|gz|tgz)$/i.test(p));
-    if (archive) setSingleFile('extract-files-list', archive);
-  });
 
   document.getElementById('btn-select-extract-output')?.addEventListener('click', async () => {
     const dir = await ipc.selectFolder();
@@ -386,7 +386,6 @@ function setupExtract(): void {
         hideGlobalProgress();
         hidePasswordModal();
         showToast('toast-extract', 'Extraction complete', 'success');
-        setSingleFile('extract-files-list', null);
       }, 350);
       
       const s = await ipc.getSettings();
@@ -412,64 +411,6 @@ function setupExtract(): void {
       }
     }
   };
-
-  document.getElementById('btn-submit-password')?.addEventListener('click', async () => {
-    if (currentExtractArchive && currentExtractOutput) {
-      const pwd = passwordInput?.value;
-      if (pwd) {
-        const submitBtn = document.getElementById('btn-submit-password') as HTMLButtonElement;
-        if (submitBtn) submitBtn.disabled = true;
-
-        // Start extraction, but stay on password modal initially until success is proven
-        await doExtract(currentExtractArchive, currentExtractOutput, pwd);
-
-        if (submitBtn) submitBtn.disabled = false;
-      }
-    }
-  });
-
-  passwordInput?.addEventListener('keyup', (e) => {
-    if (e.key === 'Enter') {
-      document.getElementById('btn-submit-password')?.click();
-    }
-  });
-
-  document.getElementById('btn-extract')?.addEventListener('click', async () => {
-    const archivePath = getSingleFile('extract-files-list');
-
-    if (!archivePath) {
-      showToast('toast-extract', 'Select an archive first', 'error');
-      return;
-    }
-
-    const outputDir = await ipc.selectFolder();
-    if (!outputDir) {
-      // User cancelled the dialog, just return
-      return;
-    }
-    
-    currentExtractArchive = archivePath;
-    currentExtractOutput = outputDir;
-
-    // Test the archive silently first to check for encryption
-    // WE DO NOT show the progress modal yet! We want the testing phase to be fully invisible.
-    const testResult = await ipc.test(archivePath);
-    if (!testResult.success) {
-      const errLower = (testResult.error || '').toLowerCase();
-      if (
-        errLower.includes('password') ||
-        errLower.includes('encrypt') ||
-        errLower.includes('data error') ||
-        (testResult.error || '').includes('Wrong password')
-      ) {
-        showPasswordModal(false);
-        return; // Halt here until they enter password
-      }
-    }
-    
-    // Valid archive or zip without password, proceed normally
-    await doExtract(archivePath, outputDir);
-  });
 
   // Archive Viewer Logic
   let currentViewerArchive = '';
@@ -519,37 +460,10 @@ function setupExtract(): void {
     });
   };
 
-  const btnViewArchive = document.getElementById('btn-view-archive') as HTMLButtonElement;
-  
-  // Enable View Archive button when file is selected
-  const origSetSingleFile = setSingleFile;
-  (window as any).__patchedSetSingleFile = (listId: string, path: string | null) => {
-    origSetSingleFile(listId, path);
-    if (listId === 'extract-files-list') {
-      const btnExtract = document.getElementById('btn-extract') as HTMLButtonElement | null;
-      if (btnViewArchive) btnViewArchive.disabled = !path;
-      if (btnExtract) btnExtract.disabled = !path;
-    }
-  };
-  // We don't want to actually re-declare setSingleFile, but since events.ts imports it, we can't easily patch it.
-  // Instead we'll use a MutationObserver on the extract-files-list to toggle the button!
-  
-  const extractList = document.getElementById('extract-files-list');
-  const btnExtract = document.getElementById('btn-extract') as HTMLButtonElement | null;
-  
-  if (extractList) {
-    const observer = new MutationObserver(() => {
-      const isEmpty = extractList.children.length === 0;
-      if (btnViewArchive) btnViewArchive.disabled = isEmpty;
-      if (btnExtract) btnExtract.disabled = isEmpty;
-    });
-    observer.observe(extractList, { childList: true });
-  }
+  document.getElementById('btn-close-viewer')?.addEventListener('click', hideArchiveViewerModal);
 
-  btnViewArchive?.addEventListener('click', async () => {
-    const archivePath = getSingleFile('extract-files-list');
-    if (!archivePath) return;
-
+  const loadArchiveIntoViewer = async (archivePath: string, pwd?: string) => {
+    // Store globally for viewer operations
     currentViewerArchive = archivePath;
     currentViewerPath = [];
     currentViewerFiles = [];
@@ -557,17 +471,15 @@ function setupExtract(): void {
     showArchiveViewerModal();
     setArchiveViewerState('loading');
 
-    const result = await ipc.listArchive(archivePath);
+    const result = await ipc.listArchive(archivePath, pwd);
 
     if (result.success && result.files) {
-      // Normalize slashes for windows archives
       const map = new Map<string, any>();
       
       result.files.forEach(f => {
         const normalizedPath = f.path.replace(/\\/g, '/');
         map.set(normalizedPath, { ...f, path: normalizedPath });
         
-        // Synthesize missing parent directories
         const parts = normalizedPath.split('/');
         let currentParent = '';
         for (let i = 0; i < parts.length - 1; i++) {
@@ -590,14 +502,71 @@ function setupExtract(): void {
     } else {
       setArchiveViewerState('error', result.error);
     }
+  };
+  
+  const handleArchiveSelection = async (archivePath: string) => {
+    currentExtractArchive = archivePath;
+    currentViewerArchive = archivePath;
+    
+    // Populate Viewer immediately.
+    // If extraction requires a password, the user will be prompted after clicking Extract in the viewer.
+    await loadArchiveIntoViewer(archivePath);
+  };
+  globalOpenArchiveHandler = handleArchiveSelection;
+
+  document.getElementById('btn-submit-password')?.addEventListener('click', async () => {
+    if (currentExtractArchive && currentExtractOutput) {
+      const pwd = passwordInput?.value;
+      if (pwd) {
+        const submitBtn = document.getElementById('btn-submit-password') as HTMLButtonElement;
+        if (submitBtn) submitBtn.disabled = true;
+
+        await doExtract(currentExtractArchive, currentExtractOutput, pwd);
+
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    }
   });
 
-  document.getElementById('btn-close-viewer')?.addEventListener('click', hideArchiveViewerModal);
+  passwordInput?.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') {
+      document.getElementById('btn-submit-password')?.click();
+    }
+  });
+
+  document.getElementById('btn-open-archive')?.addEventListener('click', async () => {
+    // 1. Pick file
+    const paths = await ipc.selectFiles();
+    if (!paths || paths.length === 0) return;
+    await handleArchiveSelection(paths[0]);
+  });
+
+  // (loadArchiveIntoViewer was moved up)
   
-  document.getElementById('btn-extract-from-viewer')?.addEventListener('click', () => {
+  document.getElementById('btn-extract-from-viewer')?.addEventListener('click', async () => {
+    const outputDir = await ipc.selectFolder();
+    if (!outputDir) return;
+    
+    currentExtractOutput = outputDir;
+    
+    // Test for encryption before extracting
+    const testResult = await ipc.test(currentViewerArchive);
+    if (!testResult.success) {
+      const errLower = (testResult.error || '').toLowerCase();
+      if (
+        errLower.includes('password') ||
+        errLower.includes('encrypt') ||
+        errLower.includes('data error') ||
+        (testResult.error || '').includes('Wrong password')
+      ) {
+        hideArchiveViewerModal();
+        showPasswordModal(false);
+        return; 
+      }
+    }
+    
     hideArchiveViewerModal();
-    // Simulate click on main extract button
-    document.getElementById('btn-extract')?.click();
+    await doExtract(currentViewerArchive, outputDir);
   });
 }
 

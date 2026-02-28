@@ -124,35 +124,23 @@
       </section>
 
       <section id="panel-extract" class="panel">
-        <div class="panel-layout panel-split">
-          <div class="card card-drop">
-            <div class="card-body">
-              <h2 class="panel-title">Extract</h2>
-              <p class="panel-subtitle">Unpack an archive to a folder</p>
-              <div class="drop-zone" id="drop-zone-extract" data-drop-type="extract">
-              <svg class="drop-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+        <div class="panel-layout panel-full">
+          <div class="card" style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+            <div class="card-body" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;">
+              <svg viewBox="0 0 24 24" width="64" height="64" fill="var(--color-accent-secondary)" style="margin-bottom: 8px;">
+                <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H5v-2h14v2zm0-4H5v-2h14v2z"/>
               </svg>
-              <p class="drop-text">Drop archive here or click to browse</p>
-              <p class="drop-hint">ZIP · 7Z · RAR · TAR · TAR.GZ</p>
-              </div>
-            </div>
-          </div>
-          <div class="panel-actions">
-            <div class="card" id="extract-files-section">
-              <div class="card-header">
-                <span class="files-label">Archive</span>
-              </div>
-              <ul class="files-list" id="extract-files-list"></ul>
-              <div class="card-footer" style="flex-direction: column; gap: 12px;">
-                <button type="button" class="btn-primary btn-block" id="btn-extract" disabled>Extract</button>
-                <button type="button" class="btn-secondary btn-block" id="btn-view-archive" disabled>
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-                  </svg>
-                  View Archive
-                </button>
-              </div>
+              <h2 class="panel-title" style="font-size: 1.5rem; margin-bottom: 4px;">Open an Archive</h2>
+              <p class="panel-subtitle" style="margin-bottom: 24px; max-width: 300px; color: var(--color-text-muted);">
+                Select an archive file to instantly view its contents and extract them.
+              </p>
+              <button type="button" class="btn-primary" id="btn-open-archive" style="font-size: 1.1rem; padding: 16px 36px; display: inline-flex; align-items: center; gap: 12px;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                  <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                </svg>
+                Select Archive...
+              </button>
+              <p class="drop-hint" style="margin-top: 16px;">ZIP · 7Z · RAR · TAR · TAR.GZ</p>
             </div>
           </div>
         </div>
