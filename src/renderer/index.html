@@ -49,15 +49,17 @@
     <main class="main">
       <section id="panel-compress" class="panel active">
         <div class="panel-layout panel-split">
-          <div class="panel-drop">
-            <h2 class="panel-title">Compress</h2>
-            <p class="panel-subtitle">Create an archive from files or folders</p>
-            <div class="drop-zone" id="drop-zone-compress" data-drop-type="compress">
+          <div class="card card-drop">
+            <div class="card-body">
+              <h2 class="panel-title">Compress</h2>
+              <p class="panel-subtitle">Create an archive from files or folders</p>
+              <div class="drop-zone" id="drop-zone-compress" data-drop-type="compress">
               <svg class="drop-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/>
               </svg>
               <p class="drop-text">Drop files here or click to browse</p>
               <p class="drop-hint">ZIP · 7Z · TAR · TAR.GZ</p>
+              </div>
             </div>
           </div>
           <div class="panel-actions">
@@ -93,15 +95,17 @@
 
       <section id="panel-extract" class="panel">
         <div class="panel-layout panel-split">
-          <div class="panel-drop">
-            <h2 class="panel-title">Extract</h2>
-            <p class="panel-subtitle">Unpack an archive to a folder</p>
-            <div class="drop-zone" id="drop-zone-extract" data-drop-type="extract">
+          <div class="card card-drop">
+            <div class="card-body">
+              <h2 class="panel-title">Extract</h2>
+              <p class="panel-subtitle">Unpack an archive to a folder</p>
+              <div class="drop-zone" id="drop-zone-extract" data-drop-type="extract">
               <svg class="drop-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
               </svg>
               <p class="drop-text">Drop archive here or click to browse</p>
               <p class="drop-hint">ZIP · 7Z · RAR · TAR · TAR.GZ</p>
+              </div>
             </div>
           </div>
           <div class="panel-actions">
@@ -141,7 +145,7 @@
             </div>
             <button type="button" class="btn-text" id="btn-clear-history">Clear all</button>
           </div>
-          <div class="history-grid">
+          <div class="cards-grid history-grid">
             <ul class="history-list" id="history-list"></ul>
           </div>
         </div>
@@ -153,7 +157,7 @@
             <h2 class="panel-title">Settings</h2>
             <p class="panel-subtitle">Customize iCompressor</p>
           </div>
-          <div class="settings-grid">
+          <div class="cards-grid settings-grid">
             <div class="card setting-card">
               <label for="setting-compression-level">Compression level</label>
               <div class="setting-control">
