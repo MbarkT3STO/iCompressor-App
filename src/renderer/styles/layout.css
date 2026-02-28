@@ -747,7 +747,7 @@ body {
 }
 
 .progress-bar {
-  height: 8px;
+  height: 12px;
   background: var(--color-bg-glass-strong);
   border-radius: var(--radius-full);
   overflow: hidden;
@@ -801,7 +801,7 @@ body {
   -webkit-backdrop-filter: blur(30px);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-xl);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4), 0 0 0 1px inset rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow-glow), var(--shadow-lg);
   width: 100%;
   max-width: 480px;
   padding: 36px 32px;
@@ -834,7 +834,7 @@ body {
 }
 
 .progress-modern-bar {
-  height: 12px;
+  height: 16px;
   background: var(--color-bg-glass-strong);
   border-radius: var(--radius-full);
   overflow: hidden;
