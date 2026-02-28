@@ -23,6 +23,7 @@ export const IPC_CHANNELS = {
   WINDOW_MINIMIZE: 'window:minimize',
   WINDOW_MAXIMIZE: 'window:maximize',
   WINDOW_CLOSE: 'window:close',
+  OPEN_WITH: 'app:open-with',
 } as const;
 
 export const PROGRESS_CHANNEL = 'compressor:progress';

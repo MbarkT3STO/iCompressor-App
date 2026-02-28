@@ -45,6 +45,7 @@ export const ipc: {
   maximizeWindow: () => void;
   closeWindow: () => void;
   getPlatform: () => string;
+  onOpenWith: (callback: (data: { filePath: string; action: 'compress' | 'extract' }) => void) => () => void;
 } = {
   selectFiles: () => api.selectFiles(),
   selectFolder: () => api.selectFolder(),
@@ -76,4 +77,5 @@ export const ipc: {
   maximizeWindow: () => api.maximizeWindow(),
   closeWindow: () => api.closeWindow(),
   getPlatform: () => api.getPlatform(),
+  onOpenWith: (callback) => api.onOpenWith(callback),
 };

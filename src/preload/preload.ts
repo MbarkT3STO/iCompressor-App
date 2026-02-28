@@ -26,6 +26,7 @@ const IPC_CHANNELS = {
   WINDOW_MINIMIZE: 'window:minimize',
   WINDOW_MAXIMIZE: 'window:maximize',
   WINDOW_CLOSE: 'window:close',
+  OPEN_WITH: 'app:open-with',
 } as const;
 
 const PROGRESS_CHANNEL = 'compressor:progress';
@@ -65,6 +66,7 @@ export interface ICompressorAPI {
   maximizeWindow: () => void;
   closeWindow: () => void;
   getPlatform: () => string;
+  onOpenWith: (callback: (data: { filePath: string; action: 'compress' | 'extract' }) => void) => () => void;
 }
 
 export interface AppSettings {
@@ -120,6 +122,15 @@ const api: ICompressorAPI = {
   maximizeWindow: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_MAXIMIZE),
   closeWindow: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_CLOSE),
   getPlatform: () => process.platform,
+  onOpenWith: (callback) => {
+    const handler = (_: Electron.IpcRendererEvent, data: { filePath: string; action: 'compress' | 'extract' }) =>
+      callback(data);
+    ipcRenderer.on(IPC_CHANNELS.OPEN_WITH, handler);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.OPEN_WITH, handler);
+  },
 };
 
 contextBridge.exposeInMainWorld('compressorAPI', api);
+
+// Signal main that renderer is loaded and ready to receive the pending open-with intent
+ipcRenderer.send('renderer:ready');

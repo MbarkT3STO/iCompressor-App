@@ -43,7 +43,55 @@
         "dmg",
         "zip"
       ],
-      "category": "public.app-category.utilities"
+      "category": "public.app-category.utilities",
+      "extendInfo": {
+        "CFBundleDocumentTypes": [
+          {
+            "CFBundleTypeName": "ZIP Archive",
+            "CFBundleTypeExtensions": ["zip"],
+            "CFBundleTypeRole": "Viewer",
+            "LSHandlerRank": "Alternate"
+          },
+          {
+            "CFBundleTypeName": "7-Zip Archive",
+            "CFBundleTypeExtensions": ["7z"],
+            "CFBundleTypeRole": "Viewer",
+            "LSHandlerRank": "Alternate"
+          },
+          {
+            "CFBundleTypeName": "RAR Archive",
+            "CFBundleTypeExtensions": ["rar"],
+            "CFBundleTypeRole": "Viewer",
+            "LSHandlerRank": "Alternate"
+          },
+          {
+            "CFBundleTypeName": "TAR Archive",
+            "CFBundleTypeExtensions": ["tar"],
+            "CFBundleTypeRole": "Viewer",
+            "LSHandlerRank": "Alternate"
+          },
+          {
+            "CFBundleTypeName": "Gzipped TAR Archive",
+            "CFBundleTypeExtensions": ["tar.gz", "tgz"],
+            "CFBundleTypeRole": "Viewer",
+            "LSHandlerRank": "Alternate"
+          }
+        ],
+        "NSServices": [
+          {
+            "NSMenuItem": { "default": "Compress with iCompressor" },
+            "NSMessage": "compress",
+            "NSSendTypes": ["NSFilenamesPboardType"],
+            "NSRequiredContext": { "NSApplicationIdentifier": "com.icompressor.app" }
+          },
+          {
+            "NSMenuItem": { "default": "Extract with iCompressor" },
+            "NSMessage": "extract",
+            "NSSendTypes": ["NSFilenamesPboardType"],
+            "NSRequiredContext": { "NSApplicationIdentifier": "com.icompressor.app" }
+          }
+        ]
+      }
     },
     "win": {
       "target": [

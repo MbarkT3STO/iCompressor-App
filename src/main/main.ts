@@ -10,6 +10,20 @@ import { IPC_CHANNELS, PROGRESS_CHANNEL } from './ipc-channels';
 let mainWindow: BrowserWindow | null = null;
 const isDev = process.argv.includes('--dev');
 
+// Track files/folders queued before the window is ready
+const ARCHIVE_EXTENSIONS = new Set(['.zip', '.7z', '.rar', '.tar', '.gz', '.tgz']);
+
+function getActionForPath(filePath: string): 'compress' | 'extract' {
+  const ext = filePath.includes('.') ? '.' + filePath.split('.').slice(1).join('.').toLowerCase() : '';
+  // Check multi-part extensions like .tar.gz first
+  if (ext.endsWith('.tar.gz') || ext.endsWith('.tgz') || ARCHIVE_EXTENSIONS.has(ext)) {
+    return 'extract';
+  }
+  return 'compress';
+}
+
+let pendingOpen: { filePath: string; action: 'compress' | 'extract' } | null = null;
+
 function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1000,
@@ -268,9 +282,41 @@ function registerIpcHandlers(): void {
   });
 }
 
+// ─── Handle open-file from macOS Services / file associations ─────────────────
+// macOS sends this *before* app is ready, so we buffer it in pendingOpen
+app.on('open-file', (event, filePath) => {
+  event.preventDefault();
+  const action = getActionForPath(filePath);
+  if (mainWindow?.webContents) {
+    mainWindow.webContents.send(IPC_CHANNELS.OPEN_WITH, { filePath, action });
+    mainWindow.show();
+  } else {
+    pendingOpen = { filePath, action };
+  }
+});
+
+// ─── Also handle plain CLI arg (e.g. `electron . /path/to/file.zip`) ──────────
+function checkCliArgs(): void {
+  // Filter out electron flags and our own entry points
+  const args = process.argv.slice(isDev ? 3 : 2).filter(a => !a.startsWith('-') && a !== '.');
+  if (args.length > 0) {
+    const filePath = args[0];
+    pendingOpen = { filePath, action: getActionForPath(filePath) };
+  }
+}
+
 app.whenReady().then(() => {
+  checkCliArgs();
   registerIpcHandlers();
   createWindow();
+
+  // Once the renderer signals it's ready, flush any pending open-with intent
+  ipcMain.on('renderer:ready', () => {
+    if (pendingOpen && mainWindow?.webContents) {
+      mainWindow.webContents.send(IPC_CHANNELS.OPEN_WITH, pendingOpen);
+      pendingOpen = null;
+    }
+  });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

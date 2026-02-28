@@ -624,6 +624,22 @@ export function init(): void {
     const toastId = activePanel?.id === 'panel-extract' ? 'toast-extract' : 'toast-compress';
     showToast(toastId, 'Modal dismissed (Process continues in background)', 'success');
   });
+
+  // ─── Handle open-file from macOS Services / double-click ─────────────────────
+  // When the user right-clicks a folder → Services → "Compress with iCompressor"
+  // or right-clicks an archive → Services → "Extract with iCompressor",
+  // the main process sends OPEN_WITH and we route them to the right tab.
+  ipc.onOpenWith(({ filePath, action }) => {
+    if (action === 'compress') {
+      showPanel('panel-compress');
+      const existing = getPathsFromList('compress-files-list');
+      const merged = [...new Set([...existing, filePath])];
+      setFileList('compress-files-list', merged);
+    } else {
+      showPanel('panel-extract');
+      setSingleFile('extract-files-list', filePath);
+    }
+  });
 }
 
 if (document.readyState === 'loading') {
