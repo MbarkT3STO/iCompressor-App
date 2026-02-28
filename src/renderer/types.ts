@@ -17,3 +17,11 @@ export interface AppSettings {
   theme: 'light' | 'dark' | 'system';
   animationsEnabled: boolean;
 }
+
+export interface FileEntry {
+  name: string;
+  path: string;
+  isDirectory: boolean;
+  size: number;
+  modifiedAt: number;
+}

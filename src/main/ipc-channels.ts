@@ -16,6 +16,8 @@ export const IPC_CHANNELS = {
   CLEAR_HISTORY: 'history:clear',
   GET_VERSION: 'app:version',
   OPEN_PATH: 'shell:open-path',
+  READ_DIR: 'fs:read-dir',
+  GET_HOME_DIR: 'fs:get-home-dir',
 } as const;
 
 export const PROGRESS_CHANNEL = 'compressor:progress';

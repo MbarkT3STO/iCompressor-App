@@ -179,6 +179,46 @@ function registerIpcHandlers(): void {
       return { success: false };
     }
   });
+
+  // File System (Browse)
+  ipcMain.handle(IPC_CHANNELS.GET_HOME_DIR, () => {
+    return app.getPath('home');
+  });
+
+  ipcMain.handle(IPC_CHANNELS.READ_DIR, async (_, dirPath: string) => {
+    const fs = require('fs');
+    try {
+      const dirents = fs.readdirSync(dirPath, { withFileTypes: true });
+      const entries = dirents.map((dirent: any) => {
+        const fullPath = path.join(dirPath, dirent.name);
+        let size = 0;
+        let modifiedAt = 0;
+        try {
+          const stat = fs.statSync(fullPath);
+          size = stat.size;
+          modifiedAt = stat.mtimeMs;
+        } catch {
+          // ignore stat errors (e.g., permissions)
+        }
+        return {
+          name: dirent.name,
+          path: fullPath,
+          isDirectory: dirent.isDirectory(),
+          size,
+          modifiedAt,
+        };
+      });
+      // Sort: folders first, then alphabetical
+      entries.sort((a: any, b: any) => {
+        if (a.isDirectory && !b.isDirectory) return -1;
+        if (!a.isDirectory && b.isDirectory) return 1;
+        return a.name.localeCompare(b.name);
+      });
+      return { success: true, entries };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    }
+  });
 }
 
 app.whenReady().then(() => {

@@ -3,7 +3,13 @@
  * Thin wrapper around window.compressorAPI
  */
 
-import type { AppSettings, HistoryEntry } from '../types';
+import type { AppSettings, HistoryEntry, FileEntry } from '../types';
+
+declare global {
+  interface Window {
+    compressorAPI: any;
+  }
+}
 
 const api = window.compressorAPI;
 
@@ -29,6 +35,8 @@ export const ipc: {
   getVersion: () => Promise<string>;
   openPath: (path: string) => Promise<{ success: boolean }>;
   onProgress: (callback: (data: { percent: number; status: string }) => void) => () => void;
+  getHomeDir: () => Promise<string>;
+  readDir: (path: string) => Promise<{ success: boolean; entries?: FileEntry[]; error?: string }>;
 } = {
   selectFiles: () => api.selectFiles(),
   selectFolder: () => api.selectFolder(),
@@ -52,4 +60,6 @@ export const ipc: {
   openPath: (path: string) => api.openPath(path),
   onProgress: (callback: (data: { percent: number; status: string }) => void) =>
     api.onProgress(callback),
+  getHomeDir: () => api.getHomeDir(),
+  readDir: (path: string) => api.readDir(path),
 };

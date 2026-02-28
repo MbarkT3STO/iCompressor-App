@@ -3,7 +3,7 @@
  * Pure DOM manipulation, no frameworks
  */
 
-import type { HistoryEntry, AppSettings } from '../types';
+import type { HistoryEntry, AppSettings, FileEntry } from '../types';
 
 // Panel switching
 export function showPanel(panelId: string): void {
@@ -182,4 +182,75 @@ export function applyTheme(theme: 'light' | 'dark' | 'system'): void {
   } else {
     root.setAttribute('data-theme', theme);
   }
+}
+
+// File Browser
+export function renderBreadcrumbs(containerId: string, pathPieces: { name: string; fullPath: string }[], onNav: (path: string) => void): void {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  pathPieces.forEach((piece, index) => {
+    const span = document.createElement('span');
+    span.className = 'breadcrumb-item';
+    span.textContent = piece.name || (index === 0 ? 'Home' : piece.name);
+    span.onclick = () => onNav(piece.fullPath);
+    container.appendChild(span);
+    
+    if (index < pathPieces.length - 1) {
+      const sep = document.createElement('span');
+      sep.className = 'breadcrumb-sep';
+      sep.textContent = ' / ';
+      container.appendChild(sep);
+    }
+  });
+}
+
+function formatSize(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function formatDate(ms: number): string {
+  if (!ms) return '--';
+  return new Date(ms).toLocaleDateString(undefined, {
+    year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+
+const folderIcon = `<svg class="file-icon" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>`;
+const fileIcon = `<svg class="file-icon" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
+
+export function renderBrowseList(containerId: string, entries: FileEntry[], onSelect: (entry: FileEntry, multi: boolean) => void, onOpen: (entry: FileEntry) => void, isSelected: (path: string) => boolean): void {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (entries.length === 0) {
+    container.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--color-text-muted);">Empty folder</div>';
+    return;
+  }
+
+  entries.forEach((entry) => {
+    const el = document.createElement('div');
+    el.className = `file-item ${entry.isDirectory ? 'folder' : 'file'}`;
+    if (isSelected(entry.path)) el.classList.add('selected');
+
+    el.innerHTML = `
+      <div class="col-name" title="${entry.name}">
+        ${entry.isDirectory ? folderIcon : fileIcon}
+        <span>${entry.name}</span>
+      </div>
+      <div class="col-date">${formatDate(entry.modifiedAt)}</div>
+      <div class="col-size">${entry.isDirectory ? '--' : formatSize(entry.size)}</div>
+    `;
+
+    el.addEventListener('click', (e) => onSelect(entry, e.metaKey || e.ctrlKey));
+    el.addEventListener('dblclick', () => onOpen(entry));
+    
+    container.appendChild(el);
+  });
 }

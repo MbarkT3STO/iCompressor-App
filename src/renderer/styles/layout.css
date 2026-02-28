@@ -141,6 +141,7 @@ body {
     opacity: 0;
     transform: translateY(12px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -241,7 +242,7 @@ body {
 }
 
 /* Actions card - files list fills space, stretches to match card-drop */
-.panel-actions > .card {
+.panel-actions>.card {
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -696,18 +697,35 @@ body {
 }
 
 @keyframes modal-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes modal-scale-in {
-  from { opacity: 0; transform: scale(0.92) translateY(16px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 @keyframes progress-shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(200%); }
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(200%);
+  }
 }
 
 /* Toast */
@@ -747,6 +765,7 @@ body {
     opacity: 0;
     transform: translateY(16px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -901,6 +920,134 @@ body {
   display: none !important;
 }
 
+/* File Browser */
+.browse-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-glass);
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.breadcrumb-item {
+  cursor: pointer;
+  color: var(--electric-sapphire);
+  transition: color var(--transition-fast);
+  font-weight: 500;
+}
+
+.breadcrumb-item:hover {
+  color: var(--neon-pink);
+  text-decoration: underline;
+}
+
+.breadcrumb-sep {
+  color: var(--color-text-muted);
+  user-select: none;
+}
+
+.browse-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.browse-card {
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.browse-grid-header {
+  display: grid;
+  grid-template-columns: minmax(200px, 3fr) 1fr 1fr;
+  padding: 12px 20px;
+  border-bottom: 2px solid var(--color-border-strong);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.05em;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.browse-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.browse-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.browse-list::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 4px;
+}
+
+.file-item {
+  display: grid;
+  grid-template-columns: minmax(200px, 3fr) 1fr 1fr;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+}
+
+.file-item:hover {
+  background: var(--color-bg-hover);
+}
+
+.file-item.selected {
+  background: rgba(58, 12, 163, 0.1);
+  border-left: 3px solid var(--neon-pink);
+}
+
+.file-item.folder .col-name {
+  font-weight: 600;
+  color: var(--electric-sapphire);
+}
+
+.file-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 12px;
+  vertical-align: middle;
+  fill: currentColor;
+}
+
+.file-item.folder .file-icon {
+  fill: #fbc02d;
+  /* Folder color */
+}
+
+.file-item.file .file-icon {
+  fill: var(--color-text-secondary);
+}
+
+.col-name {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.col-date,
+.col-size {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
 /* ========== RESPONSIVE ========== */
 
 /* Medium - tablets / smaller windows */
@@ -918,7 +1065,7 @@ body {
     order: 1;
   }
 
-  .panel-actions > .card {
+  .panel-actions>.card {
     min-height: 320px;
   }
 
@@ -987,7 +1134,7 @@ body {
 
   .card,
   .card-drop,
-  .panel-actions > .card {
+  .panel-actions>.card {
     min-height: 260px;
   }
 
@@ -1053,7 +1200,7 @@ body {
 
   .card,
   .card-drop,
-  .panel-actions > .card {
+  .panel-actions>.card {
     min-height: 240px;
   }
 

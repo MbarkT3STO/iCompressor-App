@@ -16,7 +16,10 @@ import {
   renderHistory,
   applySettingsToForm,
   applyTheme,
+  renderBreadcrumbs,
+  renderBrowseList
 } from './ui';
+import type { FileEntry } from '../types';
 
 // Path utilities (renderer-safe - we receive paths as strings from main)
 function basename(p: string): string {
@@ -93,8 +96,135 @@ function setupNavigation(): void {
         showPanel(panelId);
         if (panelId === 'history') loadHistory();
         if (panelId === 'settings') loadSettings();
+        if (panelId === 'browse') initBrowse();
       }
     });
+  });
+}
+
+// Browse
+let currentBrowsePath = '';
+let selectedBrowsePaths = new Set<string>();
+let browseEntries: FileEntry[] = [];
+
+async function initBrowse() {
+  if (!currentBrowsePath) {
+    currentBrowsePath = await ipc.getHomeDir();
+  }
+  await loadDirectory(currentBrowsePath);
+}
+
+async function loadDirectory(dirPath: string) {
+  const result = await ipc.readDir(dirPath);
+  if (!result.success || !result.entries) {
+    showToast('toast-compress', result.error || 'Failed to read directory', 'error'); // fallback toast
+    return;
+  }
+  
+  currentBrowsePath = dirPath;
+  browseEntries = result.entries;
+  selectedBrowsePaths.clear();
+  updateBrowseUI();
+}
+
+function updateBrowseUI() {
+  // Update breadcrumbs
+  const parts = currentBrowsePath.split(/[/\\]/).filter(Boolean);
+  const isWin = currentBrowsePath.includes('\\') || /^[a-zA-Z]:/.test(currentBrowsePath);
+  const sep = isWin ? '\\' : '/';
+  
+  const pieces = [];
+  let currentAccum = isWin && currentBrowsePath.startsWith('\\\\') ? '\\\\' : (isWin ? '' : '/');
+  
+  if (parts.length === 0 && !isWin) {
+    pieces.push({ name: '/', fullPath: '/' });
+  } else {
+    parts.forEach((part, i) => {
+      currentAccum += part;
+      pieces.push({ name: part, fullPath: currentAccum });
+      currentAccum += sep;
+    });
+  }
+
+  renderBreadcrumbs('browse-breadcrumbs', pieces, (path) => loadDirectory(path));
+  
+  // Render list
+  renderBrowseList(
+    'browse-list', 
+    browseEntries, 
+    handleBrowseSelect, 
+    handleBrowseOpen,
+    (path) => selectedBrowsePaths.has(path)
+  );
+
+  updateBrowseButtons();
+}
+
+function handleBrowseSelect(entry: FileEntry, multi: boolean) {
+  if (multi) {
+    if (selectedBrowsePaths.has(entry.path)) {
+      selectedBrowsePaths.delete(entry.path);
+    } else {
+      selectedBrowsePaths.add(entry.path);
+    }
+  } else {
+    // Single select: toggles if clicking same, otherwise sets unique
+    if (selectedBrowsePaths.size === 1 && selectedBrowsePaths.has(entry.path)) {
+      selectedBrowsePaths.clear();
+    } else {
+      selectedBrowsePaths.clear();
+      selectedBrowsePaths.add(entry.path);
+    }
+  }
+  updateBrowseUI();
+}
+
+function handleBrowseOpen(entry: FileEntry) {
+  if (entry.isDirectory) {
+    loadDirectory(entry.path);
+  }
+}
+
+function updateBrowseButtons() {
+  const btnCompress = document.getElementById('btn-browse-compress') as HTMLButtonElement;
+  const btnExtract = document.getElementById('btn-browse-extract') as HTMLButtonElement;
+  
+  const selectedCount = selectedBrowsePaths.size;
+  if (btnCompress) btnCompress.disabled = selectedCount === 0;
+  
+  if (btnExtract) {
+    // Only allow extract if exactly one supported archive is selected
+    if (selectedCount === 1) {
+      const path = Array.from(selectedBrowsePaths)[0];
+      const isArchive = /\.(zip|7z|rar|tar|gz|tgz)$/i.test(path);
+      btnExtract.disabled = !isArchive;
+    } else {
+      btnExtract.disabled = true;
+    }
+  }
+}
+
+function setupBrowse() {
+  document.getElementById('btn-browse-refresh')?.addEventListener('click', () => {
+    if (currentBrowsePath) loadDirectory(currentBrowsePath);
+  });
+
+  document.getElementById('btn-browse-compress')?.addEventListener('click', () => {
+    if (selectedBrowsePaths.size > 0) {
+      const paths = Array.from(selectedBrowsePaths);
+      const existing = getPathsFromList('compress-files-list');
+      const merged = [...new Set([...existing, ...paths])];
+      setFileList('compress-files-list', merged);
+      showPanel('compress');
+    }
+  });
+
+  document.getElementById('btn-browse-extract')?.addEventListener('click', () => {
+    if (selectedBrowsePaths.size === 1) {
+      const path = Array.from(selectedBrowsePaths)[0];
+      setSingleFile('extract-files-list', path);
+      showPanel('extract');
+    }
   });
 }
 
@@ -293,6 +423,7 @@ function setupExtractDropZoneClick(): void {
 // Init - call when DOM ready
 export function init(): void {
   setupNavigation();
+  setupBrowse();
   setupCompress();
   setupExtract();
   setupHistory();
