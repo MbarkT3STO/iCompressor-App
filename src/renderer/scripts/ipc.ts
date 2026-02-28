@@ -16,7 +16,7 @@ const api = window.compressorAPI;
 export const ipc: {
   selectFiles: () => Promise<string[]>;
   selectFolder: () => Promise<string | null>;
-  selectOutput: (defaultPath?: string) => Promise<string | null>;
+  selectOutput: (defaultPath?: string, format?: string) => Promise<string | null>;
   compress: (payload: {
     sources: string[];
     outputPath: string;
@@ -49,7 +49,7 @@ export const ipc: {
 } = {
   selectFiles: () => api.selectFiles(),
   selectFolder: () => api.selectFolder(),
-  selectOutput: (defaultPath?: string) => api.selectOutput(defaultPath),
+  selectOutput: (defaultPath?: string, format?: string) => api.selectOutput(defaultPath, format),
   compress: (payload: {
     sources: string[];
     outputPath: string;

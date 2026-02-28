@@ -97,17 +97,27 @@ function registerIpcHandlers(): void {
     return result.canceled ? null : result.filePaths[0];
   });
 
-  ipcMain.handle(IPC_CHANNELS.SELECT_OUTPUT, async (_, defaultPath?: string) => {
+  ipcMain.handle(IPC_CHANNELS.SELECT_OUTPUT, async (_, defaultPath?: string, format?: string) => {
+    const allFilters = [
+      { name: 'ZIP Archive', extensions: ['zip'] },
+      { name: '7z Archive', extensions: ['7z'] },
+      { name: 'TAR Archive', extensions: ['tar'] },
+      { name: 'TAR.GZ Archive', extensions: ['tar', 'gz'] },
+      { name: 'All Archives', extensions: ['*'] },
+    ];
+
+    // Put the user's selected format first so macOS pre-selects it
+    const extMap: Record<string, string> = { zip: 'zip', '7z': '7z', tar: 'tar', targz: 'tar' };
+    const selectedExt = extMap[format || 'zip'] || 'zip';
+    const filters = [
+      ...allFilters.filter(f => f.extensions[0] === selectedExt),
+      ...allFilters.filter(f => f.extensions[0] !== selectedExt),
+    ];
+
     const result = await dialog.showSaveDialog(mainWindow!, {
       defaultPath,
       title: 'Save archive as',
-      filters: [
-        { name: 'ZIP Archive', extensions: ['zip'] },
-        { name: '7z Archive', extensions: ['7z'] },
-        { name: 'TAR Archive', extensions: ['tar'] },
-        { name: 'TAR.GZ Archive', extensions: ['tar.gz'] },
-        { name: 'All Archives', extensions: ['*'] },
-      ],
+      filters,
     });
     return result.canceled ? null : result.filePath;
   });

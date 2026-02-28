@@ -34,7 +34,7 @@ const PROGRESS_CHANNEL = 'compressor:progress';
 export interface ICompressorAPI {
   selectFiles: () => Promise<string[]>;
   selectFolder: () => Promise<string | null>;
-  selectOutput: (defaultPath?: string) => Promise<string | null>;
+  selectOutput: (defaultPath?: string, format?: string) => Promise<string | null>;
   compress: (payload: {
     sources: string[];
     outputPath: string;
@@ -96,8 +96,8 @@ export interface FileEntry {
 const api: ICompressorAPI = {
   selectFiles: () => ipcRenderer.invoke(IPC_CHANNELS.SELECT_FILES),
   selectFolder: () => ipcRenderer.invoke(IPC_CHANNELS.SELECT_FOLDER),
-  selectOutput: (defaultPath?: string) =>
-    ipcRenderer.invoke(IPC_CHANNELS.SELECT_OUTPUT, defaultPath),
+  selectOutput: (defaultPath?: string, format?: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SELECT_OUTPUT, defaultPath, format),
   compress: (payload) => ipcRenderer.invoke(IPC_CHANNELS.COMPRESS, payload),
   extract: (payload) => ipcRenderer.invoke(IPC_CHANNELS.EXTRACT, payload),
   test: (archivePath: string, password?: string) => ipcRenderer.invoke(IPC_CHANNELS.TEST, { archivePath, password }),

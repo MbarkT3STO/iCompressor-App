@@ -270,42 +270,42 @@ function setupCompress(): void {
     const outputDir = settings.outputDirectory || dirname(sources[0]);
     const defaultPath = outputDir ? `${outputDir}/${defaultName}` : defaultName;
 
-    const outputPath = await ipc.selectOutput(defaultPath);
+    const outputPath = await ipc.selectOutput(defaultPath, format);
     if (!outputPath) return;
 
     const compressionLevel = settings.compressionLevel ?? 6;
 
     showGlobalProgress(0, 'Preparing...', 'Compressing...');
 
-    let operationDone = false;
-    const unsub = ipc.onProgress((data) => {
-      if (!operationDone) {
+    let unsub: (() => void) | null = null;
+    try {
+      unsub = ipc.onProgress((data) => {
         showGlobalProgress(data.percent, data.status, 'Compressing...');
+      });
+
+      const result = await ipc.compress({
+        sources,
+        outputPath,
+        format,
+        level: compressionLevel,
+        password,
+      });
+
+      if (result.success) {
+        showToast('toast-compress', `Compressed to ${basename(result.outputPath!)}`, 'success');
+        setFileList('compress-files-list', []);
+        if (settings.autoOpenResultFolder && result.outputPath) {
+          ipc.openPath(result.outputPath);
+        }
+      } else {
+        showToast('toast-compress', result.error || 'Compression failed', 'error');
       }
-    });
-
-    const result = await ipc.compress({
-      sources,
-      outputPath,
-      format,
-      level: compressionLevel,
-      password,
-    });
-
-    operationDone = true;
-    unsub();
-    // Show 100% briefly so the bar finishes cleanly, then hide
-    showGlobalProgress(100, 'Complete', 'Compressing...');
-    setTimeout(() => hideGlobalProgress(), 350);
-
-    if (result.success) {
-      showToast('toast-compress', `Compressed to ${basename(result.outputPath!)}`, 'success');
-      setFileList('compress-files-list', []);
-      if (settings.autoOpenResultFolder && result.outputPath) {
-        ipc.openPath(result.outputPath);
-      }
-    } else {
-      showToast('toast-compress', result.error || 'Compression failed', 'error');
+    } catch (err: any) {
+      showToast('toast-compress', err.message || 'An unexpected error occurred', 'error');
+    } finally {
+      if (unsub) unsub();
+      // Brief delay to show 100% or error state before hiding
+      setTimeout(() => hideGlobalProgress(), 500);
     }
   });
 }

@@ -105,7 +105,7 @@ export class CompressorService extends EventEmitter {
       const archiveFormat = format === 'targz' ? 'tar' : format;
       const gzip = format === 'targz';
 
-      // ── Pre-compute source size to calibrate the time estimate ───────────────
+      // ── Total Bytes Calculation ─────────────────────────────────────────────
       const getSize = (p: string): number => {
         try {
           const st = fs.statSync(p);
@@ -115,24 +115,8 @@ export class CompressorService extends EventEmitter {
           return st.size;
         } catch { return 0; }
       };
-      const sourceMB = Math.max(1, sources.reduce((s, src) => s + getSize(src), 0)) / (1024 * 1024);
+      const totalBytes = Math.max(1, sources.reduce((s, src) => s + getSize(src), 0));
 
-      // ── Estimate compression duration ────────────────────────────────────────
-      // Using a fixed halfT of 500ms gives a rational curve 95·t/(t+0.5s).
-      // This reaches: 67% at 1s | 83% at 2.5s | 91% at 5s | 93% at 10s | 96% at 30s
-      // So the bar is always above 90% for medium/large files, then snaps to 100% on close.
-      const halfT = 500; // ms — fixed, machine-speed-independent
-      const startTime = Date.now();
-
-      this.progress(1, 'Compressing... 1%');
-
-      const ticker = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const pct = Math.min(95, Math.round(95 * elapsed / (elapsed + halfT)));
-        this.progress(pct, `Compressing... ${pct}%`);
-      }, 400);
-
-      // ── Archiver plumbing ─────────────────────────────────────────────────────
       const output = fs.createWriteStream(outputPath);
       const archive = archiver(
         archiveFormat,
@@ -141,26 +125,46 @@ export class CompressorService extends EventEmitter {
           : { zlib: { level: Math.min(9, Math.max(0, level)) } }
       );
 
-      output.on('close', () => {
-        clearInterval(ticker);
-        this.progress(100, 'Complete');
-        resolve({ success: true, outputPath });
+      let lastPercent = 0;
+      let isResolved = false;
+
+      const finish = (success: boolean, error?: string) => {
+        if (isResolved) return;
+        isResolved = true;
+        if (success) {
+          this.progress(100, 'Complete');
+          resolve({ success: true, outputPath });
+        } else {
+          this.progress(0, '');
+          resolve({ success: false, error: error || 'Unknown error' });
+        }
+      };
+
+      archive.on('progress', (data: any) => {
+        const processed = data.fs?.processedBytes || 0;
+        // Cap at 99 so we only hit 100 on 'close'
+        const rawPct = Math.min(99, Math.round((processed / totalBytes) * 100));
+        
+        // Only broadcast if it actually changed to reduce IPC noise
+        if (rawPct > lastPercent) {
+          lastPercent = rawPct;
+          this.progress(rawPct, `Compressing... ${rawPct}%`);
+        }
       });
 
-      archive.on('error', (err: Error) => {
-        clearInterval(ticker);
-        this.progress(0, '');
-        resolve({ success: false, error: err.message });
-      });
+      output.on('close', () => finish(true));
+      archive.on('error', (err: Error) => finish(false, err.message));
+      output.on('error', (err: Error) => finish(false, err.message));
 
       archive.pipe(output);
 
       sources.forEach((src) => {
         const stat = fs.statSync(src);
+        const name = path.basename(src);
         if (stat.isDirectory()) {
-          archive.directory(src, path.basename(src));
+          archive.directory(src, name);
         } else {
-          archive.file(src, { name: path.basename(src) });
+          archive.file(src, { name });
         }
       });
 
@@ -168,59 +172,77 @@ export class CompressorService extends EventEmitter {
     });
   }
 
-
-
-
   private async compress7z(sources: string[], outputPath: string, level: number, password?: string): Promise<CompressResult> {
     return new Promise((resolve) => {
       const pathTo7z = sevenBin.path7za;
       const args = sources.map((s) => path.resolve(s));
 
-      const extractOptions: any = {
+      // ── Maximum Compression Strategy ────────────────────────────────────────
+      // For high levels, we use LZMA2 with large dictionary sizes and solid mode.
+      const clampedLevel = Math.min(9, Math.max(0, level));
+      
+      const rawFlags = [
+        `-mx=${clampedLevel}`,    // Compression level
+        '-m0=lzma2',             // Use LZMA2
+        '-ms=on',                // Enable solid mode
+      ];
+
+      // Dictionary size optimization
+      // Level 9: 64MB, Level 7+: 32MB, Level 5+: 16MB, others: 4MB
+      if (clampedLevel >= 9) rawFlags.push('-md=64m');
+      else if (clampedLevel >= 7) rawFlags.push('-md=32m');
+      else if (clampedLevel >= 5) rawFlags.push('-md=16m');
+      else rawFlags.push('-md=4m');
+
+      // BCJ filter for executables if no password (password + filters can sometimes be prickly with 7za)
+      if (!password) {
+        rawFlags.push('-mf=BCJ');
+      }
+
+      const compressOptions: any = {
         $bin: pathTo7z,
         recursive: true,
         $progress: true,
+        $raw: rawFlags,
       };
 
       if (password) {
-        extractOptions.password = password;
+        compressOptions.password = password;
       }
 
-      const stream = Seven.add(outputPath, args, extractOptions);
+      const stream = Seven.add(outputPath, args, compressOptions);
+      let isResolved = false;
 
-      // Smooth progress ticker: interpolates between node-7z's coarse ~10% jumps
-      let targetPercent = 1; // kick off with a tiny start so bar feels responsive
-      let currentPercent = 0;
-      this.progress(1, 'Compressing... 1%');
-
-      const ticker = setInterval(() => {
-        if (currentPercent < targetPercent) {
-          // Ease toward target: advance 30% of the remaining distance per tick
-          currentPercent = Math.min(targetPercent, currentPercent + Math.max(0.5, (targetPercent - currentPercent) * 0.3));
-          const displayPct = Math.round(currentPercent);
-          this.progress(displayPct, `Compressing... ${displayPct}%`);
+      const finish = (success: boolean, error?: string) => {
+        if (isResolved) return;
+        isResolved = true;
+        if (success) {
+          this.progress(100, 'Complete');
+          resolve({ success: true, outputPath });
+        } else {
+          // Verify if file was actually produced (7za sometimes warns on stderr)
+          try {
+            if (fs.existsSync(outputPath) && fs.statSync(outputPath).size > 0) {
+              this.progress(100, 'Complete');
+              return resolve({ success: true, outputPath });
+            }
+          } catch {}
+          this.progress(0, '');
+          resolve({ success: false, error: error || 'Compression failed' });
         }
-      }, 80);
+      };
 
-      stream.on('progress', (p: { percent?: number }) => {
-        const pct = p.percent ?? 0;
-        // Only ever advance, never go backwards
-        if (pct > targetPercent) targetPercent = Math.min(99, pct);
+      stream.on('progress', (p: any) => {
+        const pct = Math.min(99, p.percent || 0);
+        this.progress(pct, `Compressing... ${pct}%`);
       });
 
-      stream.on('end', () => {
-        clearInterval(ticker);
-        this.progress(100, 'Complete');
-        resolve({ success: true, outputPath });
-      });
-
-      stream.on('error', (err: Error) => {
-        clearInterval(ticker);
-        this.progress(0, '');
-        resolve({ success: false, error: err.message });
-      });
+      stream.on('end', () => finish(true));
+      stream.on('error', (err: Error) => finish(false, err.message));
     });
   }
+
+
 
   async extract(payload: ExtractPayload): Promise<ExtractResult> {
     const { archivePath, outputDir } = payload;
