@@ -3,7 +3,8 @@
  * Electron main entry point with window management and IPC handlers
  */
 
-import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell, screen } from 'electron';
+import windowStateKeeper from 'electron-window-state';
 import * as path from 'path';
 import { IPC_CHANNELS, PROGRESS_CHANNEL } from './ipc-channels';
 
@@ -40,9 +41,19 @@ function getActionForPath(filePath: string): 'compress' | 'extract' {
 let pendingOpen: { filePath: string; action: 'compress' | 'extract' } | null = null;
 
 function createWindow(): void {
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height } = primaryDisplay.workAreaSize;
+
+  const mainWindowState = windowStateKeeper({
+    defaultWidth: width,
+    defaultHeight: height
+  });
+
   mainWindow = new BrowserWindow({
-    width: 1000,
-    height: 700,
+    x: mainWindowState.x,
+    y: mainWindowState.y,
+    width: mainWindowState.width,
+    height: mainWindowState.height,
     minWidth: 800,
     minHeight: 600,
     show: false,
@@ -59,6 +70,8 @@ function createWindow(): void {
 
   const rendererPath = `file://${path.join(__dirname, '../renderer/index.html')}`;
   mainWindow.loadURL(rendererPath);
+
+  mainWindowState.manage(mainWindow);
 
   // Force hide macOS native traffic lights since we built our own
   if (process.platform === 'darwin') {

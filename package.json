@@ -25,6 +25,7 @@
   "dependencies": {
     "7zip-bin": "^5.2.0",
     "archiver": "^6.0.1",
+    "electron-window-state": "^5.0.3",
     "node-7z": "^3.0.0",
     "tar-stream": "^3.1.7"
   },
@@ -48,47 +49,70 @@
         "CFBundleDocumentTypes": [
           {
             "CFBundleTypeName": "ZIP Archive",
-            "CFBundleTypeExtensions": ["zip"],
+            "CFBundleTypeExtensions": [
+              "zip"
+            ],
             "CFBundleTypeRole": "Viewer",
             "LSHandlerRank": "Alternate"
           },
           {
             "CFBundleTypeName": "7-Zip Archive",
-            "CFBundleTypeExtensions": ["7z"],
+            "CFBundleTypeExtensions": [
+              "7z"
+            ],
             "CFBundleTypeRole": "Viewer",
             "LSHandlerRank": "Alternate"
           },
           {
             "CFBundleTypeName": "RAR Archive",
-            "CFBundleTypeExtensions": ["rar"],
+            "CFBundleTypeExtensions": [
+              "rar"
+            ],
             "CFBundleTypeRole": "Viewer",
             "LSHandlerRank": "Alternate"
           },
           {
             "CFBundleTypeName": "TAR Archive",
-            "CFBundleTypeExtensions": ["tar"],
+            "CFBundleTypeExtensions": [
+              "tar"
+            ],
             "CFBundleTypeRole": "Viewer",
             "LSHandlerRank": "Alternate"
           },
           {
             "CFBundleTypeName": "Gzipped TAR Archive",
-            "CFBundleTypeExtensions": ["tar.gz", "tgz"],
+            "CFBundleTypeExtensions": [
+              "tar.gz",
+              "tgz"
+            ],
             "CFBundleTypeRole": "Viewer",
             "LSHandlerRank": "Alternate"
           }
         ],
         "NSServices": [
           {
-            "NSMenuItem": { "default": "Compress with iCompressor" },
+            "NSMenuItem": {
+              "default": "Compress with iCompressor"
+            },
             "NSMessage": "compress",
-            "NSSendTypes": ["NSFilenamesPboardType"],
-            "NSRequiredContext": { "NSApplicationIdentifier": "com.icompressor.app" }
+            "NSSendTypes": [
+              "NSFilenamesPboardType"
+            ],
+            "NSRequiredContext": {
+              "NSApplicationIdentifier": "com.icompressor.app"
+            }
           },
           {
-            "NSMenuItem": { "default": "Extract with iCompressor" },
+            "NSMenuItem": {
+              "default": "Extract with iCompressor"
+            },
             "NSMessage": "extract",
-            "NSSendTypes": ["NSFilenamesPboardType"],
-            "NSRequiredContext": { "NSApplicationIdentifier": "com.icompressor.app" }
+            "NSSendTypes": [
+              "NSFilenamesPboardType"
+            ],
+            "NSRequiredContext": {
+              "NSApplicationIdentifier": "com.icompressor.app"
+            }
           }
         ]
       }
