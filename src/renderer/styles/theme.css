@@ -1,0 +1,95 @@
+/**
+ * iCompressor - Theme System
+ * CSS variables for theming (light/dark mode)
+ * Animated transitions between themes
+ */
+
+:root {
+  /* Light theme (default) */
+  --color-bg: #fafafa;
+  --color-bg-elevated: #ffffff;
+  --color-bg-sidebar: #f0f0f0;
+  --color-bg-hover: #e8e8e8;
+  --color-bg-active: #e0e0e0;
+  --color-border: #e5e5e5;
+  --color-border-strong: #d0d0d0;
+  --color-text: #1a1a1a;
+  --color-text-secondary: #6b6b6b;
+  --color-text-muted: #9a9a9a;
+  --color-accent: #2563eb;
+  --color-accent-hover: #1d4ed8;
+  --color-accent-muted: #93c5fd;
+  --color-success: #059669;
+  --color-error: #dc2626;
+  --color-drop-zone: #f5f5f5;
+  --color-drop-zone-hover: #ebebeb;
+  --color-drop-zone-border: #d4d4d4;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+}
+
+[data-theme='dark'] {
+  --color-bg: #0f0f0f;
+  --color-bg-elevated: #1a1a1a;
+  --color-bg-sidebar: #141414;
+  --color-bg-hover: #252525;
+  --color-bg-active: #2a2a2a;
+  --color-border: #2a2a2a;
+  --color-border-strong: #3a3a3a;
+  --color-text: #fafafa;
+  --color-text-secondary: #a3a3a3;
+  --color-text-muted: #737373;
+  --color-accent: #3b82f6;
+  --color-accent-hover: #60a5fa;
+  --color-accent-muted: #1e3a5f;
+  --color-success: #10b981;
+  --color-error: #ef4444;
+  --color-drop-zone: #1a1a1a;
+  --color-drop-zone-hover: #252525;
+  --color-drop-zone-border: #333;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+}
+
+/* System preference - prefers-color-scheme */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-bg: #0f0f0f;
+    --color-bg-elevated: #1a1a1a;
+    --color-bg-sidebar: #141414;
+    --color-bg-hover: #252525;
+    --color-bg-active: #2a2a2a;
+    --color-border: #2a2a2a;
+    --color-border-strong: #3a3a3a;
+    --color-text: #fafafa;
+    --color-text-secondary: #a3a3a3;
+    --color-text-muted: #737373;
+    --color-accent: #3b82f6;
+    --color-accent-hover: #60a5fa;
+    --color-accent-muted: #1e3a5f;
+    --color-success: #10b981;
+    --color-error: #ef4444;
+    --color-drop-zone: #1a1a1a;
+    --color-drop-zone-hover: #252525;
+    --color-drop-zone-border: #333;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Override when explicitly light/dark */
+[data-theme='light'] {
+  --color-bg: #fafafa;
+  --color-bg-elevated: #ffffff;
+  --color-bg-sidebar: #f0f0f0;
+  --color-text: #1a1a1a;
+  /* ... rest same as :root light */
+}

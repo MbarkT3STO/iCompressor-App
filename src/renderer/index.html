@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+  <title>iCompressor</title>
+  <link rel="stylesheet" href="styles/theme.css">
+  <link rel="stylesheet" href="styles/layout.css">
+</head>
+<body>
+  <div id="app" class="app">
+    <aside class="sidebar" role="navigation">
+      <div class="sidebar-header">
+        <svg class="logo-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H8v-2h3V7h2v6h3v2h-5zm5-11h2v2h-2V6z"/>
+        </svg>
+        <span class="logo-text">iCompressor</span>
+      </div>
+      <nav class="nav">
+        <button class="nav-item active" data-panel="compress" aria-selected="true">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M14.5 11l-3 6v-4H9l3-6v4h2.5z"/>
+            <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12z"/>
+          </svg>
+          <span>Compress</span>
+        </button>
+        <button class="nav-item" data-panel="extract" aria-selected="false">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+          </svg>
+          <span>Extract</span>
+        </button>
+        <button class="nav-item" data-panel="history" aria-selected="false">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.25 2.52.77-1.28-3.52-2.09V8H12z"/>
+          </svg>
+          <span>History</span>
+        </button>
+        <button class="nav-item" data-panel="settings" aria-selected="false">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+          </svg>
+          <span>Settings</span>
+        </button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <section id="panel-compress" class="panel active">
+        <div class="panel-header">
+          <h1 class="panel-title">Compress Files</h1>
+          <p class="panel-subtitle">Select files or folders to create an archive</p>
+        </div>
+        <div class="drop-zone" id="drop-zone-compress" data-drop-type="compress">
+          <svg class="drop-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/>
+          </svg>
+          <p class="drop-text">Drag and drop files here, or click to browse</p>
+          <p class="drop-hint">Supports ZIP, 7Z, TAR, TAR.GZ</p>
+        </div>
+        <div class="files-section" id="compress-files-section">
+          <div class="files-header">
+            <span class="files-label">Selected files</span>
+            <button type="button" class="btn-text" id="btn-add-files">Add files</button>
+          </div>
+          <ul class="files-list" id="compress-files-list"></ul>
+          <div class="format-row">
+            <label for="format-select">Format:</label>
+            <select id="format-select">
+              <option value="zip">ZIP</option>
+              <option value="7z">7Z</option>
+              <option value="tar">TAR</option>
+              <option value="targz">TAR.GZ</option>
+            </select>
+            <button type="button" class="btn-primary" id="btn-compress">Compress</button>
+          </div>
+        </div>
+        <div class="progress-section hidden" id="compress-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" id="compress-progress-fill"></div>
+          </div>
+          <p class="progress-status" id="compress-progress-status">Preparing...</p>
+        </div>
+        <div class="toast-container" id="toast-compress"></div>
+      </section>
+
+      <section id="panel-extract" class="panel">
+        <div class="panel-header">
+          <h1 class="panel-title">Extract Archive</h1>
+          <p class="panel-subtitle">Select an archive to extract</p>
+        </div>
+        <div class="drop-zone" id="drop-zone-extract" data-drop-type="extract">
+          <svg class="drop-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+          </svg>
+          <p class="drop-text">Drag and drop archive here, or click to browse</p>
+          <p class="drop-hint">Supports ZIP, 7Z, RAR, TAR, TAR.GZ</p>
+        </div>
+        <div class="files-section" id="extract-files-section">
+          <div class="files-header">
+            <span class="files-label">Archive</span>
+          </div>
+          <ul class="files-list" id="extract-files-list"></ul>
+          <div class="extract-row">
+            <label for="extract-output">Output folder:</label>
+            <input type="text" id="extract-output" class="input-path" readonly placeholder="Select output folder">
+            <button type="button" class="btn-text" id="btn-select-extract-output">Browse</button>
+            <button type="button" class="btn-primary" id="btn-extract">Extract</button>
+          </div>
+        </div>
+        <div class="progress-section hidden" id="extract-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" id="extract-progress-fill"></div>
+          </div>
+          <p class="progress-status" id="extract-progress-status">Preparing...</p>
+        </div>
+        <div class="toast-container" id="toast-extract"></div>
+      </section>
+
+      <section id="panel-history" class="panel">
+        <div class="panel-header">
+          <h1 class="panel-title">History</h1>
+          <p class="panel-subtitle">Recent compression and extraction operations</p>
+          <button type="button" class="btn-text" id="btn-clear-history">Clear history</button>
+        </div>
+        <ul class="history-list" id="history-list"></ul>
+      </section>
+
+      <section id="panel-settings" class="panel">
+        <div class="panel-header">
+          <h1 class="panel-title">Settings</h1>
+          <p class="panel-subtitle">Customize iCompressor</p>
+        </div>
+        <div class="settings-form">
+          <div class="setting-row">
+            <label for="setting-compression-level">Compression level (0–9)</label>
+            <input type="range" id="setting-compression-level" min="0" max="9" value="6" step="1">
+            <span id="compression-level-value">6</span>
+          </div>
+          <div class="setting-row">
+            <label for="setting-output-dir">Default output directory</label>
+            <div class="input-row">
+              <input type="text" id="setting-output-dir" class="input-path" readonly placeholder="Same as source">
+              <button type="button" class="btn-text" id="btn-select-output-dir">Browse</button>
+            </div>
+          </div>
+          <div class="setting-row setting-toggle">
+            <label for="setting-auto-open">Auto-open result folder</label>
+            <input type="checkbox" id="setting-auto-open" checked>
+          </div>
+          <div class="setting-row setting-toggle">
+            <label for="setting-theme">Theme</label>
+            <select id="setting-theme">
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+              <option value="system">System</option>
+            </select>
+          </div>
+          <div class="setting-row setting-toggle">
+            <label for="setting-animations">Enable animations</label>
+            <input type="checkbox" id="setting-animations" checked>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="scripts/app.js"></script>
+</body>
+</html>
