@@ -26,11 +26,36 @@ body {
   transition: background var(--transition-normal), color var(--transition-normal);
 }
 
+/* Global Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(247, 37, 133, 0.4);
+  /* Neon Pink with opacity */
+  border-radius: var(--radius-full);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--neon-pink);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
 /* App */
 .app {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
 }
 
 /* Header */
@@ -76,7 +101,11 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+  /* Space for the scrollbar */
 }
 
 .nav-item {
@@ -92,6 +121,8 @@ body {
   font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .nav-item:hover {
@@ -374,15 +405,8 @@ body {
   max-height: 160px;
   overflow-y: auto;
   padding: 0;
-}
-
-.files-list::-webkit-scrollbar {
-  width: 5px;
-}
-
-.files-list::-webkit-scrollbar-thumb {
-  background: var(--color-border-strong);
-  border-radius: 3px;
+  padding-right: 4px;
+  /* Space for scrollbar */
 }
 
 .files-list li {
@@ -981,15 +1005,8 @@ body {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-}
-
-.browse-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.browse-list::-webkit-scrollbar-thumb {
-  background: var(--color-border-strong);
-  border-radius: 4px;
+  padding-right: 4px;
+  /* Space for scrollbar */
 }
 
 .file-item {
