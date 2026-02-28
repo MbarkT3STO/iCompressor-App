@@ -21,6 +21,7 @@ const IPC_CHANNELS = {
   OPEN_PATH: 'shell:open-path',
   READ_DIR: 'fs:read-dir',
   GET_HOME_DIR: 'fs:get-home-dir',
+  OPEN_EXTERNAL: 'shell:open-external',
 } as const;
 
 const PROGRESS_CHANNEL = 'compressor:progress';
@@ -49,6 +50,7 @@ export interface ICompressorAPI {
   onProgress: (callback: (data: { percent: number; status: string }) => void) => () => void;
   getHomeDir: () => Promise<string>;
   readDir: (path: string) => Promise<{ success: boolean; entries?: FileEntry[]; error?: string }>;
+  openExternal: (url: string) => Promise<{ success: boolean }>;
 }
 
 export interface AppSettings {
@@ -98,6 +100,7 @@ const api: ICompressorAPI = {
   },
   getHomeDir: () => ipcRenderer.invoke(IPC_CHANNELS.GET_HOME_DIR),
   readDir: (path: string) => ipcRenderer.invoke(IPC_CHANNELS.READ_DIR, path),
+  openExternal: (url: string) => ipcRenderer.invoke(IPC_CHANNELS.OPEN_EXTERNAL, url),
 };
 
 contextBridge.exposeInMainWorld('compressorAPI', api);

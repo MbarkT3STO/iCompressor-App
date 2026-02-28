@@ -37,6 +37,7 @@ export const ipc: {
   onProgress: (callback: (data: { percent: number; status: string }) => void) => () => void;
   getHomeDir: () => Promise<string>;
   readDir: (path: string) => Promise<{ success: boolean; entries?: FileEntry[]; error?: string }>;
+  openExternal: (url: string) => Promise<{ success: boolean }>;
 } = {
   selectFiles: () => api.selectFiles(),
   selectFolder: () => api.selectFolder(),
@@ -62,4 +63,5 @@ export const ipc: {
     api.onProgress(callback),
   getHomeDir: () => api.getHomeDir(),
   readDir: (path: string) => api.readDir(path),
+  openExternal: (url: string) => api.openExternal(url),
 };

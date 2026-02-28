@@ -409,6 +409,19 @@ function setupSettings(): void {
   document.getElementById('setting-animations')?.addEventListener('change', saveSettings);
 }
 
+// About
+function setupAbout(): void {
+  document.querySelectorAll('.external-link').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      const target = e.currentTarget as HTMLElement;
+      const url = target.getAttribute('data-url');
+      if (url) {
+        ipc.openExternal(url);
+      }
+    });
+  });
+}
+
 // Extract drop zone - allow single archive click to browse
 function setupExtractDropZoneClick(): void {
   const zone = document.getElementById('drop-zone-extract');
@@ -428,6 +441,7 @@ export function init(): void {
   setupExtract();
   setupHistory();
   setupSettings();
+  setupAbout();
   loadSettings();
 
   document.getElementById('btn-cancel-progress')?.addEventListener('click', () => {

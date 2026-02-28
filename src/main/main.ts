@@ -180,6 +180,15 @@ function registerIpcHandlers(): void {
     }
   });
 
+  ipcMain.handle(IPC_CHANNELS.OPEN_EXTERNAL, async (_, url: string) => {
+    try {
+      await shell.openExternal(url);
+      return { success: true };
+    } catch {
+      return { success: false };
+    }
+  });
+
   // File System (Browse)
   ipcMain.handle(IPC_CHANNELS.GET_HOME_DIR, () => {
     return app.getPath('home');

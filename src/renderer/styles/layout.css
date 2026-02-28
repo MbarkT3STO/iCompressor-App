@@ -864,6 +864,150 @@ body {
   border: 2px dashed var(--color-border);
 }
 
+/* About Page */
+.about-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.about-card {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 20px;
+  background: var(--color-bg-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all var(--transition-normal);
+}
+
+.about-card:hover {
+  border-color: var(--color-border-strong);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 48px rgba(247, 37, 133, 0.15);
+}
+
+.about-logo {
+  width: 80px;
+  height: 80px;
+  background: var(--color-bg-glass-strong);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.05), 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.logo-icon-large {
+  width: 48px;
+  height: 48px;
+  fill: var(--neon-pink);
+}
+
+.app-name-large {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  background: var(--color-accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 4px;
+}
+
+.app-version {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 12px;
+}
+
+.app-description {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  max-width: 280px;
+}
+
+.dev-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.dev-avatar {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, var(--electric-sapphire), var(--neon-pink));
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 8px 24px rgba(58, 12, 163, 0.3);
+}
+
+.dev-avatar svg {
+  width: 40px;
+  height: 40px;
+}
+
+.dev-name {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.dev-role {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--electric-sapphire);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.social-links {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.social-btn:hover {
+  background: var(--color-bg-hover);
+  border-color: var(--neon-pink);
+  color: var(--neon-pink);
+  transform: translateY(-2px);
+}
+
+.social-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
 /* Settings - card grid - equal height cards per row */
 .settings-grid {
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
