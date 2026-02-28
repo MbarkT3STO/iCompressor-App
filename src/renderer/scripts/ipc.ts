@@ -31,6 +31,7 @@ export const ipc: {
     password?: string;
   }) => Promise<{ success: boolean; outputDir?: string; error?: string }>;
   test: (archivePath: string, password?: string) => Promise<{ success: boolean; error?: string }>;
+  listArchive: (archivePath: string, password?: string) => Promise<{ success: boolean; files?: any[]; error?: string }>;
   getSettings: () => Promise<AppSettings>;
   saveSettings: (settings: Partial<AppSettings>) => Promise<void>;
   getHistory: () => Promise<HistoryEntry[]>;
@@ -62,6 +63,7 @@ export const ipc: {
     format?: string;
   }) => api.extract(payload),
   test: (archivePath: string, password?: string) => api.test(archivePath, password),
+  listArchive: (archivePath: string, password?: string) => api.listArchive(archivePath, password),
   getSettings: () => api.getSettings(),
   saveSettings: (settings: Partial<AppSettings>) => api.saveSettings(settings),
   getHistory: () => api.getHistory(),

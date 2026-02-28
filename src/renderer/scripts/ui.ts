@@ -263,3 +263,101 @@ export function renderBrowseList(containerId: string, entries: FileEntry[], onSe
     container.appendChild(el);
   });
 }
+
+// Archive Viewer Modal
+export function showArchiveViewerModal(): void {
+  const modal = document.getElementById('archive-viewer-modal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+export function hideArchiveViewerModal(): void {
+  const modal = document.getElementById('archive-viewer-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+export function setArchiveViewerState(state: 'loading' | 'error' | 'empty' | 'data', errorMessage?: string): void {
+  const loading = document.getElementById('archive-viewer-loading');
+  const error = document.getElementById('archive-viewer-error');
+  const errorMsg = document.getElementById('archive-viewer-error-msg');
+  const empty = document.getElementById('archive-viewer-empty');
+  const table = document.getElementById('archive-viewer-table-container');
+
+  [loading, error, empty, table].forEach(el => el?.classList.add('hidden'));
+
+  switch (state) {
+    case 'loading': loading?.classList.remove('hidden'); break;
+    case 'error': 
+      if (errorMsg && errorMessage) errorMsg.textContent = errorMessage;
+      error?.classList.remove('hidden'); 
+      break;
+    case 'empty': empty?.classList.remove('hidden'); break;
+    case 'data': table?.classList.remove('hidden'); break;
+  }
+}
+
+export function renderArchiveViewerPath(archiveName: string, pathParts: string[], onNav: (index: number) => void): void {
+  const container = document.getElementById('archive-viewer-breadcrumbs');
+  const title = document.getElementById('archive-viewer-title');
+  if (title) title.textContent = archiveName;
+  
+  if (!container) return;
+  container.innerHTML = '';
+  
+  const root = document.createElement('span');
+  root.className = 'breadcrumb-item';
+  root.textContent = 'Root';
+  root.onclick = () => onNav(-1);
+  container.appendChild(root);
+
+  pathParts.forEach((part, idx) => {
+    const sep = document.createElement('span');
+    sep.className = 'breadcrumb-sep';
+    sep.textContent = ' / ';
+    container.appendChild(sep);
+
+    const span = document.createElement('span');
+    span.className = 'breadcrumb-item';
+    span.textContent = part;
+    span.onclick = () => onNav(idx);
+    container.appendChild(span);
+  });
+}
+
+export function renderArchiveViewerTable(
+  files: any[], 
+  onFolderClick: (folderName: string) => void
+): void {
+  const tbody = document.getElementById('archive-viewer-tbody');
+  const stats = document.getElementById('archive-viewer-stats');
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+  if (stats) stats.textContent = `${files.length} items`;
+
+  files.forEach(file => {
+    const tr = document.createElement('tr');
+    tr.className = 'viewer-row-item';
+    
+    // Size formatting
+    const sizeStr = file.isDirectory ? '--' : formatSize(file.size || 0);
+    const packedStr = file.isDirectory ? '--' : formatSize(file.packedSize || 0);
+    // Parse the 7z output "yyyy-MM-dd HH:mm:ss" if present
+    const dateStr = file.modified ? file.modified.substring(0, 16) : '--';
+    
+    tr.innerHTML = `
+      <td class="col-name" title="${file.name}">
+        ${file.isDirectory ? folderIcon : fileIcon}
+        <span>${file.name}</span>
+      </td>
+      <td class="col-size">${sizeStr}</td>
+      <td class="col-packed">${packedStr}</td>
+      <td class="col-date">${dateStr}</td>
+    `;
+
+    if (file.isDirectory) {
+      tr.addEventListener('dblclick', () => onFolderClick(file.name));
+    }
+
+    tbody.appendChild(tr);
+  });
+}

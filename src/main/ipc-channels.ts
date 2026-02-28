@@ -10,6 +10,7 @@ export const IPC_CHANNELS = {
   COMPRESS: 'compressor:compress',
   EXTRACT: 'compressor:extract',
   TEST: 'compressor:test',
+  LIST_ARCHIVE: 'compressor:list',
   GET_SETTINGS: 'settings:get',
   SAVE_SETTINGS: 'settings:save',
   GET_HISTORY: 'history:get',

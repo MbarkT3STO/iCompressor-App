@@ -10,6 +10,21 @@ import { IPC_CHANNELS, PROGRESS_CHANNEL } from './ipc-channels';
 let mainWindow: BrowserWindow | null = null;
 const isDev = process.argv.includes('--dev');
 
+// ─── Handle open-file from macOS Services / file associations ─────────────────
+// macOS sends this *before* app is ready, so we buffer it in pendingOpen
+if (app) {
+  app.on('open-file', (event, filePath) => {
+    event.preventDefault();
+    const action = getActionForPath(filePath);
+    if (mainWindow?.webContents) {
+      mainWindow.webContents.send(IPC_CHANNELS.OPEN_WITH, { filePath, action });
+      mainWindow.show();
+    } else {
+      pendingOpen = { filePath, action };
+    }
+  });
+}
+
 // Track files/folders queued before the window is ready
 const ARCHIVE_EXTENSIONS = new Set(['.zip', '.7z', '.rar', '.tar', '.gz', '.tgz']);
 
@@ -183,6 +198,18 @@ function registerIpcHandlers(): void {
     }
   );
 
+  console.log('--- REGISTERING COMPRESSOR:LIST ---', IPC_CHANNELS.LIST_ARCHIVE);
+  ipcMain.handle(
+    IPC_CHANNELS.LIST_ARCHIVE,
+    async (_, payload: { archivePath: string; password?: string }) => {
+      try {
+        return await compressor.listArchive(payload.archivePath, payload.password);
+      } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+      }
+    }
+  );
+
   ipcMain.handle(
     IPC_CHANNELS.TEST,
     async (_, payload: { archivePath: string; password?: string }) => {
@@ -293,17 +320,7 @@ function registerIpcHandlers(): void {
 }
 
 // ─── Handle open-file from macOS Services / file associations ─────────────────
-// macOS sends this *before* app is ready, so we buffer it in pendingOpen
-app.on('open-file', (event, filePath) => {
-  event.preventDefault();
-  const action = getActionForPath(filePath);
-  if (mainWindow?.webContents) {
-    mainWindow.webContents.send(IPC_CHANNELS.OPEN_WITH, { filePath, action });
-    mainWindow.show();
-  } else {
-    pendingOpen = { filePath, action };
-  }
-});
+// Moved to top of file
 
 // ─── Also handle plain CLI arg (e.g. `electron . /path/to/file.zip`) ──────────
 function checkCliArgs(): void {

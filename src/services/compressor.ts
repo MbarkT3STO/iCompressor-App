@@ -11,6 +11,18 @@ import Seven from 'node-7z';
 import sevenBin from '7zip-bin';
 import { EventEmitter } from 'events';
 
+export interface FileEntry {
+  name: string;
+  path: string;
+  isDirectory: boolean;
+  size?: number;
+}
+
+export interface ArchiveFileEntry extends FileEntry {
+  packedSize?: number;
+  modified?: string; // e.g. "2023-10-25 14:30:00"
+}
+
 export type ProgressCallback = (data: { percent: number; status: string }) => void;
 
 const SUPPORTED_EXTRACT = ['.zip', '.7z', '.rar', '.tar', '.tar.gz', '.tgz'];
@@ -338,6 +350,81 @@ export class CompressorService extends EventEmitter {
         }
 
         resolve({ success: true });
+      });
+    });
+  }
+
+  async listArchive(archivePath: string, password?: string): Promise<{ success: boolean; files?: ArchiveFileEntry[]; error?: string }> {
+    if (!fs.existsSync(archivePath)) {
+      return { success: false, error: 'Archive not found' };
+    }
+
+    const pathTo7z = sevenBin.path7za;
+
+    return new Promise((resolve) => {
+      const { execFile } = require('child_process');
+      // -slt outputs data in a machine-readable block format (Path = ..., Size = ...)
+      const args = ['l', '-slt'];
+      if (password) args.push(`-p${password}`);
+      args.push(archivePath);
+
+      execFile(pathTo7z, args, (error: any, stdout: string, stderr: string) => {
+        if (error) {
+          const outStr = (stdout + stderr).toLowerCase();
+          if (outStr.includes('wrong password') || outStr.includes('cannot open encrypted archive')) {
+            resolve({ success: false, error: 'Wrong password or encrypted archive' });
+          } else {
+            resolve({ success: false, error: error.message });
+          }
+          return;
+        }
+
+        const files: ArchiveFileEntry[] = [];
+        
+        // Parse the -slt output blocks
+        // Data usually starts after a line containing "----------"
+        const blocks = stdout.split(/\r?\n\r?\n/);
+        
+        for (const block of blocks) {
+          if (!block.includes('Path = ')) continue;
+          
+          const lines = block.split(/\r?\n/);
+          let pathValue = '';
+          let size = 0;
+          let packedSize = 0;
+          let isDirectory = false;
+          let modified = '';
+
+          for (const line of lines) {
+            const eqIdx = line.indexOf('=');
+            if (eqIdx === -1) continue;
+            
+            const key = line.substring(0, eqIdx).trim();
+            const value = line.substring(eqIdx + 1).trim();
+
+            if (key === 'Path') pathValue = value;
+            else if (key === 'Size') size = parseInt(value, 10) || 0;
+            else if (key === 'Packed Size') packedSize = parseInt(value, 10) || 0;
+            else if (key === 'Modified') modified = value;
+            else if (key === 'Folder') isDirectory = value === '+';
+            // Often attributes line dictates folder if Folder field isn't explicitly +
+            else if (key === 'Attributes' && value.startsWith('D')) isDirectory = true;
+          }
+
+          // Skip the archive root itself which 7-Zip sometimes lists first
+          if (pathValue && pathValue !== path.basename(archivePath) && !block.includes('Type = ')) {
+            files.push({
+              name: path.basename(pathValue),
+              path: pathValue,
+              isDirectory,
+              size,
+              packedSize,
+              modified
+            });
+          }
+        }
+
+        resolve({ success: true, files });
       });
     });
   }

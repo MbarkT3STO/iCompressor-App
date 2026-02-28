@@ -14,10 +14,15 @@ import {
   hideGlobalProgress,
   showToast,
   renderHistory,
-  applySettingsToForm,
   applyTheme,
   renderBreadcrumbs,
-  renderBrowseList
+  renderBrowseList,
+  showArchiveViewerModal,
+  hideArchiveViewerModal,
+  setArchiveViewerState,
+  renderArchiveViewerPath,
+  renderArchiveViewerTable,
+  applySettingsToForm
 } from './ui';
 import type { FileEntry } from '../types';
 
@@ -382,12 +387,6 @@ function setupExtract(): void {
         hidePasswordModal();
         showToast('toast-extract', 'Extraction complete', 'success');
         setSingleFile('extract-files-list', null);
-        
-        const outputInput = document.getElementById('extract-output') as HTMLInputElement;
-        if (outputInput) {
-          outputInput.value = '';
-          outputInput.removeAttribute('data-path');
-        }
       }, 350);
       
       const s = await ipc.getSettings();
@@ -437,15 +436,15 @@ function setupExtract(): void {
 
   document.getElementById('btn-extract')?.addEventListener('click', async () => {
     const archivePath = getSingleFile('extract-files-list');
-    const outputInput = document.getElementById('extract-output') as HTMLInputElement;
-    const outputDir = outputInput?.getAttribute('data-path') || outputInput?.value;
 
     if (!archivePath) {
       showToast('toast-extract', 'Select an archive first', 'error');
       return;
     }
+
+    const outputDir = await ipc.selectFolder();
     if (!outputDir) {
-      showToast('toast-extract', 'Select an output folder', 'error');
+      // User cancelled the dialog, just return
       return;
     }
     
@@ -470,6 +469,114 @@ function setupExtract(): void {
     
     // Valid archive or zip without password, proceed normally
     await doExtract(archivePath, outputDir);
+  });
+
+  // Archive Viewer Logic
+  let currentViewerArchive = '';
+  let currentViewerFiles: any[] = [];
+  let currentViewerPath: string[] = [];
+
+  const updateViewerUI = () => {
+    const currentPathStr = currentViewerPath.join('/');
+    
+    // Filter files for current directory level
+    const filesToShow = currentViewerFiles.filter(f => {
+      // If we are at root (empty path array), we want items with no slashes in their path
+      // If we are in "folder/sub", we want items starting with "folder/sub/" but exactly one level deep
+      
+      const isRoot = currentViewerPath.length === 0;
+      if (isRoot) {
+        // Items in root have no slashes in their path, or are directories
+        return !f.path.includes('/');
+      } else {
+        const prefix = currentPathStr + '/';
+        if (!f.path.startsWith(prefix)) return false;
+        
+        // Remove prefix to see how many slashes are left
+        const remainder = f.path.substring(prefix.length);
+        // It must not contain any more slashes to be in this exact directory
+        return !remainder.includes('/');
+      }
+    });
+
+    if (filesToShow.length === 0) {
+      setArchiveViewerState('empty');
+    } else {
+      setArchiveViewerState('data');
+      renderArchiveViewerTable(filesToShow, (folderName) => {
+        currentViewerPath.push(folderName);
+        updateViewerUI();
+      });
+    }
+
+    renderArchiveViewerPath(basename(currentViewerArchive), currentViewerPath, (idx) => {
+      if (idx === -1) {
+        currentViewerPath = [];
+      } else {
+        currentViewerPath = currentViewerPath.slice(0, idx + 1);
+      }
+      updateViewerUI();
+    });
+  };
+
+  const btnViewArchive = document.getElementById('btn-view-archive') as HTMLButtonElement;
+  
+  // Enable View Archive button when file is selected
+  const origSetSingleFile = setSingleFile;
+  (window as any).__patchedSetSingleFile = (listId: string, path: string | null) => {
+    origSetSingleFile(listId, path);
+    if (listId === 'extract-files-list') {
+      const btnExtract = document.getElementById('btn-extract') as HTMLButtonElement | null;
+      if (btnViewArchive) btnViewArchive.disabled = !path;
+      if (btnExtract) btnExtract.disabled = !path;
+    }
+  };
+  // We don't want to actually re-declare setSingleFile, but since events.ts imports it, we can't easily patch it.
+  // Instead we'll use a MutationObserver on the extract-files-list to toggle the button!
+  
+  const extractList = document.getElementById('extract-files-list');
+  const btnExtract = document.getElementById('btn-extract') as HTMLButtonElement | null;
+  
+  if (extractList) {
+    const observer = new MutationObserver(() => {
+      const isEmpty = extractList.children.length === 0;
+      if (btnViewArchive) btnViewArchive.disabled = isEmpty;
+      if (btnExtract) btnExtract.disabled = isEmpty;
+    });
+    observer.observe(extractList, { childList: true });
+  }
+
+  btnViewArchive?.addEventListener('click', async () => {
+    const archivePath = getSingleFile('extract-files-list');
+    if (!archivePath) return;
+
+    currentViewerArchive = archivePath;
+    currentViewerPath = [];
+    currentViewerFiles = [];
+
+    showArchiveViewerModal();
+    setArchiveViewerState('loading');
+
+    const result = await ipc.listArchive(archivePath);
+
+    if (result.success && result.files) {
+      // Normalize slashes for windows archives
+      currentViewerFiles = result.files.map(f => ({
+        ...f,
+        path: f.path.replace(/\\/g, '/')
+      }));
+      updateViewerUI();
+    } else {
+      setArchiveViewerState('error', result.error);
+    }
+  });
+
+  document.getElementById('btn-close-viewer')?.addEventListener('click', hideArchiveViewerModal);
+  
+  document.getElementById('btn-extract-from-viewer')?.addEventListener('click', () => {
+    hideArchiveViewerModal();
+    // Simulate click on main extract button
+    document.getElementById('btn-extract')?.click();
   });
 }
 
