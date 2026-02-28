@@ -78,29 +78,32 @@
     <main class="main">
       <section id="panel-compress" class="panel active">
         <div class="panel-layout panel-split">
-          <div class="card card-drop">
-            <div class="card-body">
-              <h2 class="panel-title">Compress</h2>
-              <p class="panel-subtitle">Create an archive from files or folders</p>
-              <div class="drop-zone" id="drop-zone-compress" data-drop-type="compress">
-              <svg class="drop-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/>
-              </svg>
-              <p class="drop-text">Drop files here or click to browse</p>
-              <p class="drop-hint">ZIP · 7Z · TAR · TAR.GZ</p>
-              </div>
-            </div>
+          <!-- Left side: Drop Zone -->
+          <div class="card card-drop" id="drop-zone-compress" data-drop-type="compress" style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; padding: 40px; transition: all var(--transition-bounce); border: 2px dashed var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface);">
+            <svg class="drop-icon" viewBox="0 0 24 24" aria-hidden="true" style="width: 64px; height: 64px; fill: var(--color-accent-secondary); margin-bottom: 16px;">
+              <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/>
+            </svg>
+            <h2 class="panel-title" style="margin-bottom: 8px;">Add Files</h2>
+            <p class="drop-text" style="font-size: 1.1rem; font-weight: 600; color: var(--color-text);">Drop files here or click to browse</p>
+            <p class="drop-hint" style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 12px;">ZIP · 7Z · TAR · TAR.GZ</p>
           </div>
+          
+          <!-- Right side: File List & Options -->
           <div class="panel-actions">
-            <div class="card" id="compress-files-section">
+            <div class="card" style="height: 100%; display: flex; flex-direction: column;">
               <div class="card-header">
                 <span class="files-label">Selected files</span>
-                <button type="button" class="btn-text" id="btn-add-files">+ Add</button>
+                <button type="button" class="btn-text" id="btn-add-files">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="margin-right: 4px; vertical-align: middle;">
+                    <path d="M19 13h-6v6-h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                  </svg>
+                  Add
+                </button>
               </div>
-              <ul class="files-list" id="compress-files-list"></ul>
+              <ul class="files-list" id="compress-files-list" style="flex: 1; overflow-y: auto;"></ul>
               <div class="card-footer">
                 <div class="format-row">
-                  <label for="archive-name">Name</label>
+                  <label for="archive-name">Archive Name</label>
                   <input type="text" id="archive-name" class="input-path" placeholder="Archive name (optional)">
                 </div>
                 <div class="format-row">
@@ -116,8 +119,9 @@
                     <option value="targz">TAR.GZ</option>
                   </select>
                 </div>
-                <button type="button" class="btn-primary btn-block" id="btn-compress">Compress</button>
+                <button type="button" class="btn-primary btn-block" id="btn-compress">Compress Now</button>
               </div>
+            </div>
           </div>
         </div>
         <div class="toast-container" id="toast-compress"></div>

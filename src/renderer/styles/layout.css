@@ -515,11 +515,25 @@ body {
   font-size: 1rem;
   font-weight: 600;
   color: var(--color-text);
+  transition: color var(--transition-fast);
 }
 
 .drop-hint {
   font-size: 0.85rem;
   color: var(--color-text-muted);
+}
+
+#drop-zone-compress:hover .drop-text,
+#drop-zone-compress.drag-over .drop-text {
+  color: var(--color-accent);
+}
+
+#drop-zone-compress:hover,
+#drop-zone-compress.drag-over {
+  border-color: var(--color-accent) !important;
+  background: rgba(49, 14, 204, 0.05) !important;
+  transform: scale(1.02);
+  box-shadow: var(--shadow-glow);
 }
 
 /* Cards grid - shared layout */
