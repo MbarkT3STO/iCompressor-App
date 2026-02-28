@@ -345,10 +345,19 @@ function setupExtract(): void {
   document.getElementById('btn-cancel-password')?.addEventListener('click', hidePasswordModal);
 
   const doExtract = async (archivePath: string, outputDir: string, password?: string) => {
-    // Only show the progress modal now that we are actually extracting (or testing a failed password)
-    showGlobalProgress(0, 'Preparing...', 'Extracting...');
+    
+    let hasSuccessfullyStarted = false;
     
     const unsub = ipc.onProgress((data) => {
+      if (password && !hasSuccessfullyStarted) {
+        hasSuccessfullyStarted = true;
+        // Password proven safe! Swap the modals.
+        hidePasswordModal();
+        showGlobalProgress(0, 'Preparing...', 'Extracting...');
+      } else if (!password && !hasSuccessfullyStarted) {
+        hasSuccessfullyStarted = true;
+        showGlobalProgress(0, 'Preparing...', 'Extracting...');
+      }
       showGlobalProgress(data.percent, data.status, 'Extracting...');
     });
 
@@ -380,24 +389,29 @@ function setupExtract(): void {
       if (
         errLower.includes('password') || 
         errLower.includes('encrypt') || 
-        errLower.includes('data error') ||
-        err.includes('Wrong password')
+        errLower.includes('data error')
       ) {
-        hideGlobalProgress(); // Force hide in case any async progress events still trickling
-        showPasswordModal(!!password); // Show error if they already tried a password
+        hideGlobalProgress(); // Force hide in case any async progress events trickled
+        showPasswordModal(!!password); // Keep it open, but flash the red error text
       } else {
+        hideGlobalProgress();
         hidePasswordModal();
         showToast('toast-extract', result.error || 'Extraction failed', 'error');
       }
     }
   };
 
-  document.getElementById('btn-submit-password')?.addEventListener('click', () => {
+  document.getElementById('btn-submit-password')?.addEventListener('click', async () => {
     if (currentExtractArchive && currentExtractOutput) {
       const pwd = passwordInput?.value;
       if (pwd) {
-        passwordModal?.classList.add('hidden'); // Hide temporarily to show global progress
-        doExtract(currentExtractArchive, currentExtractOutput, pwd);
+        const submitBtn = document.getElementById('btn-submit-password') as HTMLButtonElement;
+        if (submitBtn) submitBtn.disabled = true;
+
+        // Start extraction, but stay on password modal initially until success is proven
+        await doExtract(currentExtractArchive, currentExtractOutput, pwd);
+
+        if (submitBtn) submitBtn.disabled = false;
       }
     }
   });
@@ -436,13 +450,12 @@ function setupExtract(): void {
         errLower.includes('data error') ||
         (testResult.error || '').includes('Wrong password')
       ) {
-        // No need to hideGlobalProgress because we never showed it
         showPasswordModal(false);
         return; // Halt here until they enter password
       }
     }
     
-    // No error or a non-password error (we let doExtract handle other errors normally)
+    // Valid archive or zip without password, proceed normally
     await doExtract(archivePath, outputDir);
   });
 }

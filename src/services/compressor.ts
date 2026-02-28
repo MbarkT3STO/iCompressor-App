@@ -208,9 +208,10 @@ export class CompressorService extends EventEmitter {
         resolve({ success: true, outputDir });
       });
 
-      stream.on('error', (err: Error) => {
+      stream.on('error', (err: any) => {
         this.progress(0, '');
-        resolve({ success: false, error: err.message });
+        const detailedError = err.stderr ? String(err.stderr) : String(err.message);
+        resolve({ success: false, error: detailedError });
       });
 
       stream.on('progress', (p: { percent?: number }) => {
