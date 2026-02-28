@@ -275,8 +275,13 @@ function setupCompress(): void {
 
     const compressionLevel = settings.compressionLevel ?? 6;
 
+    showGlobalProgress(0, 'Preparing...', 'Compressing...');
+
+    let operationDone = false;
     const unsub = ipc.onProgress((data) => {
-      showGlobalProgress(data.percent, data.status, 'Compressing...');
+      if (!operationDone) {
+        showGlobalProgress(data.percent, data.status, 'Compressing...');
+      }
     });
 
     const result = await ipc.compress({
@@ -287,8 +292,11 @@ function setupCompress(): void {
       password,
     });
 
+    operationDone = true;
     unsub();
-    hideGlobalProgress();
+    // Show 100% briefly so the bar finishes cleanly, then hide
+    showGlobalProgress(100, 'Complete', 'Compressing...');
+    setTimeout(() => hideGlobalProgress(), 350);
 
     if (result.success) {
       showToast('toast-compress', `Compressed to ${basename(result.outputPath!)}`, 'success');
@@ -346,36 +354,41 @@ function setupExtract(): void {
 
   const doExtract = async (archivePath: string, outputDir: string, password?: string) => {
     
-    let hasSuccessfullyStarted = false;
+    let hasShownProgress = false;
+    let operationDone = false;
     
     const unsub = ipc.onProgress((data) => {
-      if (password && !hasSuccessfullyStarted) {
-        hasSuccessfullyStarted = true;
-        // Password proven safe! Swap the modals.
-        hidePasswordModal();
-        showGlobalProgress(0, 'Preparing...', 'Extracting...');
-      } else if (!password && !hasSuccessfullyStarted) {
-        hasSuccessfullyStarted = true;
-        showGlobalProgress(0, 'Preparing...', 'Extracting...');
+      if (operationDone) return; // Discard stale ticker events after completion
+      if (!hasShownProgress) {
+        hasShownProgress = true;
+        if (password) {
+          // Password is correct — swap modal for progress
+          hidePasswordModal();
+        }
       }
       showGlobalProgress(data.percent, data.status, 'Extracting...');
     });
 
     const result = await ipc.extract({ archivePath, outputDir, password });
 
+    operationDone = true;
     unsub();
-    hideGlobalProgress();
 
     if (result.success) {
-      hidePasswordModal();
-      showToast('toast-extract', 'Extraction complete', 'success');
-      setSingleFile('extract-files-list', null);
-      
-      const outputInput = document.getElementById('extract-output') as HTMLInputElement;
-      if (outputInput) {
-        outputInput.value = '';
-        outputInput.removeAttribute('data-path');
-      }
+      // Show 100% briefly so the bar finishes cleanly, then hide
+      showGlobalProgress(100, 'Complete', 'Extracting...');
+      setTimeout(() => {
+        hideGlobalProgress();
+        hidePasswordModal();
+        showToast('toast-extract', 'Extraction complete', 'success');
+        setSingleFile('extract-files-list', null);
+        
+        const outputInput = document.getElementById('extract-output') as HTMLInputElement;
+        if (outputInput) {
+          outputInput.value = '';
+          outputInput.removeAttribute('data-path');
+        }
+      }, 350);
       
       const s = await ipc.getSettings();
       if (s?.autoOpenResultFolder && result.outputDir) {
@@ -500,7 +513,7 @@ function setupSettings(): void {
     const themeEl = document.getElementById('setting-theme') as HTMLSelectElement;
     const animationsEl = document.getElementById('setting-animations') as HTMLInputElement;
 
-    const defaultFormatEl = document.getElementById('setting-default-format') as HTMLSelectElement;
+
     const deleteSourcesEl = document.getElementById('setting-delete-sources') as HTMLInputElement;
     const overwriteBehaviorEl = document.getElementById('setting-overwrite-behavior') as HTMLSelectElement;
 
@@ -510,7 +523,7 @@ function setupSettings(): void {
       autoOpenResultFolder: autoOpenEl?.checked ?? true,
       theme: (themeEl?.value as 'light' | 'dark' | 'system') || 'system',
       animationsEnabled: animationsEl?.checked ?? true,
-      defaultFormat: defaultFormatEl?.value || 'zip',
+
       deleteSourcesAfterProcess: deleteSourcesEl?.checked ?? false,
       overwriteBehavior: (overwriteBehaviorEl?.value as 'overwrite' | 'skip' | 'prompt') || 'prompt',
     });
@@ -527,7 +540,7 @@ function setupSettings(): void {
   });
   document.getElementById('setting-animations')?.addEventListener('change', saveSettings);
   
-  document.getElementById('setting-default-format')?.addEventListener('change', saveSettings);
+
   document.getElementById('setting-delete-sources')?.addEventListener('change', saveSettings);
   document.getElementById('setting-overwrite-behavior')?.addEventListener('change', saveSettings);
 }

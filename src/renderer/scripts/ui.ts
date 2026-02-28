@@ -166,7 +166,7 @@ export function applySettingsToForm(settings: AppSettings): void {
   const themeEl = document.getElementById('setting-theme') as HTMLSelectElement;
   const animationsEl = document.getElementById('setting-animations') as HTMLInputElement;
   
-  const defaultFormatEl = document.getElementById('setting-default-format') as HTMLSelectElement;
+
   const deleteSourcesEl = document.getElementById('setting-delete-sources') as HTMLInputElement;
   const overwriteBehaviorEl = document.getElementById('setting-overwrite-behavior') as HTMLSelectElement;
 
@@ -178,7 +178,7 @@ export function applySettingsToForm(settings: AppSettings): void {
   if (themeEl) themeEl.value = settings.theme || 'system';
   if (animationsEl) animationsEl.checked = settings.animationsEnabled ?? true;
   
-  if (defaultFormatEl) defaultFormatEl.value = settings.defaultFormat || 'zip';
+
   if (deleteSourcesEl) deleteSourcesEl.checked = settings.deleteSourcesAfterProcess ?? false;
   if (overwriteBehaviorEl) overwriteBehaviorEl.value = settings.overwriteBehavior || 'prompt';
 }

@@ -16,7 +16,7 @@ export interface AppSettings {
   autoOpenResultFolder: boolean;
   theme: 'light' | 'dark' | 'system';
   animationsEnabled: boolean;
-  defaultFormat: string;
+
   deleteSourcesAfterProcess: boolean;
   overwriteBehavior: 'overwrite' | 'skip' | 'prompt';
 }
