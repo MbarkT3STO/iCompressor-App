@@ -18,7 +18,6 @@ export interface AppSettings {
   animationsEnabled: boolean;
   defaultFormat: string;
   deleteSourcesAfterProcess: boolean;
-  defaultPassword?: string;
   overwriteBehavior: 'overwrite' | 'skip' | 'prompt';
 }
 

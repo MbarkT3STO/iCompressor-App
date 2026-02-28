@@ -15,7 +15,6 @@ export interface AppSettings {
   animationsEnabled: boolean;
   defaultFormat: string;
   deleteSourcesAfterProcess: boolean;
-  defaultPassword?: string;
   overwriteBehavior: 'overwrite' | 'skip' | 'prompt';
 }
 
@@ -27,7 +26,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   animationsEnabled: true,
   defaultFormat: 'zip',
   deleteSourcesAfterProcess: false,
-  defaultPassword: '',
   overwriteBehavior: 'prompt',
 };
 

@@ -168,7 +168,6 @@ export function applySettingsToForm(settings: AppSettings): void {
   
   const defaultFormatEl = document.getElementById('setting-default-format') as HTMLSelectElement;
   const deleteSourcesEl = document.getElementById('setting-delete-sources') as HTMLInputElement;
-  const defaultPasswordEl = document.getElementById('setting-default-password') as HTMLInputElement;
   const overwriteBehaviorEl = document.getElementById('setting-overwrite-behavior') as HTMLSelectElement;
 
   if (levelEl) levelEl.value = String(settings.compressionLevel);
@@ -181,7 +180,6 @@ export function applySettingsToForm(settings: AppSettings): void {
   
   if (defaultFormatEl) defaultFormatEl.value = settings.defaultFormat || 'zip';
   if (deleteSourcesEl) deleteSourcesEl.checked = settings.deleteSourcesAfterProcess ?? false;
-  if (defaultPasswordEl) defaultPasswordEl.value = settings.defaultPassword || '';
   if (overwriteBehaviorEl) overwriteBehaviorEl.value = settings.overwriteBehavior || 'prompt';
 }
 

@@ -502,7 +502,6 @@ function setupSettings(): void {
 
     const defaultFormatEl = document.getElementById('setting-default-format') as HTMLSelectElement;
     const deleteSourcesEl = document.getElementById('setting-delete-sources') as HTMLInputElement;
-    const defaultPasswordEl = document.getElementById('setting-default-password') as HTMLInputElement;
     const overwriteBehaviorEl = document.getElementById('setting-overwrite-behavior') as HTMLSelectElement;
 
     await ipc.saveSettings({
@@ -513,7 +512,6 @@ function setupSettings(): void {
       animationsEnabled: animationsEl?.checked ?? true,
       defaultFormat: defaultFormatEl?.value || 'zip',
       deleteSourcesAfterProcess: deleteSourcesEl?.checked ?? false,
-      defaultPassword: defaultPasswordEl?.value || '',
       overwriteBehavior: (overwriteBehaviorEl?.value as 'overwrite' | 'skip' | 'prompt') || 'prompt',
     });
   };
@@ -531,7 +529,6 @@ function setupSettings(): void {
   
   document.getElementById('setting-default-format')?.addEventListener('change', saveSettings);
   document.getElementById('setting-delete-sources')?.addEventListener('change', saveSettings);
-  document.getElementById('setting-default-password')?.addEventListener('input', saveSettings);
   document.getElementById('setting-overwrite-behavior')?.addEventListener('change', saveSettings);
 }
 
