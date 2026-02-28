@@ -107,18 +107,20 @@ export function getSingleFile(listId: string): string | null {
 }
 
 // Progress
-export function showProgress(sectionId: string, percent: number, status: string): void {
-  const section = document.getElementById(sectionId);
-  const fill = section?.querySelector('.progress-fill') as HTMLElement;
-  const statusEl = section?.querySelector('.progress-status') as HTMLElement;
-  if (section) section.classList.remove('hidden');
+export function showGlobalProgress(percent: number, status: string, title?: string): void {
+  const modal = document.getElementById('global-progress-modal');
+  const fill = document.getElementById('global-progress-fill');
+  const statusEl = document.getElementById('global-progress-status');
+  const titleEl = document.getElementById('progress-modal-title');
+  if (title && titleEl) titleEl.textContent = title;
+  if (modal) modal.classList.remove('hidden');
   if (fill) fill.style.width = `${percent}%`;
   if (statusEl) statusEl.textContent = status;
 }
 
-export function hideProgress(sectionId: string): void {
-  const section = document.getElementById(sectionId);
-  if (section) section.classList.add('hidden');
+export function hideGlobalProgress(): void {
+  const modal = document.getElementById('global-progress-modal');
+  if (modal) modal.classList.add('hidden');
 }
 
 // Toast

@@ -10,8 +10,8 @@ import {
   getPathsFromList,
   setSingleFile,
   getSingleFile,
-  showProgress,
-  hideProgress,
+  showGlobalProgress,
+  hideGlobalProgress,
   showToast,
   renderHistory,
   applySettingsToForm,
@@ -137,13 +137,8 @@ function setupCompress(): void {
 
     const compressionLevel = settings.compressionLevel ?? 6;
 
-    const filesSection = document.getElementById('compress-files-section');
-    const progressSection = document.getElementById('compress-progress');
-    if (filesSection) filesSection.classList.add('hidden');
-    if (progressSection) progressSection.classList.remove('hidden');
-
     const unsub = ipc.onProgress((data) => {
-      showProgress('compress-progress', data.percent, data.status);
+      showGlobalProgress(data.percent, data.status, 'Compressing...');
     });
 
     const result = await ipc.compress({
@@ -154,8 +149,7 @@ function setupCompress(): void {
     });
 
     unsub();
-    hideProgress('compress-progress');
-    if (filesSection) filesSection.classList.remove('hidden');
+    hideGlobalProgress();
 
     if (result.success) {
       showToast('toast-compress', `Compressed to ${basename(result.outputPath!)}`, 'success');
@@ -198,13 +192,8 @@ function setupExtract(): void {
       return;
     }
 
-    const filesSection = document.getElementById('extract-files-section');
-    const progressSection = document.getElementById('extract-progress');
-    if (filesSection) filesSection.classList.add('hidden');
-    if (progressSection) progressSection.classList.remove('hidden');
-
     const unsub = ipc.onProgress((data) => {
-      showProgress('extract-progress', data.percent, data.status);
+      showGlobalProgress(data.percent, data.status, 'Extracting...');
     });
 
     const result = await ipc.extract({
@@ -213,8 +202,7 @@ function setupExtract(): void {
     });
 
     unsub();
-    hideProgress('extract-progress');
-    if (filesSection) filesSection.classList.remove('hidden');
+    hideGlobalProgress();
 
     if (result.success) {
       showToast('toast-extract', 'Extraction complete', 'success');
@@ -310,6 +298,14 @@ export function init(): void {
   setupHistory();
   setupSettings();
   loadSettings();
+
+  document.getElementById('btn-cancel-progress')?.addEventListener('click', () => {
+    hideGlobalProgress();
+    // Use active panel's toast container
+    const activePanel = document.querySelector('.panel.active');
+    const toastId = activePanel?.id === 'panel-extract' ? 'toast-extract' : 'toast-compress';
+    showToast(toastId, 'Modal dismissed (Process continues in background)', 'success');
+  });
 }
 
 if (document.readyState === 'loading') {

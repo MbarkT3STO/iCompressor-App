@@ -81,13 +81,6 @@
                 </div>
                 <button type="button" class="btn-primary btn-block" id="btn-compress">Compress</button>
               </div>
-            </div>
-            <div class="progress-section hidden" id="compress-progress">
-              <div class="progress-bar">
-                <div class="progress-fill" id="compress-progress-fill"></div>
-              </div>
-              <p class="progress-status" id="compress-progress-status">Preparing...</p>
-            </div>
           </div>
         </div>
         <div class="toast-container" id="toast-compress"></div>
@@ -124,12 +117,6 @@
                 </div>
                 <button type="button" class="btn-primary btn-block" id="btn-extract">Extract</button>
               </div>
-            </div>
-            <div class="progress-section hidden" id="extract-progress">
-              <div class="progress-bar">
-                <div class="progress-fill" id="extract-progress-fill"></div>
-              </div>
-              <p class="progress-status" id="extract-progress-status">Preparing...</p>
             </div>
           </div>
         </div>
@@ -191,6 +178,23 @@
           </div>
         </div>
       </section>
+      <div id="global-progress-modal" class="progress-modal hidden">
+        <div class="progress-modal-backdrop"></div>
+        <div class="progress-modal-content">
+          <div class="progress-modal-header">
+            <h3 class="progress-modal-title" id="progress-modal-title">Processing...</h3>
+          </div>
+          <div class="progress-modern-container">
+            <div class="progress-modern-bar">
+              <div class="progress-modern-fill" id="global-progress-fill"></div>
+            </div>
+          </div>
+          <p class="progress-status" id="global-progress-status">Preparing...</p>
+          <div class="progress-modal-footer">
+            <button type="button" class="btn-text" id="btn-cancel-progress">Cancel</button>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 

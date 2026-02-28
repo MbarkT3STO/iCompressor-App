@@ -119,7 +119,7 @@ export class CompressorService extends EventEmitter {
         const total = p.entries?.total ?? 1;
         const processed = p.entries?.processed ?? 0;
         const percent = total > 0 ? Math.min(99, Math.round((processed / total) * 100)) : 0;
-        this.progress(percent, `Compressing ${processed}/${total} entries...`);
+        this.progress(percent, `Compressing... ${percent}%`);
       });
 
       archive.pipe(output);
