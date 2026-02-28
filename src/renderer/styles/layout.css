@@ -1456,6 +1456,46 @@ body {
   color: var(--color-text-secondary);
 }
 
+/* Password Modal Customizations */
+#password-prompt-modal {
+  z-index: 1100;
+  /* Must sit securely over the global progress modal (z-index: 1000) */
+}
+
+.password-modal-content {
+  max-width: 400px;
+  text-align: center;
+}
+
+.password-modal-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.password-modal-message {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.password-error-message {
+  color: #ff4b4b;
+  /* red error text */
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin: 0;
+  text-align: left;
+  padding-left: 4px;
+}
+
+.password-modal-footer {
+  justify-content: flex-end;
+  gap: 12px;
+}
+
 /* ========== RESPONSIVE ========== */
 
 /* Medium - tablets / smaller windows */

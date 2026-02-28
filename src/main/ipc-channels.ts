@@ -9,6 +9,7 @@ export const IPC_CHANNELS = {
   SELECT_OUTPUT: 'dialog:select-output',
   COMPRESS: 'compressor:compress',
   EXTRACT: 'compressor:extract',
+  TEST: 'compressor:test',
   GET_SETTINGS: 'settings:get',
   SAVE_SETTINGS: 'settings:save',
   GET_HISTORY: 'history:get',

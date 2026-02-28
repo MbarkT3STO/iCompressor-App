@@ -100,6 +100,14 @@
               <ul class="files-list" id="compress-files-list"></ul>
               <div class="card-footer">
                 <div class="format-row">
+                  <label for="archive-name">Name</label>
+                  <input type="text" id="archive-name" class="input-path" placeholder="Archive name (optional)">
+                </div>
+                <div class="format-row">
+                  <label for="archive-password">Password</label>
+                  <input type="password" id="archive-password" class="input-path" placeholder="Password (optional)">
+                </div>
+                <div class="format-row">
                   <label for="format-select">Format</label>
                   <select id="format-select">
                     <option value="zip">ZIP</option>
@@ -281,6 +289,23 @@
                   <span id="compression-level-value" class="setting-value">6</span>
                 </div>
               </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 10H6v-2h8v2zm4-4H6v-2h12v2z"/></svg>
+                  </div>
+                  <label for="setting-default-format">Default Archive Format</label>
+                </div>
+                <div class="setting-control">
+                  <select id="setting-default-format" class="setting-select">
+                    <option value="zip">.zip</option>
+                    <option value="7z">.7z</option>
+                    <option value="tar">.tar</option>
+                    <option value="tar.gz">.tar.gz</option>
+                  </select>
+                </div>
+              </div>
               
               <div class="setting-row">
                 <div class="setting-info">
@@ -309,6 +334,56 @@
                     <input type="checkbox" id="setting-auto-open" checked>
                     <span class="toggle-slider"></span>
                   </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Group: File Management & Security -->
+            <div class="settings-group">
+              <h3 class="settings-group-title">File Management</h3>
+
+              <div class="setting-row setting-toggle">
+                <div class="setting-info">
+                  <div class="setting-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                  </div>
+                  <label for="setting-delete-sources">Delete Sources After Process</label>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="setting-delete-sources">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+                  </div>
+                  <label for="setting-default-password">Archive Password</label>
+                </div>
+                <div class="setting-control control-expand">
+                  <div class="input-group">
+                    <input type="password" id="setting-default-password" class="input-path" placeholder="Optional archive protection">
+                  </div>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zM8 5h8v3H8V5zm8 14H8v-4h8v4z"/></svg>
+                  </div>
+                  <label for="setting-overwrite-behavior">Overwrite Behavior</label>
+                </div>
+                <div class="setting-control">
+                  <select id="setting-overwrite-behavior" class="setting-select">
+                    <option value="prompt">Prompt Me</option>
+                    <option value="overwrite">Always Overwrite</option>
+                    <option value="skip">Always Skip</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -366,6 +441,28 @@
           <p class="progress-status" id="global-progress-status">Preparing...</p>
           <div class="progress-modal-footer">
             <button type="button" class="btn-text" id="btn-cancel-progress">Cancel</button>
+          </div>
+        </div>
+        </div>
+      </div>
+      
+      <!-- Password Prompt Modal -->
+      <div id="password-prompt-modal" class="progress-modal hidden">
+        <div class="progress-modal-backdrop"></div>
+        <div class="progress-modal-content password-modal-content">
+          <div class="progress-modal-header">
+            <h3 class="progress-modal-title">Password Required</h3>
+          </div>
+          <div class="password-modal-body">
+            <p class="password-modal-message">This archive is encrypted. Please enter the password to extract it.</p>
+            <div class="input-group">
+              <input type="password" id="extract-password-input" class="input-path" placeholder="Enter password...">
+            </div>
+            <p id="password-error-message" class="password-error-message hidden">Wrong password. Please try again.</p>
+          </div>
+          <div class="progress-modal-footer password-modal-footer">
+            <button type="button" class="btn-text" id="btn-cancel-password">Cancel</button>
+            <button type="button" class="btn-primary" id="btn-submit-password">Submit</button>
           </div>
         </div>
       </div>

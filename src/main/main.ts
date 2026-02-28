@@ -108,6 +108,7 @@ function registerIpcHandlers(): void {
         outputPath: string;
         format: string;
         level: number;
+        password?: string;
       }
     ) => {
       try {
@@ -135,7 +136,7 @@ function registerIpcHandlers(): void {
     IPC_CHANNELS.EXTRACT,
     async (
       _,
-      payload: { archivePath: string; outputDir: string; format?: string }
+      payload: { archivePath: string; outputDir: string; format?: string; password?: string }
     ) => {
       try {
         const result = await compressor.extract(payload);
@@ -149,6 +150,20 @@ function registerIpcHandlers(): void {
           });
         }
         return result;
+      } catch (err) {
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : 'Unknown error',
+        };
+      }
+    }
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.TEST,
+    async (_, payload: { archivePath: string; password?: string }) => {
+      try {
+        return await compressor.test(payload.archivePath, payload.password);
       } catch (err) {
         return {
           success: false,

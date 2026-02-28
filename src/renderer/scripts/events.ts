@@ -256,7 +256,15 @@ function setupCompress(): void {
     const formatSelect = document.getElementById('format-select') as HTMLSelectElement;
     const format = formatSelect?.value || 'zip';
     const ext = format === 'targz' ? 'tar.gz' : format;
-    const defaultName = basename(sources[0]) + '.' + ext;
+    
+    // Read optional custom name
+    const nameInput = document.getElementById('archive-name') as HTMLInputElement;
+    const customName = nameInput?.value.trim();
+    const defaultName = customName ? `${customName}.${ext}` : `${basename(sources[0])}.${ext}`;
+    
+    // Read optional custom password
+    const passwordInput = document.getElementById('archive-password') as HTMLInputElement;
+    const password = passwordInput?.value;
 
     const settings = await ipc.getSettings();
     const outputDir = settings.outputDirectory || dirname(sources[0]);
@@ -276,6 +284,7 @@ function setupCompress(): void {
       outputPath,
       format,
       level: compressionLevel,
+      password,
     });
 
     unsub();
@@ -308,6 +317,97 @@ function setupExtract(): void {
     }
   });
 
+  let currentExtractArchive = '';
+  let currentExtractOutput = '';
+
+  const passwordModal = document.getElementById('password-prompt-modal');
+  const passwordInput = document.getElementById('extract-password-input') as HTMLInputElement;
+  const passwordError = document.getElementById('password-error-message');
+
+  const showPasswordModal = (showError = false) => {
+    if (passwordModal) passwordModal.classList.remove('hidden');
+    if (passwordInput) {
+      passwordInput.value = '';
+      passwordInput.focus();
+    }
+    if (passwordError) {
+      if (showError) passwordError.classList.remove('hidden');
+      else passwordError.classList.add('hidden');
+    }
+  };
+
+  const hidePasswordModal = () => {
+    if (passwordModal) passwordModal.classList.add('hidden');
+    if (passwordInput) passwordInput.value = '';
+    if (passwordError) passwordError.classList.add('hidden');
+  };
+
+  document.getElementById('btn-cancel-password')?.addEventListener('click', hidePasswordModal);
+
+  const doExtract = async (archivePath: string, outputDir: string, password?: string) => {
+    // Only show the progress modal now that we are actually extracting (or testing a failed password)
+    showGlobalProgress(0, 'Preparing...', 'Extracting...');
+    
+    const unsub = ipc.onProgress((data) => {
+      showGlobalProgress(data.percent, data.status, 'Extracting...');
+    });
+
+    const result = await ipc.extract({ archivePath, outputDir, password });
+
+    unsub();
+    hideGlobalProgress();
+
+    if (result.success) {
+      hidePasswordModal();
+      showToast('toast-extract', 'Extraction complete', 'success');
+      setSingleFile('extract-files-list', null);
+      
+      const outputInput = document.getElementById('extract-output') as HTMLInputElement;
+      if (outputInput) {
+        outputInput.value = '';
+        outputInput.removeAttribute('data-path');
+      }
+      
+      const s = await ipc.getSettings();
+      if (s?.autoOpenResultFolder && result.outputDir) {
+        ipc.openPath(result.outputDir);
+      }
+    } else {
+      const err = result.error || '';
+      const errLower = err.toLowerCase();
+      // node-7z password errors often contain these keywords
+      // "Wrong password : <file>" or "Data error : <file>" (when no password provided)
+      if (
+        errLower.includes('password') || 
+        errLower.includes('encrypt') || 
+        errLower.includes('data error') ||
+        err.includes('Wrong password')
+      ) {
+        hideGlobalProgress(); // Force hide in case any async progress events still trickling
+        showPasswordModal(!!password); // Show error if they already tried a password
+      } else {
+        hidePasswordModal();
+        showToast('toast-extract', result.error || 'Extraction failed', 'error');
+      }
+    }
+  };
+
+  document.getElementById('btn-submit-password')?.addEventListener('click', () => {
+    if (currentExtractArchive && currentExtractOutput) {
+      const pwd = passwordInput?.value;
+      if (pwd) {
+        passwordModal?.classList.add('hidden'); // Hide temporarily to show global progress
+        doExtract(currentExtractArchive, currentExtractOutput, pwd);
+      }
+    }
+  });
+
+  passwordInput?.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') {
+      document.getElementById('btn-submit-password')?.click();
+    }
+  });
+
   document.getElementById('btn-extract')?.addEventListener('click', async () => {
     const archivePath = getSingleFile('extract-files-list');
     const outputInput = document.getElementById('extract-output') as HTMLInputElement;
@@ -321,31 +421,29 @@ function setupExtract(): void {
       showToast('toast-extract', 'Select an output folder', 'error');
       return;
     }
+    
+    currentExtractArchive = archivePath;
+    currentExtractOutput = outputDir;
 
-    const unsub = ipc.onProgress((data) => {
-      showGlobalProgress(data.percent, data.status, 'Extracting...');
-    });
-
-    const result = await ipc.extract({
-      archivePath,
-      outputDir,
-    });
-
-    unsub();
-    hideGlobalProgress();
-
-    if (result.success) {
-      showToast('toast-extract', 'Extraction complete', 'success');
-      setSingleFile('extract-files-list', null);
-      outputInput.value = '';
-      outputInput.removeAttribute('data-path');
-      const s = await ipc.getSettings();
-      if (s?.autoOpenResultFolder && result.outputDir) {
-        ipc.openPath(result.outputDir);
+    // Test the archive silently first to check for encryption
+    // WE DO NOT show the progress modal yet! We want the testing phase to be fully invisible.
+    const testResult = await ipc.test(archivePath);
+    if (!testResult.success) {
+      const errLower = (testResult.error || '').toLowerCase();
+      if (
+        errLower.includes('password') ||
+        errLower.includes('encrypt') ||
+        errLower.includes('data error') ||
+        (testResult.error || '').includes('Wrong password')
+      ) {
+        // No need to hideGlobalProgress because we never showed it
+        showPasswordModal(false);
+        return; // Halt here until they enter password
       }
-    } else {
-      showToast('toast-extract', result.error || 'Extraction failed', 'error');
     }
+    
+    // No error or a non-password error (we let doExtract handle other errors normally)
+    await doExtract(archivePath, outputDir);
   });
 }
 
@@ -388,12 +486,22 @@ function setupSettings(): void {
     const autoOpenEl = document.getElementById('setting-auto-open') as HTMLInputElement;
     const themeEl = document.getElementById('setting-theme') as HTMLSelectElement;
     const animationsEl = document.getElementById('setting-animations') as HTMLInputElement;
+
+    const defaultFormatEl = document.getElementById('setting-default-format') as HTMLSelectElement;
+    const deleteSourcesEl = document.getElementById('setting-delete-sources') as HTMLInputElement;
+    const defaultPasswordEl = document.getElementById('setting-default-password') as HTMLInputElement;
+    const overwriteBehaviorEl = document.getElementById('setting-overwrite-behavior') as HTMLSelectElement;
+
     await ipc.saveSettings({
       compressionLevel: Number(levelEl?.value ?? 6),
       outputDirectory: outputDirEl?.value || '',
       autoOpenResultFolder: autoOpenEl?.checked ?? true,
       theme: (themeEl?.value as 'light' | 'dark' | 'system') || 'system',
       animationsEnabled: animationsEl?.checked ?? true,
+      defaultFormat: defaultFormatEl?.value || 'zip',
+      deleteSourcesAfterProcess: deleteSourcesEl?.checked ?? false,
+      defaultPassword: defaultPasswordEl?.value || '',
+      overwriteBehavior: (overwriteBehaviorEl?.value as 'overwrite' | 'skip' | 'prompt') || 'prompt',
     });
   };
 
@@ -407,6 +515,11 @@ function setupSettings(): void {
     await saveSettings();
   });
   document.getElementById('setting-animations')?.addEventListener('change', saveSettings);
+  
+  document.getElementById('setting-default-format')?.addEventListener('change', saveSettings);
+  document.getElementById('setting-delete-sources')?.addEventListener('change', saveSettings);
+  document.getElementById('setting-default-password')?.addEventListener('input', saveSettings);
+  document.getElementById('setting-overwrite-behavior')?.addEventListener('change', saveSettings);
 }
 
 // About

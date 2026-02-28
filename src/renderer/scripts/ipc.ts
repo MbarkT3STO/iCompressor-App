@@ -22,12 +22,15 @@ export const ipc: {
     outputPath: string;
     format: string;
     level: number;
+    password?: string;
   }) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
   extract: (payload: {
     archivePath: string;
     outputDir: string;
     format?: string;
+    password?: string;
   }) => Promise<{ success: boolean; outputDir?: string; error?: string }>;
+  test: (archivePath: string, password?: string) => Promise<{ success: boolean; error?: string }>;
   getSettings: () => Promise<AppSettings>;
   saveSettings: (settings: Partial<AppSettings>) => Promise<void>;
   getHistory: () => Promise<HistoryEntry[]>;
@@ -57,6 +60,7 @@ export const ipc: {
     outputDir: string;
     format?: string;
   }) => api.extract(payload),
+  test: (archivePath: string, password?: string) => api.test(archivePath, password),
   getSettings: () => api.getSettings(),
   saveSettings: (settings: Partial<AppSettings>) => api.saveSettings(settings),
   getHistory: () => api.getHistory(),

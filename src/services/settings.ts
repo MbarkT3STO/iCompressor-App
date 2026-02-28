@@ -13,6 +13,10 @@ export interface AppSettings {
   autoOpenResultFolder: boolean;
   theme: 'light' | 'dark' | 'system';
   animationsEnabled: boolean;
+  defaultFormat: string;
+  deleteSourcesAfterProcess: boolean;
+  defaultPassword?: string;
+  overwriteBehavior: 'overwrite' | 'skip' | 'prompt';
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -21,6 +25,10 @@ const DEFAULT_SETTINGS: AppSettings = {
   autoOpenResultFolder: true,
   theme: 'system',
   animationsEnabled: true,
+  defaultFormat: 'zip',
+  deleteSourcesAfterProcess: false,
+  defaultPassword: '',
+  overwriteBehavior: 'prompt',
 };
 
 function getSettingsPath(): string {

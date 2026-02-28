@@ -38,6 +38,7 @@ export interface CompressPayload {
   outputPath: string;
   format: string;
   level: number;
+  password?: string;
 }
 
 export interface CompressResult {
@@ -50,6 +51,7 @@ export interface ExtractPayload {
   archivePath: string;
   outputDir: string;
   format?: string;
+  password?: string;
 }
 
 export interface ExtractResult {
@@ -80,9 +82,13 @@ export class CompressorService extends EventEmitter {
 
     const ext = format === 'targz' ? 'tar.gz' : format;
 
-    // Use node-7z for 7z only; archiver for zip, tar, tar.gz
-    if (format === '7z') {
-      return this.compress7z(sources, outputPath, level);
+    if (payload.password && (format === 'tar' || format === 'targz')) {
+      return { success: false, error: 'TAR/TAR.GZ formats do not support password encryption. Please use ZIP or 7Z.' };
+    }
+
+    // Use node-7z for 7z, and for password-protected zips (archiver doesn't support encryption)
+    if (format === '7z' || (format === 'zip' && payload.password)) {
+      return this.compress7z(sources, outputPath, level, payload.password);
     }
 
     const archiverFormat = format as 'zip' | 'tar' | 'targz';
@@ -137,16 +143,22 @@ export class CompressorService extends EventEmitter {
     });
   }
 
-  private async compress7z(sources: string[], outputPath: string, level: number): Promise<CompressResult> {
+  private async compress7z(sources: string[], outputPath: string, level: number, password?: string): Promise<CompressResult> {
     return new Promise((resolve) => {
       const pathTo7z = sevenBin.path7za;
       const args = sources.map((s) => path.resolve(s));
 
-      const stream = Seven.add(outputPath, args, {
+      const extractOptions: any = {
         $bin: pathTo7z,
         recursive: true,
         $progress: true,
-      });
+      };
+
+      if (password) {
+        extractOptions.password = password;
+      }
+
+      const stream = Seven.add(outputPath, args, extractOptions);
 
       stream.on('end', () => {
         this.progress(100, 'Complete');
@@ -180,10 +192,16 @@ export class CompressorService extends EventEmitter {
     const pathTo7z = sevenBin.path7za;
 
     return new Promise((resolve) => {
-      const stream = Seven.extractFull(archivePath, outputDir, {
+      const extractOptions: any = {
         $bin: pathTo7z,
         $progress: true,
-      });
+      };
+
+      if (payload.password) {
+        extractOptions.password = payload.password;
+      }
+
+      const stream = Seven.extractFull(archivePath, outputDir, extractOptions);
 
       stream.on('end', () => {
         this.progress(100, 'Complete');
@@ -198,6 +216,45 @@ export class CompressorService extends EventEmitter {
       stream.on('progress', (p: { percent?: number }) => {
         const percent = p.percent ?? 0;
         this.progress(percent, `Extracting... ${percent}%`);
+      });
+    });
+  }
+
+  async test(archivePath: string, password?: string): Promise<{ success: boolean; error?: string }> {
+    if (!fs.existsSync(archivePath)) {
+      return { success: false, error: 'Archive not found' };
+    }
+
+    const pathTo7z = sevenBin.path7za;
+
+    return new Promise((resolve) => {
+      const { execFile } = require('child_process');
+      const args = ['l', '-slt'];
+      if (password) {
+        args.push(`-p${password}`);
+      }
+      args.push(archivePath);
+
+      execFile(pathTo7z, args, (error: any, stdout: string, stderr: string) => {
+        if (error) {
+          // If the test command actually failed (e.g., wrong password supplied, or file is bad)
+          // `7za` often outputs "Wrong password" or similar in stdout/stderr
+          const outStr = (stdout + stderr).toLowerCase();
+          if (outStr.includes('wrong password') || outStr.includes('cannot open encrypted archive') || outStr.includes('data error')) {
+            resolve({ success: false, error: 'Wrong password' });
+          } else {
+            resolve({ success: false, error: error.message });
+          }
+          return;
+        }
+
+        // If no password was provided but stdout shows Encrypted = +, it requires a password
+        if (!password && stdout.includes('Encrypted = +')) {
+          resolve({ success: false, error: 'Password required' });
+          return;
+        }
+
+        resolve({ success: true });
       });
     });
   }

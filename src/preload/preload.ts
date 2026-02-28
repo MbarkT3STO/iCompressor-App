@@ -12,6 +12,7 @@ const IPC_CHANNELS = {
   SELECT_OUTPUT: 'dialog:select-output',
   COMPRESS: 'compressor:compress',
   EXTRACT: 'compressor:extract',
+  TEST: 'compressor:test',
   GET_SETTINGS: 'settings:get',
   SAVE_SETTINGS: 'settings:save',
   GET_HISTORY: 'history:get',
@@ -38,12 +39,18 @@ export interface ICompressorAPI {
     outputPath: string;
     format: string;
     level: number;
+    password?: string;
   }) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
   extract: (payload: {
     archivePath: string;
     outputDir: string;
     format?: string;
+    password?: string;
   }) => Promise<{ success: boolean; outputDir?: string; error?: string }>;
+  test: (
+    archivePath: string,
+    password?: string
+  ) => Promise<{ success: boolean; error?: string }>;
   getSettings: () => Promise<AppSettings>;
   saveSettings: (settings: Partial<AppSettings>) => Promise<void>;
   getHistory: () => Promise<HistoryEntry[]>;
@@ -91,6 +98,7 @@ const api: ICompressorAPI = {
     ipcRenderer.invoke(IPC_CHANNELS.SELECT_OUTPUT, defaultPath),
   compress: (payload) => ipcRenderer.invoke(IPC_CHANNELS.COMPRESS, payload),
   extract: (payload) => ipcRenderer.invoke(IPC_CHANNELS.EXTRACT, payload),
+  test: (archivePath: string, password?: string) => ipcRenderer.invoke(IPC_CHANNELS.TEST, { archivePath, password }),
   getSettings: () => ipcRenderer.invoke(IPC_CHANNELS.GET_SETTINGS),
   saveSettings: (settings) => ipcRenderer.invoke(IPC_CHANNELS.SAVE_SETTINGS, settings),
   getHistory: () => ipcRenderer.invoke(IPC_CHANNELS.GET_HISTORY),

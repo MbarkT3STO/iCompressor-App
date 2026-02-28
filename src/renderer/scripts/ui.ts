@@ -165,13 +165,24 @@ export function applySettingsToForm(settings: AppSettings): void {
   const autoOpenEl = document.getElementById('setting-auto-open') as HTMLInputElement;
   const themeEl = document.getElementById('setting-theme') as HTMLSelectElement;
   const animationsEl = document.getElementById('setting-animations') as HTMLInputElement;
+  
+  const defaultFormatEl = document.getElementById('setting-default-format') as HTMLSelectElement;
+  const deleteSourcesEl = document.getElementById('setting-delete-sources') as HTMLInputElement;
+  const defaultPasswordEl = document.getElementById('setting-default-password') as HTMLInputElement;
+  const overwriteBehaviorEl = document.getElementById('setting-overwrite-behavior') as HTMLSelectElement;
+
   if (levelEl) levelEl.value = String(settings.compressionLevel);
   if (levelValueEl) levelValueEl.textContent = String(settings.compressionLevel);
   if (outputDirEl) outputDirEl.value = settings.outputDirectory || '';
   if (outputDirEl) outputDirEl.placeholder = 'Same as source';
-  if (autoOpenEl) autoOpenEl.checked = settings.autoOpenResultFolder;
-  if (themeEl) themeEl.value = settings.theme;
-  if (animationsEl) animationsEl.checked = settings.animationsEnabled;
+  if (autoOpenEl) autoOpenEl.checked = settings.autoOpenResultFolder ?? true;
+  if (themeEl) themeEl.value = settings.theme || 'system';
+  if (animationsEl) animationsEl.checked = settings.animationsEnabled ?? true;
+  
+  if (defaultFormatEl) defaultFormatEl.value = settings.defaultFormat || 'zip';
+  if (deleteSourcesEl) deleteSourcesEl.checked = settings.deleteSourcesAfterProcess ?? false;
+  if (defaultPasswordEl) defaultPasswordEl.value = settings.defaultPassword || '';
+  if (overwriteBehaviorEl) overwriteBehaviorEl.value = settings.overwriteBehavior || 'prompt';
 }
 
 // Theme

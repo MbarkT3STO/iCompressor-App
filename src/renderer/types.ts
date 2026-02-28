@@ -16,6 +16,10 @@ export interface AppSettings {
   autoOpenResultFolder: boolean;
   theme: 'light' | 'dark' | 'system';
   animationsEnabled: boolean;
+  defaultFormat: string;
+  deleteSourcesAfterProcess: boolean;
+  defaultPassword?: string;
+  overwriteBehavior: 'overwrite' | 'skip' | 'prompt';
 }
 
 export interface FileEntry {
