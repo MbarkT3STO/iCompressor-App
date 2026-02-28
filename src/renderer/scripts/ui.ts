@@ -346,7 +346,7 @@ export function renderArchiveViewerTable(
     
     tr.innerHTML = `
       <td class="col-name" title="${file.name}">
-        ${file.isDirectory ? folderIcon : fileIcon}
+        ${file.isDirectory ? folderIcon.replace('file-icon', 'viewer-icon folder-icon') : fileIcon.replace('file-icon', 'viewer-icon file-icon')}
         <span>${file.name}</span>
       </td>
       <td class="col-size">${sizeStr}</td>
