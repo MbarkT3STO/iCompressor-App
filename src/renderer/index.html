@@ -48,12 +48,7 @@
           </svg>
           <span>Extract</span>
         </button>
-        <button class="nav-item" data-panel="history" aria-selected="false">
-          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.25 2.52.77-1.28-3.52-2.09V8H12z"/>
-          </svg>
-          <span>History</span>
-        </button>
+
         <button class="nav-item" data-panel="browse" aria-selected="false">
           <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/>
@@ -95,7 +90,7 @@
                 <span class="files-label">Selected files & Folders</span>
                 <button type="button" class="btn-text" id="btn-add-files">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="margin-right: 4px; vertical-align: middle;">
-                    <path d="M19 13h-6v6-h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
                   </svg>
                   Add
                 </button>
@@ -151,20 +146,7 @@
         <div class="toast-container" id="toast-extract"></div>
       </section>
 
-      <section id="panel-history" class="panel">
-        <div class="panel-layout panel-full">
-          <div class="panel-head">
-            <div>
-              <h2 class="panel-title">History</h2>
-              <p class="panel-subtitle">Recent operations</p>
-            </div>
-            <button type="button" class="btn-text" id="btn-clear-history">Clear all</button>
-          </div>
-          <div class="cards-grid history-grid">
-            <ul class="history-list" id="history-list"></ul>
-          </div>
-        </div>
-      </section>
+
 
       <section id="panel-browse" class="panel">
         <div class="panel-layout panel-full panel-browse-layout">

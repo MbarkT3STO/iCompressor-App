@@ -95,11 +95,11 @@ function createWindow(): void {
 function registerIpcHandlers(): void {
   const { CompressorService } = require('../services/compressor');
   const { SettingsService } = require('../services/settings');
-  const { HistoryService } = require('../services/history');
+
 
   const compressor = new CompressorService();
   const settings = new SettingsService();
-  const history = new HistoryService();
+
 
   // Send progress to renderer
   const sendProgress = (data: { percent: number; status: string }) => {
@@ -165,15 +165,7 @@ function registerIpcHandlers(): void {
     ) => {
       try {
         const result = await compressor.compress(payload);
-        if (result.success && payload.sources.length > 0) {
-          history.add({
-            type: 'compress',
-            sources: payload.sources,
-            output: payload.outputPath,
-            format: payload.format,
-            timestamp: Date.now(),
-          });
-        }
+
         return result;
       } catch (err) {
         return {
@@ -192,15 +184,7 @@ function registerIpcHandlers(): void {
     ) => {
       try {
         const result = await compressor.extract(payload);
-        if (result.success) {
-          history.add({
-            type: 'extract',
-            sources: [payload.archivePath],
-            output: payload.outputDir,
-            format: payload.format || '',
-            timestamp: Date.now(),
-          });
-        }
+
         return result;
       } catch (err) {
         return {
@@ -241,10 +225,7 @@ function registerIpcHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.GET_SETTINGS, () => settings.get());
   ipcMain.handle(IPC_CHANNELS.SAVE_SETTINGS, (_, s) => settings.saveSettings(s));
 
-  // History
-  ipcMain.handle(IPC_CHANNELS.GET_HISTORY, () => history.get());
-  ipcMain.handle(IPC_CHANNELS.ADD_HISTORY, (_, h) => history.add(h));
-  ipcMain.handle(IPC_CHANNELS.CLEAR_HISTORY, () => history.clear());
+
 
   // App
   ipcMain.handle(IPC_CHANNELS.GET_VERSION, () => app.getVersion());

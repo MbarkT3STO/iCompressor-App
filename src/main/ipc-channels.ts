@@ -13,9 +13,7 @@ export const IPC_CHANNELS = {
   LIST_ARCHIVE: 'compressor:list',
   GET_SETTINGS: 'settings:get',
   SAVE_SETTINGS: 'settings:save',
-  GET_HISTORY: 'history:get',
-  ADD_HISTORY: 'history:add',
-  CLEAR_HISTORY: 'history:clear',
+
   GET_VERSION: 'app:version',
   OPEN_PATH: 'shell:open-path',
   READ_DIR: 'fs:read-dir',

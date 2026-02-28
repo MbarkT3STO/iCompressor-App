@@ -16,9 +16,7 @@ const IPC_CHANNELS = {
   LIST_ARCHIVE: 'compressor:list',
   GET_SETTINGS: 'settings:get',
   SAVE_SETTINGS: 'settings:save',
-  GET_HISTORY: 'history:get',
-  ADD_HISTORY: 'history:add',
-  CLEAR_HISTORY: 'history:clear',
+
   GET_VERSION: 'app:version',
   OPEN_PATH: 'shell:open-path',
   READ_DIR: 'fs:read-dir',
@@ -59,8 +57,7 @@ export interface ICompressorAPI {
   ) => Promise<{ success: boolean; files?: any[]; error?: string }>;
   getSettings: () => Promise<AppSettings>;
   saveSettings: (settings: Partial<AppSettings>) => Promise<void>;
-  getHistory: () => Promise<HistoryEntry[]>;
-  clearHistory: () => Promise<void>;
+
   getVersion: () => Promise<string>;
   openPath: (path: string) => Promise<{ success: boolean }>;
   onProgress: (callback: (data: { percent: number; status: string }) => void) => () => void;
@@ -82,13 +79,7 @@ export interface AppSettings {
   animationsEnabled: boolean;
 }
 
-export interface HistoryEntry {
-  type: 'compress' | 'extract';
-  sources: string[];
-  output: string;
-  format: string;
-  timestamp: number;
-}
+
 
 export interface FileEntry {
   name: string;
@@ -109,8 +100,7 @@ const api: ICompressorAPI = {
   listArchive: (archivePath: string, password?: string) => ipcRenderer.invoke(IPC_CHANNELS.LIST_ARCHIVE, { archivePath, password }),
   getSettings: () => ipcRenderer.invoke(IPC_CHANNELS.GET_SETTINGS),
   saveSettings: (settings) => ipcRenderer.invoke(IPC_CHANNELS.SAVE_SETTINGS, settings),
-  getHistory: () => ipcRenderer.invoke(IPC_CHANNELS.GET_HISTORY),
-  clearHistory: () => ipcRenderer.invoke(IPC_CHANNELS.CLEAR_HISTORY),
+
   getVersion: () => ipcRenderer.invoke(IPC_CHANNELS.GET_VERSION),
   openPath: (p: string) => ipcRenderer.invoke(IPC_CHANNELS.OPEN_PATH, p),
   onProgress: (callback) => {

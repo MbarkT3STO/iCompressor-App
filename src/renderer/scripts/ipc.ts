@@ -3,7 +3,7 @@
  * Thin wrapper around window.compressorAPI
  */
 
-import type { AppSettings, HistoryEntry, FileEntry } from '../types';
+import type { AppSettings, FileEntry } from '../types';
 
 declare global {
   interface Window {
@@ -34,8 +34,7 @@ export const ipc: {
   listArchive: (archivePath: string, password?: string) => Promise<{ success: boolean; files?: any[]; error?: string }>;
   getSettings: () => Promise<AppSettings>;
   saveSettings: (settings: Partial<AppSettings>) => Promise<void>;
-  getHistory: () => Promise<HistoryEntry[]>;
-  clearHistory: () => Promise<void>;
+
   getVersion: () => Promise<string>;
   openPath: (path: string) => Promise<{ success: boolean }>;
   onProgress: (callback: (data: { percent: number; status: string }) => void) => () => void;
@@ -66,8 +65,7 @@ export const ipc: {
   listArchive: (archivePath: string, password?: string) => api.listArchive(archivePath, password),
   getSettings: () => api.getSettings(),
   saveSettings: (settings: Partial<AppSettings>) => api.saveSettings(settings),
-  getHistory: () => api.getHistory(),
-  clearHistory: () => api.clearHistory(),
+
   getVersion: () => api.getVersion(),
   openPath: (path: string) => api.openPath(path),
   onProgress: (callback: (data: { percent: number; status: string }) => void) =>

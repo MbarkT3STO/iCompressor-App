@@ -13,7 +13,7 @@ import {
   showGlobalProgress,
   hideGlobalProgress,
   showToast,
-  renderHistory,
+
   applyTheme,
   renderBreadcrumbs,
   renderBrowseList,
@@ -101,7 +101,7 @@ function setupNavigation(): void {
       const panelId = btn.getAttribute('data-panel');
       if (panelId) {
         showPanel(panelId);
-        if (panelId === 'history') loadHistory();
+
         if (panelId === 'settings') loadSettings();
         if (panelId === 'browse') initBrowse();
       }
@@ -570,18 +570,7 @@ function setupExtract(): void {
   });
 }
 
-// History
-async function loadHistory(): Promise<void> {
-  const entries = await ipc.getHistory();
-  renderHistory(entries);
-}
 
-function setupHistory(): void {
-  document.getElementById('btn-clear-history')?.addEventListener('click', async () => {
-    await ipc.clearHistory();
-    renderHistory([]);
-  });
-}
 
 // Settings
 async function loadSettings(): Promise<void> {
@@ -722,7 +711,7 @@ export function init(): void {
   setupBrowse();
   setupCompress();
   setupExtract();
-  setupHistory();
+
   setupSettings();
   setupAbout();
   loadSettings();

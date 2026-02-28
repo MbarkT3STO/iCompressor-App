@@ -187,9 +187,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
-  padding: 16px 24px;
+  flex-wrap: nowrap;
+  gap: 12px;
+  padding: 12px 20px;
   background: var(--color-bg-sidebar);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -224,12 +224,18 @@ body {
 .nav {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: nowrap;
   overflow-x: auto;
   overflow-y: hidden;
-  padding-bottom: 4px;
-  /* Space for the scrollbar */
+  padding-bottom: 2px;
+  flex: 1;
+  justify-content: flex-end;
+  -webkit-app-region: no-drag;
+}
+
+.nav::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-item {
@@ -974,73 +980,7 @@ body {
   }
 }
 
-/* History - cards - consistent height */
-.history-grid {
-  grid-template-columns: 1fr;
-}
 
-.history-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 0;
-}
-
-.history-list li {
-  padding: 18px 22px;
-  min-height: 88px;
-  background: var(--color-bg-glass);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 6px;
-  transition: all var(--transition-fast);
-  backdrop-filter: blur(12px);
-}
-
-.history-list li:hover {
-  background: var(--color-bg-hover);
-  border-color: var(--color-border-strong);
-  box-shadow: 0 4px 20px rgba(58, 12, 163, 0.1);
-}
-
-.history-entry-type {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-weight: 700;
-  color: var(--color-accent);
-}
-
-.history-entry-sources {
-  font-size: 0.95rem;
-  color: var(--color-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: 500;
-}
-
-.history-entry-output {
-  font-size: 0.88rem;
-  color: var(--color-text-secondary);
-}
-
-.history-empty {
-  padding: 48px 28px;
-  min-height: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: var(--color-text-muted);
-  font-size: 1rem;
-  background: var(--color-bg-glass);
-  border-radius: var(--radius-lg);
-  border: 2px dashed var(--color-border);
-}
 
 /* About Page — Hero Layout */
 .about-full-layout {
@@ -2003,12 +1943,5 @@ body {
     min-height: 80px;
   }
 
-  .history-list li {
-    min-height: 72px;
-  }
 
-  .history-empty {
-    min-height: 100px;
-    padding: 32px 20px;
-  }
 }

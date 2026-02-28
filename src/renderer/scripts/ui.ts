@@ -3,7 +3,7 @@
  * Pure DOM manipulation, no frameworks
  */
 
-import type { HistoryEntry, AppSettings, FileEntry } from '../types';
+import type { AppSettings, FileEntry } from '../types';
 
 // Panel switching
 export function showPanel(panelId: string): void {
@@ -136,26 +136,7 @@ export function showToast(containerId: string, message: string, type: 'success' 
   }, 4000);
 }
 
-// History list
-export function renderHistory(entries: HistoryEntry[]): void {
-  const list = document.getElementById('history-list');
-  if (!list) return;
-  if (entries.length === 0) {
-    list.innerHTML = '<li class="history-empty">No history yet</li>';
-    return;
-  }
-  list.innerHTML = entries
-    .map(
-      (e) => `
-    <li>
-      <span class="history-entry-type">${e.type}</span>
-      <span class="history-entry-sources">${e.sources.map((s: string) => s.split(/[/\\]/).pop()).join(', ')}</span>
-      <span class="history-entry-output">→ ${e.output}</span>
-    </li>
-  `
-    )
-    .join('');
-}
+
 
 // Settings form
 export function applySettingsToForm(settings: AppSettings): void {
