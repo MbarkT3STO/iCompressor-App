@@ -15,7 +15,9 @@ export function showPanel(panelId: string): void {
   const panel = document.getElementById(`panel-${panelId}`);
   const navItem = document.querySelector(`.nav-item[data-panel="${panelId}"]`);
   panel?.classList.add('active');
-  navItem?.classList.add('active');
+  if (navItem) {
+    navItem.classList.add('active');
+  }
 }
 
 // File list helpers

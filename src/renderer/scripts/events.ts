@@ -714,6 +714,7 @@ export function init(): void {
 
   setupSettings();
   setupAbout();
+  setupWelcome();
   loadSettings();
 
   document.getElementById('btn-cancel-progress')?.addEventListener('click', () => {
@@ -738,6 +739,12 @@ export function init(): void {
       showPanel('panel-extract');
       setSingleFile('extract-files-list', filePath);
     }
+  });
+}
+
+function setupWelcome(): void {
+  document.getElementById('btn-welcome-start')?.addEventListener('click', () => {
+    showPanel('compress');
   });
 }
 

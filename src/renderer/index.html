@@ -71,7 +71,36 @@
     </header>
 
     <main class="main">
-      <section id="panel-compress" class="panel active">
+      <!-- Welcome Panel (Initial) -->
+      <section id="panel-welcome" class="panel active">
+        <div class="panel-layout panel-full welcome-full-layout">
+          <div class="welcome-orb welcome-orb-1"></div>
+          <div class="welcome-orb welcome-orb-2"></div>
+          
+          <div class="welcome-content">
+            <div class="welcome-hero">
+              <div class="welcome-badge">
+                <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 10H6v-2h8v2zm4-4H6v-2h12v2z"/></svg>
+              </div>
+              <h1 class="welcome-title">Welcome to iCompressor</h1>
+              <p class="welcome-subtitle">A modern Archiver</p>
+            </div>
+            
+            <div class="welcome-actions">
+              <button type="button" class="btn-primary btn-get-started" id="btn-welcome-start">
+                <span>Get Started</span>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="welcome-footer">
+            <p>Version 1.1.0 · Beta Phase</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-compress" class="panel">
         <div class="panel-layout panel-split">
           <!-- Left side: Drop Zone -->
           <div class="card card-drop" id="drop-zone-compress" data-drop-type="compress" style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; padding: 40px; transition: all var(--transition-bounce); border: 2px dashed var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface);">
