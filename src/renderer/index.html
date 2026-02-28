@@ -12,6 +12,8 @@
   <div id="app" class="app">
     <div class="custom-titlebar" id="titlebar">
       <div class="titlebar-drag-region"></div>
+      <div class="titlebar-title">iCompressor</div>
+      <div class="titlebar-drag-region"></div>
       <div class="titlebar-controls">
         <button type="button" class="titlebar-btn minimize" id="btn-window-minimize" aria-label="Minimize">
           <svg viewBox="0 0 10 1" fill="currentColor"><rect width="10" height="1"/></svg>
@@ -165,7 +167,7 @@
       </section>
 
       <section id="panel-browse" class="panel">
-        <div class="panel-layout panel-full" style="height: 100%; display: flex;">
+        <div class="panel-layout panel-full panel-browse-layout">
           <div class="panel-head">
             <div>
               <h2 class="panel-title">File Browser</h2>
@@ -183,7 +185,7 @@
               <button type="button" class="btn-primary" id="btn-browse-extract" disabled>Extract Selected</button>
             </div>
           </div>
-          <div class="card browse-card" style="flex: 1; display: flex; flex-direction: column;">
+          <div class="card browse-card">
             <div class="browse-grid-header">
               <div class="col-name" style="padding-left: 20px;">Name</div>
               <div class="col-date">Date Modified</div>

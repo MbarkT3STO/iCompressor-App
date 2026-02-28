@@ -48,6 +48,18 @@ body {
   /* This makes the window draggable */
 }
 
+.titlebar-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+  /* Let clicks pass through to drag region */
+  letter-spacing: 0.02em;
+}
+
 /* Controls - placed on the right, but keep styling simple */
 .titlebar-controls {
   display: flex;
@@ -266,6 +278,8 @@ body {
   flex: 1;
   overflow: auto;
   padding: 24px;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Panels */
@@ -273,10 +287,22 @@ body {
   display: none;
   flex-direction: column;
   animation: panel-in 0.35s ease-out;
+  flex-shrink: 0;
 }
 
 .panel.active {
   display: flex;
+}
+
+#panel-browse.active {
+  flex: 1;
+  flex-shrink: 1;
+  min-height: 0;
+}
+
+.panel-browse-layout {
+  flex: 1;
+  min-height: 0;
 }
 
 @keyframes panel-in {
@@ -1239,6 +1265,10 @@ body {
 }
 
 .browse-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   overflow: hidden;
   padding-bottom: 0;
 }
@@ -1254,6 +1284,7 @@ body {
   color: var(--color-text-secondary);
   letter-spacing: 0.05em;
   background: rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
 }
 
 .browse-list {
@@ -1262,6 +1293,7 @@ body {
   display: flex;
   flex-direction: column;
   padding-right: 4px;
+  min-height: 0;
   /* Space for scrollbar */
 }
 
