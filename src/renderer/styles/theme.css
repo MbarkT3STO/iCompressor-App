@@ -1,95 +1,127 @@
 /**
- * iCompressor - Purple Raindrops Theme
- * Neon pinks, deep violets, electric blues
+ * iCompressor - Bold Hues Theme (Cute UI)
  */
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Purple Raindrops palette */
+  /* Bold Hues Palette */
   --neon-pink: #f72585;
-  --raspberry-plum: #b5179e;
   --indigo-bloom: #7209b7;
-  --ultrasonic-blue: #560bad;
-  --true-azure: #480ca8;
   --vivid-royal: #3a0ca3;
-  --persian-blue: #3f37c9;
   --electric-sapphire: #4361ee;
-  --cloudy-sky: #4895ef;
   --sky-aqua: #4cc9f0;
 
-  /* Dark theme (default) - stormy nightfall */
+  /* Dark theme (default) */
   --color-bg: #0d0718;
-  --color-bg-gradient: linear-gradient(135deg, #0d0718 0%, #1a0d2e 25%, #16072c 50%, #0f0a1e 100%);
-  --color-bg-elevated: rgba(58, 12, 163, 0.15);
-  --color-bg-glass: rgba(72, 9, 183, 0.12);
-  --color-bg-glass-strong: rgba(114, 9, 183, 0.2);
+  --color-bg-gradient: #0d0718;
+  --color-bg-elevated: rgba(58, 12, 163, 0.25);
+  --color-bg-glass: rgba(114, 9, 183, 0.15);
+  --color-bg-glass-strong: rgba(114, 9, 183, 0.25);
   --color-bg-sidebar: rgba(26, 13, 46, 0.85);
-  --color-bg-hover: rgba(99, 55, 201, 0.2);
-  --color-bg-active: rgba(247, 37, 133, 0.15);
-  --color-border: rgba(99, 55, 201, 0.25);
-  --color-border-strong: rgba(131, 97, 238, 0.4);
+  --color-bg-hover: rgba(67, 97, 238, 0.2);
+  --color-bg-active: rgba(247, 37, 133, 0.2);
+  --color-border: rgba(114, 9, 183, 0.3);
+  --color-border-strong: rgba(67, 97, 238, 0.5);
+
   --color-text: #f5f0ff;
   --color-text-secondary: #c4b8e0;
   --color-text-muted: #8b7cb3;
-  --color-accent: #f72585;
-  --color-accent-secondary: #4361ee;
-  --color-accent-gradient: linear-gradient(135deg, #f72585 0%, #b5179e 50%, #7209b7 100%);
-  --color-accent-soft: rgba(247, 37, 133, 0.25);
-  --color-success: #4cc9f0;
-  --color-error: #f72585;
-  --color-drop-zone: rgba(58, 12, 163, 0.2);
-  --color-drop-zone-hover: rgba(114, 9, 183, 0.3);
-  --color-drop-zone-border: rgba(131, 97, 238, 0.4);
+
+  /* Primary accents use Neon Pink, secondary uses Electric Sapphire */
+  --color-accent: var(--neon-pink);
+  --color-accent-secondary: var(--electric-sapphire);
+  --color-accent-gradient: linear-gradient(135deg, var(--neon-pink) 0%, var(--indigo-bloom) 100%);
+  --color-accent-soft: rgba(247, 37, 133, 0.3);
+
+  --color-success: var(--sky-aqua);
+  --color-error: #ff3366;
+
+  --color-drop-zone: rgba(67, 97, 238, 0.15);
+  --color-drop-zone-hover: rgba(247, 37, 133, 0.15);
+  --color-drop-zone-border: rgba(67, 97, 238, 0.5);
   --color-drop-zone-glow: rgba(247, 37, 133, 0.4);
-  --shadow-sm: 0 2px 8px rgba(58, 12, 163, 0.2);
-  --shadow-md: 0 8px 24px rgba(58, 12, 163, 0.25), 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 16px 48px rgba(58, 12, 163, 0.3), 0 4px 16px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 0 40px rgba(247, 37, 133, 0.2);
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
+
+  /* Softer, color-tinted shadows for floating cute effect */
+  --shadow-sm: 0 4px 12px rgba(58, 12, 163, 0.3);
+  --shadow-md: 0 8px 24px rgba(58, 12, 163, 0.4), 0 4px 12px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 20px 48px rgba(58, 12, 163, 0.5), 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-glow: 0 0 40px rgba(247, 37, 133, 0.3);
+
+  /* Increased border-radius for "Cute" pill-like shapes */
+  --radius-sm: 14px;
+  --radius-md: 20px;
+  --radius-lg: 28px;
+  --radius-xl: 36px;
   --radius-full: 9999px;
-  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Slightly bouncier transitions */
+  --transition-fast: 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-normal: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 [data-theme='light'] {
   --color-bg: #f8f5ff;
-  --color-bg-gradient: linear-gradient(135deg, #f8f5ff 0%, #efe8ff 50%, #e8e0ff 100%);
-  --color-bg-elevated: rgba(255, 255, 255, 0.9);
-  --color-bg-glass: rgba(255, 255, 255, 0.7);
-  --color-bg-glass-strong: rgba(255, 255, 255, 0.9);
+  --color-bg-gradient: linear-gradient(135deg, #f8f5ff 0%, #efe8ff 100%);
+  --color-bg-elevated: rgba(255, 255, 255, 0.95);
+  --color-bg-glass: rgba(255, 255, 255, 0.8);
+  --color-bg-glass-strong: rgba(255, 255, 255, 0.95);
   --color-bg-sidebar: rgba(255, 255, 255, 0.95);
-  --color-bg-hover: rgba(114, 9, 183, 0.08);
+  --color-bg-hover: rgba(67, 97, 238, 0.1);
   --color-bg-active: rgba(247, 37, 133, 0.12);
   --color-border: rgba(114, 9, 183, 0.2);
-  --color-border-strong: rgba(114, 9, 183, 0.35);
+  --color-border-strong: rgba(67, 97, 238, 0.4);
+
   --color-text: #1a0d2e;
   --color-text-secondary: #4a3d6b;
   --color-text-muted: #7b6b9e;
-  --color-drop-zone: rgba(114, 9, 183, 0.06);
-  --color-drop-zone-hover: rgba(247, 37, 133, 0.1);
-  --color-drop-zone-border: rgba(114, 9, 183, 0.25);
-  --color-drop-zone-glow: rgba(247, 37, 133, 0.25);
-  --shadow-sm: 0 2px 8px rgba(114, 9, 183, 0.08);
+
+  --color-accent: var(--neon-pink);
+  --color-accent-secondary: var(--electric-sapphire);
+  --color-accent-gradient: linear-gradient(135deg, var(--neon-pink) 0%, var(--indigo-bloom) 100%);
+  --color-accent-soft: rgba(247, 37, 133, 0.2);
+
+  --color-drop-zone: rgba(67, 97, 238, 0.05);
+  --color-drop-zone-hover: rgba(247, 37, 133, 0.08);
+  --color-drop-zone-border: rgba(67, 97, 238, 0.3);
+  --color-drop-zone-glow: rgba(247, 37, 133, 0.2);
+
+  --shadow-sm: 0 4px 12px rgba(114, 9, 183, 0.08);
   --shadow-md: 0 8px 24px rgba(114, 9, 183, 0.12);
-  --shadow-lg: 0 16px 48px rgba(114, 9, 183, 0.15);
+  --shadow-lg: 0 20px 48px rgba(114, 9, 183, 0.15);
+  --shadow-glow: 0 0 40px rgba(247, 37, 133, 0.2);
 }
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme='dark']) {
     --color-bg: #f8f5ff;
-    --color-bg-gradient: linear-gradient(135deg, #f8f5ff 0%, #efe8ff 50%, #e8e0ff 100%);
-    --color-bg-elevated: rgba(255, 255, 255, 0.9);
-    --color-bg-glass: rgba(255, 255, 255, 0.7);
+    --color-bg-gradient: linear-gradient(135deg, #f8f5ff 0%, #efe8ff 100%);
+    --color-bg-elevated: rgba(255, 255, 255, 0.95);
+    --color-bg-glass: rgba(255, 255, 255, 0.8);
+    --color-bg-glass-strong: rgba(255, 255, 255, 0.95);
     --color-bg-sidebar: rgba(255, 255, 255, 0.95);
-    --color-bg-hover: rgba(114, 9, 183, 0.08);
+    --color-bg-hover: rgba(67, 97, 238, 0.1);
     --color-bg-active: rgba(247, 37, 133, 0.12);
     --color-border: rgba(114, 9, 183, 0.2);
+    --color-border-strong: rgba(67, 97, 238, 0.4);
+
     --color-text: #1a0d2e;
     --color-text-secondary: #4a3d6b;
     --color-text-muted: #7b6b9e;
+
+    --color-accent: var(--neon-pink);
+    --color-accent-secondary: var(--electric-sapphire);
+    --color-accent-gradient: linear-gradient(135deg, var(--neon-pink) 0%, var(--indigo-bloom) 100%);
+    --color-accent-soft: rgba(247, 37, 133, 0.2);
+
+    --color-drop-zone: rgba(67, 97, 238, 0.05);
+    --color-drop-zone-hover: rgba(247, 37, 133, 0.08);
+    --color-drop-zone-border: rgba(67, 97, 238, 0.3);
+    --color-drop-zone-glow: rgba(247, 37, 133, 0.2);
+
+    --shadow-sm: 0 4px 12px rgba(114, 9, 183, 0.08);
+    --shadow-md: 0 8px 24px rgba(114, 9, 183, 0.12);
+    --shadow-lg: 0 20px 48px rgba(114, 9, 183, 0.15);
+    --shadow-glow: 0 0 40px rgba(247, 37, 133, 0.2);
   }
 }
