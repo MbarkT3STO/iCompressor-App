@@ -58,8 +58,7 @@ function setupDropZone(
         }
       });
     } else {
-      ipc.selectFiles().then((paths) => {
-        const archive = paths.find((p) => /\.(zip|7z|rar|tar|gz|tgz)$/i.test(p));
+      ipc.selectArchive().then((archive) => {
         if (archive) setSingleFile('extract-files-list', archive);
       });
     }
@@ -536,9 +535,9 @@ function setupExtract(): void {
 
   document.getElementById('btn-open-archive')?.addEventListener('click', async () => {
     // 1. Pick file
-    const paths = await ipc.selectFiles();
-    if (!paths || paths.length === 0) return;
-    await handleArchiveSelection(paths[0]);
+    const archivePath = await ipc.selectArchive();
+    if (!archivePath) return;
+    await handleArchiveSelection(archivePath);
   });
 
   // (loadArchiveIntoViewer was moved up)
@@ -648,8 +647,7 @@ function setupAbout(): void {
 function setupExtractDropZoneClick(): void {
   const zone = document.getElementById('drop-zone-extract');
   zone?.addEventListener('click', () => {
-    ipc.selectFiles().then((paths) => {
-      const archive = paths.find((p) => /\.(zip|7z|rar|tar|gz|tgz)$/i.test(p));
+    ipc.selectArchive().then((archive) => {
       if (archive) setSingleFile('extract-files-list', archive);
     });
   });

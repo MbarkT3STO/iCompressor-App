@@ -6,6 +6,7 @@
 export const IPC_CHANNELS = {
   SELECT_FILES: 'dialog:select-files',
   SELECT_FOLDER: 'dialog:select-folder',
+  SELECT_ARCHIVE: 'dialog:select-archive',
   SELECT_OUTPUT: 'dialog:select-output',
   COMPRESS: 'compressor:compress',
   EXTRACT: 'compressor:extract',

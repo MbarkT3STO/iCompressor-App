@@ -9,6 +9,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 const IPC_CHANNELS = {
   SELECT_FILES: 'dialog:select-files',
   SELECT_FOLDER: 'dialog:select-folder',
+  SELECT_ARCHIVE: 'dialog:select-archive',
   SELECT_OUTPUT: 'dialog:select-output',
   COMPRESS: 'compressor:compress',
   EXTRACT: 'compressor:extract',
@@ -33,6 +34,7 @@ const PROGRESS_CHANNEL = 'compressor:progress';
 export interface ICompressorAPI {
   selectFiles: () => Promise<string[]>;
   selectFolder: () => Promise<string | null>;
+  selectArchive: () => Promise<string | null>;
   selectOutput: (defaultPath?: string, format?: string) => Promise<string | null>;
   compress: (payload: {
     sources: string[];
@@ -92,6 +94,7 @@ export interface FileEntry {
 const api: ICompressorAPI = {
   selectFiles: () => ipcRenderer.invoke(IPC_CHANNELS.SELECT_FILES),
   selectFolder: () => ipcRenderer.invoke(IPC_CHANNELS.SELECT_FOLDER),
+  selectArchive: () => ipcRenderer.invoke(IPC_CHANNELS.SELECT_ARCHIVE),
   selectOutput: (defaultPath?: string, format?: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.SELECT_OUTPUT, defaultPath, format),
   compress: (payload) => ipcRenderer.invoke(IPC_CHANNELS.COMPRESS, payload),

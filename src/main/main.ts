@@ -125,6 +125,18 @@ function registerIpcHandlers(): void {
     return result.canceled ? null : result.filePaths[0];
   });
 
+  ipcMain.handle(IPC_CHANNELS.SELECT_ARCHIVE, async () => {
+    const result = await dialog.showOpenDialog(mainWindow!, {
+      properties: ['openFile'],
+      title: 'Select an Archive',
+      filters: [
+        { name: 'Supported Archives', extensions: ['zip', '7z', 'rar', 'tar', 'gz', 'tgz'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    });
+    return result.canceled ? null : result.filePaths[0];
+  });
+
   ipcMain.handle(IPC_CHANNELS.SELECT_OUTPUT, async (_, defaultPath?: string, format?: string) => {
     const allFilters = [
       { name: 'ZIP Archive', extensions: ['zip'] },
