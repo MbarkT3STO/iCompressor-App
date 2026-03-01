@@ -190,25 +190,30 @@ export class CompressorService extends EventEmitter {
       const args = sources.map((s) => path.resolve(s));
 
       // ── Maximum Compression Strategy ────────────────────────────────────────
-      // For high levels, we use LZMA2 with large dictionary sizes and solid mode.
       const clampedLevel = Math.min(9, Math.max(0, level));
-      
       const rawFlags = [
-        `-mx=${clampedLevel}`,    // Compression level
-        '-m0=lzma2',             // Use LZMA2
-        '-ms=on',                // Enable solid mode
+        `-mx=${clampedLevel}`     // Compression level
       ];
 
-      // Dictionary size optimization
-      // Level 9: 64MB, Level 7+: 32MB, Level 5+: 16MB, others: 4MB
-      if (clampedLevel >= 9) rawFlags.push('-md=64m');
-      else if (clampedLevel >= 7) rawFlags.push('-md=32m');
-      else if (clampedLevel >= 5) rawFlags.push('-md=16m');
-      else rawFlags.push('-md=4m');
+      const is7z = outputPath.toLowerCase().endsWith('.7z');
 
-      // BCJ filter for executables if no password (password + filters can sometimes be prickly with 7za)
-      if (!password) {
-        rawFlags.push('-mf=BCJ');
+      if (is7z) {
+        // For 7z format only: we use LZMA2, solid mode, and large dictionary
+        rawFlags.push('-m0=lzma2', '-ms=on');
+        
+        // Dictionary size optimization
+        if (clampedLevel >= 9) rawFlags.push('-md=64m');
+        else if (clampedLevel >= 7) rawFlags.push('-md=32m');
+        else if (clampedLevel >= 5) rawFlags.push('-md=16m');
+        else rawFlags.push('-md=4m');
+
+        // BCJ filter for executables if no password
+        if (!password) {
+          rawFlags.push('-mf=BCJ');
+        }
+      } else {
+        // For zip files, force UTF-8 for filenames
+        rawFlags.push('-mcu=on');
       }
 
       const compressOptions: any = {
@@ -250,7 +255,9 @@ export class CompressorService extends EventEmitter {
       });
 
       stream.on('end', () => finish(true));
-      stream.on('error', (err: Error) => finish(false, err.message));
+      stream.on('error', (err: any) => {
+        finish(false, err.message || err.stderr || 'Compression failed');
+      });
     });
   }
 
