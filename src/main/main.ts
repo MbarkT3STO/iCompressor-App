@@ -315,6 +315,44 @@ function registerIpcHandlers(): void {
     }
   });
 
+  ipcMain.handle(IPC_CHANNELS.GET_FOLDER_SIZE, async (_, dirPath: string) => {
+    const fs = require('fs');
+    try {
+      let totalSize = 0;
+      const getDirSize = (dir: string) => {
+        const files = fs.readdirSync(dir, { withFileTypes: true });
+        for (const file of files) {
+          const fullPath = path.join(dir, file.name);
+          try {
+            if (file.isDirectory()) {
+              getDirSize(fullPath);
+            } else {
+              totalSize += fs.statSync(fullPath).size;
+            }
+          } catch {
+            // Ignore stat/read errors (permissions, locks, etc.)
+          }
+        }
+      };
+      
+      try {
+        const mainStat = fs.statSync(dirPath);
+        if (mainStat.isDirectory()) {
+          getDirSize(dirPath);
+        } else {
+          totalSize = mainStat.size;
+        }
+      } catch (err: any) {
+        return { success: false, error: err.message };
+      }
+      
+      return { success: true, size: totalSize };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    }
+  });
+
+
   // Window Controls
   ipcMain.on(IPC_CHANNELS.WINDOW_MINIMIZE, () => {
     mainWindow?.minimize();

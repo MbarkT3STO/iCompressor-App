@@ -283,6 +283,7 @@
             </div>
           </div>
         </div>
+        <div class="toast-container" id="toast-browse"></div>
       </section>
 
       <section id="panel-about" class="panel">
@@ -540,6 +541,29 @@
           </div>
         </div>
       </div>
+      
+      <!-- Folder Size Modal -->
+      <div id="folder-size-modal" class="progress-modal hidden">
+        <div class="progress-modal-backdrop" id="folder-size-modal-backdrop"></div>
+        <div class="progress-modal-content folder-size-modal-content">
+          <div class="progress-modal-header">
+            <h3 class="progress-modal-title">Folder Size</h3>
+          </div>
+          <div class="folder-size-modal-body">
+            <div class="folder-size-icon-wrapper">
+              <svg class="folder-size-icon" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+            </div>
+            <div class="folder-size-details">
+              <h4 id="folder-size-name" class="folder-size-name">Folder Name</h4>
+              <p id="folder-size-value" class="folder-size-value">Calculating...</p>
+            </div>
+          </div>
+          <div class="progress-modal-footer">
+            <button type="button" class="btn-primary" id="btn-close-folder-size">OK</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Archive Viewer Modal -->
       <div id="archive-viewer-modal" class="progress-modal hidden">
         <div class="progress-modal-backdrop"></div>

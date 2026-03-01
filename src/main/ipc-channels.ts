@@ -19,6 +19,7 @@ export const IPC_CHANNELS = {
   OPEN_PATH: 'shell:open-path',
   READ_DIR: 'fs:read-dir',
   GET_HOME_DIR: 'fs:get-home-dir',
+  GET_FOLDER_SIZE: 'fs:get-folder-size',
   OPEN_EXTERNAL: 'shell:open-external',
   WINDOW_MINIMIZE: 'window:minimize',
   WINDOW_MAXIMIZE: 'window:maximize',

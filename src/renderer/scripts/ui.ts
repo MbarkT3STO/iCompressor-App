@@ -126,7 +126,7 @@ export function hideGlobalProgress(): void {
 }
 
 // Toast
-export function showToast(containerId: string, message: string, type: 'success' | 'error'): void {
+export function showToast(containerId: string, message: string, type: 'success' | 'error' | 'info', duration: number = 4000): void {
   const container = document.getElementById(containerId);
   if (!container) return;
   const toast = document.createElement('div');
@@ -135,7 +135,7 @@ export function showToast(containerId: string, message: string, type: 'success' 
   container.appendChild(toast);
   setTimeout(() => {
     toast.remove();
-  }, 4000);
+  }, duration);
 }
 
 
@@ -214,7 +214,7 @@ export function renderBreadcrumbs(containerId: string, pathPieces: { name: strin
   });
 }
 
-function formatSize(bytes: number): string {
+export function formatSize(bytes: number): string {
   if (bytes === 0) return '0 B';
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
@@ -230,10 +230,22 @@ function formatDate(ms: number): string {
   });
 }
 
-const folderIcon = `<svg class="file-icon" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>`;
+const folderIcon = `<svg class="file-icon" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>`;
 const fileIcon = `<svg class="file-icon" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
 
-export function renderBrowseList(containerId: string, entries: FileEntry[], onSelect: (entry: FileEntry, multi: boolean) => void, onOpen: (entry: FileEntry) => void, isSelected: (path: string) => boolean): void {
+export const compressIcon = `<svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-2 10h-2v2h-2v-2h-2v-2h2v-2h2v2h2v2z"/></svg>`;
+export const extractIcon = `<svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>`;
+export const addIcon = `<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>`;
+export const infoIcon = `<svg viewBox="0 0 24 24"><path d="M11 17h2v-6h-2v6zm1-15C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM11 9h2V7h-2v2z"/></svg>`;
+
+export function renderBrowseList(
+  containerId: string, 
+  entries: FileEntry[], 
+  onSelect: (entry: FileEntry, multi: boolean) => void, 
+  onOpen: (entry: FileEntry) => void, 
+  isSelected: (path: string) => boolean,
+  onContextMenu: (entry: FileEntry, x: number, y: number) => void
+): void {
   const container = document.getElementById(containerId);
   if (!container) return;
   container.innerHTML = '';
@@ -260,6 +272,10 @@ export function renderBrowseList(containerId: string, entries: FileEntry[], onSe
 
     el.addEventListener('click', (e) => onSelect(entry, e.metaKey || e.ctrlKey));
     el.addEventListener('dblclick', () => onOpen(entry));
+    el.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      onContextMenu(entry, e.clientX, e.clientY);
+    });
     
     container.appendChild(el);
   });
@@ -273,7 +289,8 @@ export function renderBrowseTree(
   onSelect: (entry: FileEntry, multi: boolean) => void, 
   onOpen: (entry: FileEntry) => void, 
   onExpand: (entry: FileEntry, childrenContainer: HTMLElement) => Promise<void>,
-  isSelected: (path: string) => boolean
+  isSelected: (path: string) => boolean,
+  onContextMenu: (entry: FileEntry, x: number, y: number) => void
 ): void {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -288,7 +305,7 @@ export function renderBrowseTree(
   }
 
   entries.forEach(entry => {
-    const node = createTreeNode(entry, onSelect, onOpen, onExpand, isSelected);
+    const node = createTreeNode(entry, onSelect, onOpen, onExpand, isSelected, onContextMenu);
     tree.appendChild(node);
   });
 
@@ -300,7 +317,8 @@ function createTreeNode(
   onSelect: (entry: FileEntry, multi: boolean) => void,
   onOpen: (entry: FileEntry) => void,
   onExpand: (entry: FileEntry, childrenContainer: HTMLElement) => Promise<void>,
-  isSelected: (path: string) => boolean
+  isSelected: (path: string) => boolean,
+  onContextMenu: (entry: FileEntry, x: number, y: number) => void
 ): HTMLElement {
   const node = document.createElement('div');
   node.className = 'tree-node';
@@ -338,6 +356,10 @@ function createTreeNode(
 
   row.onclick = (e) => onSelect(entry, e.metaKey || e.ctrlKey);
   row.ondblclick = () => onOpen(entry);
+  row.oncontextmenu = (e) => {
+    e.preventDefault();
+    onContextMenu(entry, e.clientX, e.clientY);
+  };
 
   const children = document.createElement('div');
   children.className = 'tree-children';
@@ -354,11 +376,12 @@ export function renderTreeChildren(
   onSelect: (entry: FileEntry, multi: boolean) => void,
   onOpen: (entry: FileEntry) => void,
   onExpand: (entry: FileEntry, childrenContainer: HTMLElement) => Promise<void>,
-  isSelected: (path: string) => boolean
+  isSelected: (path: string) => boolean,
+  onContextMenu: (entry: FileEntry, x: number, y: number) => void
 ): void {
   container.innerHTML = '';
   entries.forEach(entry => {
-    const node = createTreeNode(entry, onSelect, onOpen, onExpand, isSelected);
+    const node = createTreeNode(entry, onSelect, onOpen, onExpand, isSelected, onContextMenu);
     container.appendChild(node);
   });
 }
@@ -538,5 +561,129 @@ export function playSound(type: 'click' | 'success' | 'error' | 'switch'): void 
     }
   } catch (e) {
     console.warn('Audio play failed', e);
+  }
+}
+
+// Context Menu
+export interface ContextMenuItem {
+  label: string;
+  icon?: string;
+  action: () => void;
+  danger?: boolean;
+  divider?: boolean;
+  shortcut?: string;
+}
+
+let activeContextMenu: HTMLElement | null = null;
+
+export function showContextMenu(x: number, y: number, items: ContextMenuItem[]): void {
+  hideContextMenu();
+
+  const menu = document.createElement('div');
+  menu.className = 'context-menu';
+  
+  // Initial positioning to measure size
+  menu.style.left = `${x}px`;
+  menu.style.top = `${y}px`;
+  menu.style.visibility = 'hidden';
+  document.body.appendChild(menu);
+
+  items.forEach(item => {
+    if (item.divider) {
+      const div = document.createElement('div');
+      div.className = 'context-menu-divider';
+      menu.appendChild(div);
+      return;
+    }
+
+    const el = document.createElement('div');
+    el.className = `context-menu-item ${item.danger ? 'danger' : ''}`;
+    
+    el.innerHTML = `
+      ${item.icon || ''}
+      <span>${item.label}</span>
+      ${item.shortcut ? `<span class="shortcut">${item.shortcut}</span>` : ''}
+    `;
+
+    el.onclick = () => {
+      item.action();
+      hideContextMenu();
+    };
+
+    menu.appendChild(el);
+  });
+
+  // Adjust position if it goes off screen
+  const rect = menu.getBoundingClientRect();
+  const pad = 10;
+  
+  let finalX = x;
+  let finalY = y;
+
+  if (x + rect.width > window.innerWidth - pad) {
+    finalX = window.innerWidth - rect.width - pad;
+  }
+  if (y + rect.height > window.innerHeight - pad) {
+    finalY = window.innerHeight - rect.height - pad;
+  }
+
+  menu.style.left = `${Math.max(pad, finalX)}px`;
+  menu.style.top = `${Math.max(pad, finalY)}px`;
+  menu.style.visibility = 'visible';
+
+  activeContextMenu = menu;
+
+  // Close on click outside
+  const closeHandler = (e: MouseEvent) => {
+    if (!menu.contains(e.target as Node)) {
+      hideContextMenu();
+      document.removeEventListener('mousedown', closeHandler);
+    }
+  };
+  
+  // slightly defer to avoid closing on the initial click
+  setTimeout(() => {
+    document.addEventListener('mousedown', closeHandler);
+  }, 10);
+}
+
+// Folder Size Modal
+
+export function showFolderSizeModal(folderName: string, sizeStr: string): void {
+  const modal = document.getElementById('folder-size-modal');
+  const nameEl = document.getElementById('folder-size-name');
+  const valueEl = document.getElementById('folder-size-value');
+  
+  if (nameEl) nameEl.textContent = folderName;
+  if (valueEl) valueEl.textContent = sizeStr;
+  
+  if (modal) {
+    modal.classList.remove('hidden');
+    // Ensure OK button binds click
+    const okBtn = document.getElementById('btn-close-folder-size');
+    const backdrop = document.getElementById('folder-size-modal-backdrop');
+    
+    const closeHandler = () => {
+      hideFolderSizeModal();
+      okBtn?.removeEventListener('click', closeHandler);
+      backdrop?.removeEventListener('click', closeHandler);
+    };
+    
+    okBtn?.addEventListener('click', closeHandler);
+    backdrop?.addEventListener('click', closeHandler);
+  }
+}
+
+export function hideFolderSizeModal(): void {
+  const modal = document.getElementById('folder-size-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+}
+
+export function hideContextMenu(): void {
+  if (activeContextMenu) {
+    activeContextMenu.remove();
+    activeContextMenu = null;
   }
 }

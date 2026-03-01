@@ -22,12 +22,19 @@ import {
   renderBrowseTree,
   renderTreeChildren,
   updateBrowseSelection,
+  showContextMenu,
+  compressIcon,
+  extractIcon,
+  addIcon,
+  infoIcon,
   showArchiveViewerModal,
   hideArchiveViewerModal,
   setArchiveViewerState,
   renderArchiveViewerPath,
   renderArchiveViewerTable,
-  applySettingsToForm
+  applySettingsToForm,
+  formatSize,
+  showFolderSizeModal
 } from './ui';
 import type { FileEntry } from '../types';
 
@@ -225,7 +232,8 @@ function updateBrowseUI() {
         handleBrowseSelect,
         handleBrowseOpen,
         handleBrowseExpand,
-        (path: string) => selectedBrowsePaths.has(path)
+        (path: string) => selectedBrowsePaths.has(path),
+        handleBrowseContextMenu
       );
     } else {
       renderBrowseList(
@@ -233,7 +241,8 @@ function updateBrowseUI() {
         filteredEntries, 
         handleBrowseSelect, 
         handleBrowseOpen,
-        (path: string) => selectedBrowsePaths.has(path)
+        (path: string) => selectedBrowsePaths.has(path),
+        handleBrowseContextMenu
       );
     }
   });
@@ -250,9 +259,65 @@ async function handleBrowseExpand(entry: FileEntry, container: HTMLElement) {
       handleBrowseSelect,
       handleBrowseOpen,
       handleBrowseExpand,
-      (path: string) => selectedBrowsePaths.has(path)
+      (path: string) => selectedBrowsePaths.has(path),
+      handleBrowseContextMenu
     );
   }
+}
+
+function handleBrowseContextMenu(entry: FileEntry, x: number, y: number) {
+  const isArchive = /\.(zip|7z|rar|tar|gz|tgz)$/i.test(entry.path);
+  const items = [
+    {
+      label: 'Compress Now',
+      icon: compressIcon,
+      action: () => {
+        setFileList('compress-files-list', [entry.path]);
+        showPanel('compress');
+      }
+    },
+    {
+      label: 'Add to Compress List',
+      icon: addIcon,
+      action: () => {
+        const existing = getPathsFromList('compress-files-list');
+        if (!existing.includes(entry.path)) {
+          setFileList('compress-files-list', [...existing, entry.path]);
+          showToast('toast-compress', `Added ${entry.name} to list`, 'success');
+        }
+      }
+    }
+  ];
+
+  if (isArchive) {
+    items.unshift({
+      label: 'Extract Now',
+      icon: extractIcon,
+      action: () => {
+        setSingleFile('extract-files-list', entry.path);
+        if (globalOpenArchiveHandler) globalOpenArchiveHandler(entry.path);
+        showPanel('extract');
+      }
+    });
+  }
+
+  if (entry.isDirectory) {
+    items.push({
+      label: 'Calculate Size',
+      icon: infoIcon,
+      action: async () => {
+        showToast('toast-browse', `Calculating...`, 'info');
+        const res = await ipc.getFolderSize(entry.path);
+        if (res.success && res.size !== undefined) {
+          showFolderSizeModal(entry.name, formatSize(res.size));
+        } else {
+          showToast('toast-browse', `Failed to calculate size`, 'error');
+        }
+      }
+    });
+  }
+
+  showContextMenu(x, y, items);
 }
 
 function handleBrowseSelect(entry: FileEntry, multi: boolean) {

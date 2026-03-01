@@ -22,6 +22,7 @@ const IPC_CHANNELS = {
   OPEN_PATH: 'shell:open-path',
   READ_DIR: 'fs:read-dir',
   GET_HOME_DIR: 'fs:get-home-dir',
+  GET_FOLDER_SIZE: 'fs:get-folder-size',
   OPEN_EXTERNAL: 'shell:open-external',
   WINDOW_MINIMIZE: 'window:minimize',
   WINDOW_MAXIMIZE: 'window:maximize',
@@ -65,6 +66,7 @@ export interface ICompressorAPI {
   openPath: (path: string) => Promise<{ success: boolean }>;
   onProgress: (callback: (data: { percent: number; status: string }) => void) => () => void;
   getHomeDir: () => Promise<string>;
+  getFolderSize: (path: string) => Promise<{ success: boolean; size?: number; error?: string }>;
   readDir: (path: string) => Promise<{ success: boolean; entries?: FileEntry[]; error?: string }>;
   openExternal: (url: string) => Promise<{ success: boolean }>;
   minimizeWindow: () => void;
@@ -118,6 +120,7 @@ const api: ICompressorAPI = {
   },
   getHomeDir: () => ipcRenderer.invoke(IPC_CHANNELS.GET_HOME_DIR),
   readDir: (path: string) => ipcRenderer.invoke(IPC_CHANNELS.READ_DIR, path),
+  getFolderSize: (path: string) => ipcRenderer.invoke(IPC_CHANNELS.GET_FOLDER_SIZE, path),
   openExternal: (url: string) => ipcRenderer.invoke(IPC_CHANNELS.OPEN_EXTERNAL, url),
   minimizeWindow: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_MINIMIZE),
   maximizeWindow: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_MAXIMIZE),

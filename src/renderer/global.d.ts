@@ -39,6 +39,7 @@ interface ICompressorAPI {
   clearHistory: () => Promise<void>;
   getVersion: () => Promise<string>;
   openPath: (path: string) => Promise<{ success: boolean }>;
+  getFolderSize: (path: string) => Promise<{ success: boolean; size?: number; error?: string }>;
   onProgress: (callback: (data: { percent: number; status: string }) => void) => () => void;
   startNativeDrag: (archivePath: string, internalPath: string, password?: string) => void;
 }
