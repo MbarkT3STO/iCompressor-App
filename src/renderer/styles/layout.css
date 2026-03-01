@@ -997,8 +997,7 @@ body {
   align-items: center;
   gap: clamp(16px, 4vh, 32px);
   height: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
   padding: clamp(20px, 5vh, 40px) 24px;
   box-sizing: border-box;
 }
