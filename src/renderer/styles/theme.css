@@ -5,91 +5,89 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Bold Hues Palette */
-  --neon-pink: #f72585;
-  --indigo-bloom: #7209b7;
-  --vivid-royal: #3a0ca3;
-  --electric-sapphire: #4361ee;
-  --sky-aqua: #4cc9f0;
+  /* Bold Hues Palette (Vibrant & Cute) */
+  --neon-pink: #ff2e8c;
+  --indigo-bloom: #8a2be2;
+  --vivid-royal: #4d1dff;
+  --electric-sapphire: #3b82f6;
+  --sky-aqua: #00d4ff;
+  --soft-mint: #00f5d4;
 
   /* Dark theme (default) */
-  --color-bg: #0d0718;
-  --color-bg-gradient: #0d0718;
-  --color-bg-elevated: rgba(58, 12, 163, 0.25);
-  --color-bg-glass: rgba(114, 9, 183, 0.15);
-  --color-bg-glass-strong: rgba(114, 9, 183, 0.25);
-  --color-bg-sidebar: rgba(26, 13, 46, 0.85);
-  --color-bg-hover: rgba(67, 97, 238, 0.2);
-  --color-bg-active: rgba(247, 37, 133, 0.2);
-  --color-border: rgba(114, 9, 183, 0.3);
-  --color-border-strong: rgba(67, 97, 238, 0.5);
+  --color-bg: #0b0514;
+  --color-bg-gradient: radial-gradient(circle at top left, #1a0b36 0%, #0b0514 100%);
+  --color-bg-elevated: rgba(30, 15, 60, 0.4);
+  --color-bg-glass: rgba(138, 43, 226, 0.1);
+  --color-bg-glass-strong: rgba(138, 43, 226, 0.2);
+  --color-bg-sidebar: rgba(15, 5, 30, 0.85);
+  --color-bg-hover: rgba(59, 130, 246, 0.15);
+  --color-bg-active: rgba(255, 46, 140, 0.15);
+  --color-border: rgba(138, 43, 226, 0.25);
+  --color-border-strong: rgba(59, 130, 246, 0.4);
 
-  --color-text: #f5f0ff;
-  --color-text-secondary: #c4b8e0;
-  --color-text-muted: #8b7cb3;
+  --color-text: #fdfcff;
+  --color-text-secondary: #dcd3ff;
+  --color-text-muted: #9e92d0;
 
-  /* Primary accents use Neon Pink, secondary uses Electric Sapphire */
+  /* Glassmorphism helpers */
+  --glass-blur: blur(12px);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+
+  /* Primary accents */
   --color-accent: var(--neon-pink);
   --color-accent-secondary: var(--electric-sapphire);
   --color-accent-gradient: linear-gradient(135deg, var(--neon-pink) 0%, var(--indigo-bloom) 100%);
-  --color-accent-soft: rgba(247, 37, 133, 0.3);
+  --color-accent-soft: rgba(255, 46, 140, 0.2);
 
-  --color-success: var(--sky-aqua);
-  --color-error: #ff3366;
+  --color-success: var(--soft-mint);
+  --color-error: #ff4757;
 
-  --color-drop-zone: rgba(67, 97, 238, 0.15);
-  --color-drop-zone-hover: rgba(247, 37, 133, 0.15);
-  --color-drop-zone-border: rgba(67, 97, 238, 0.5);
-  --color-drop-zone-glow: rgba(247, 37, 133, 0.4);
+  --color-drop-zone: rgba(59, 130, 246, 0.1);
+  --color-drop-zone-hover: rgba(255, 46, 140, 0.1);
+  --color-drop-zone-border: rgba(59, 130, 246, 0.4);
+  --color-drop-zone-glow: rgba(255, 46, 140, 0.3);
 
-  /* Softer, color-tinted shadows for floating cute effect */
-  --shadow-sm: 0 4px 12px rgba(58, 12, 163, 0.3);
-  --shadow-md: 0 8px 24px rgba(58, 12, 163, 0.4), 0 4px 12px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 20px 48px rgba(58, 12, 163, 0.5), 0 8px 24px rgba(0, 0, 0, 0.3);
-  --shadow-glow: 0 0 40px rgba(247, 37, 133, 0.3);
+  /* Cute UI Shadows */
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --shadow-md: 0 12px 28px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.35);
+  --shadow-glow: 0 0 30px rgba(255, 46, 140, 0.2);
 
-  /* Increased border-radius for "Cute" pill-like shapes */
-  --radius-sm: 14px;
-  --radius-md: 20px;
-  --radius-lg: 28px;
-  --radius-xl: 36px;
+  /* Rounded & Cute Corners */
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 26px;
+  --radius-xl: 40px;
   --radius-full: 9999px;
 
-  /* Slightly bouncier transitions */
-  --transition-fast: 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  --transition-normal: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Smooth Bouncy Transitions */
+  --transition-fast: 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --transition-normal: 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 [data-theme='light'] {
-  --color-bg: #f8f5ff;
-  --color-bg-gradient: linear-gradient(135deg, #f8f5ff 0%, #efe8ff 100%);
-  --color-bg-elevated: rgba(255, 255, 255, 0.95);
-  --color-bg-glass: rgba(255, 255, 255, 0.8);
-  --color-bg-glass-strong: rgba(255, 255, 255, 0.95);
-  --color-bg-sidebar: rgba(255, 255, 255, 0.95);
-  --color-bg-hover: rgba(67, 97, 238, 0.1);
-  --color-bg-active: rgba(247, 37, 133, 0.12);
-  --color-border: rgba(114, 9, 183, 0.2);
-  --color-border-strong: rgba(67, 97, 238, 0.4);
+  --color-bg: #fdfbff;
+  --color-bg-gradient: radial-gradient(circle at top left, #ffffff 0%, #f5f0ff 100%);
+  --color-bg-elevated: rgba(255, 255, 255, 0.8);
+  --color-bg-glass: rgba(255, 255, 255, 0.6);
+  --color-bg-glass-strong: rgba(255, 255, 255, 0.85);
+  --color-bg-sidebar: rgba(255, 255, 255, 0.9);
+  --color-bg-hover: rgba(59, 130, 246, 0.08);
+  --color-bg-active: rgba(255, 46, 140, 0.08);
+  --color-border: rgba(138, 43, 226, 0.15);
+  --color-border-strong: rgba(59, 130, 246, 0.3);
 
-  --color-text: #1a0d2e;
-  --color-text-secondary: #4a3d6b;
-  --color-text-muted: #7b6b9e;
+  --color-text: #1a0530;
+  --color-text-secondary: #584b7d;
+  --color-text-muted: #8e82ad;
 
-  --color-accent: var(--neon-pink);
-  --color-accent-secondary: var(--electric-sapphire);
-  --color-accent-gradient: linear-gradient(135deg, var(--neon-pink) 0%, var(--indigo-bloom) 100%);
-  --color-accent-soft: rgba(247, 37, 133, 0.2);
+  --glass-border: 1px solid rgba(138, 43, 226, 0.1);
+  --glass-shadow: 0 8px 32px 0 rgba(77, 29, 255, 0.1);
 
-  --color-drop-zone: rgba(67, 97, 238, 0.05);
-  --color-drop-zone-hover: rgba(247, 37, 133, 0.08);
-  --color-drop-zone-border: rgba(67, 97, 238, 0.3);
-  --color-drop-zone-glow: rgba(247, 37, 133, 0.2);
-
-  --shadow-sm: 0 4px 12px rgba(114, 9, 183, 0.08);
-  --shadow-md: 0 8px 24px rgba(114, 9, 183, 0.12);
-  --shadow-lg: 0 20px 48px rgba(114, 9, 183, 0.15);
-  --shadow-glow: 0 0 40px rgba(247, 37, 133, 0.2);
+  --shadow-sm: 0 4px 12px rgba(77, 29, 255, 0.05);
+  --shadow-md: 0 12px 28px rgba(77, 29, 255, 0.1);
+  --shadow-lg: 0 24px 64px rgba(77, 29, 255, 0.15);
 }
 
 @media (prefers-color-scheme: light) {
