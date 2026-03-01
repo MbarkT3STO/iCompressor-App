@@ -2478,12 +2478,7 @@ body {
   display: flex;
   gap: 10px;
   overflow-x: auto;
-  padding-bottom: 4px;
-  scrollbar-width: none;
-}
-
-.recents-list::-webkit-scrollbar {
-  display: none;
+  padding-bottom: 12px;
 }
 
 .recent-item {
