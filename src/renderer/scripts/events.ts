@@ -274,6 +274,9 @@ function setupCompress(): void {
     const passwordInput = document.getElementById('archive-password') as HTMLInputElement;
     const password = passwordInput?.value;
 
+    const splitSelect = document.getElementById('archive-split') as HTMLSelectElement;
+    const splitVolumeSize = splitSelect?.value;
+
     const settings = await ipc.getSettings();
     const outputDir = settings.outputDirectory || dirname(sources[0]);
     const defaultPath = outputDir ? `${outputDir}/${defaultName}` : defaultName;
@@ -297,6 +300,7 @@ function setupCompress(): void {
         format,
         level: compressionLevel,
         password,
+        splitVolumeSize: splitVolumeSize || undefined,
       });
 
       if (result.success) {
@@ -443,10 +447,16 @@ function setupExtract(): void {
       setArchiveViewerState('empty');
     } else {
       setArchiveViewerState('data');
-      renderArchiveViewerTable(filesToShow, (folderName) => {
-        currentViewerPath.push(folderName);
-        updateViewerUI();
-      });
+      renderArchiveViewerTable(
+        filesToShow, 
+        (folderName) => {
+          currentViewerPath.push(folderName);
+          updateViewerUI();
+        },
+        (file) => {
+          ipc.startNativeDrag(currentViewerArchive, file.path, currentViewerPassword);
+        }
+      );
     }
 
     renderArchiveViewerPath(basename(currentViewerArchive), currentViewerPath, (idx) => {
@@ -461,9 +471,12 @@ function setupExtract(): void {
 
   document.getElementById('btn-close-viewer')?.addEventListener('click', hideArchiveViewerModal);
 
+  let currentViewerPassword = '';
+
   const loadArchiveIntoViewer = async (archivePath: string, pwd?: string) => {
     // Store globally for viewer operations
     currentViewerArchive = archivePath;
+    currentViewerPassword = pwd || '';
     currentViewerPath = [];
     currentViewerFiles = [];
 

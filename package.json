@@ -39,6 +39,14 @@
       "dist/**/*",
       "src/renderer/**/*"
     ],
+    "fileAssociations": [
+      {
+        "ext": ["zip", "7z", "rar", "tar", "gz", "tgz"],
+        "name": "Archive File",
+        "role": "Viewer",
+        "description": "Compressed Archive File"
+      }
+    ],
     "mac": {
       "target": [
         "dmg",
@@ -119,9 +127,13 @@
     },
     "win": {
       "target": [
-        "nsis",
-        "portable"
+        "nsis"
       ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "include": "build/installer.nsh"
     },
     "linux": {
       "target": [

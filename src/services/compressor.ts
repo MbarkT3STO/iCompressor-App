@@ -29,7 +29,11 @@ const SUPPORTED_EXTRACT = ['.zip', '.7z', '.rar', '.tar', '.tar.gz', '.tgz'];
 const SUPPORTED_COMPRESS = ['.zip', '.7z', '.tar', '.tar.gz'];
 
 function getFormatFromPath(filePath: string): string {
-  const lower = filePath.toLowerCase();
+  let lower = filePath.toLowerCase();
+  
+  // Strip split volume extension (e.g., .001, .002)
+  lower = lower.replace(/\.\d{3,}$/, '');
+
   if (lower.endsWith('.tar.gz') || lower.endsWith('.tgz')) return 'targz';
   if (lower.endsWith('.7z')) return '7z';
   if (lower.endsWith('.zip')) return 'zip';
@@ -51,6 +55,7 @@ export interface CompressPayload {
   format: string;
   level: number;
   password?: string;
+  splitVolumeSize?: string;
 }
 
 export interface CompressResult {
@@ -98,9 +103,9 @@ export class CompressorService extends EventEmitter {
       return { success: false, error: 'TAR/TAR.GZ formats do not support password encryption. Please use ZIP or 7Z.' };
     }
 
-    // Use node-7z for 7z, and for password-protected zips (archiver doesn't support encryption)
-    if (format === '7z' || (format === 'zip' && payload.password)) {
-      return this.compress7z(sources, outputPath, level, payload.password);
+    // Use node-7z for 7z, password-protected zips, and any split volumes
+    if (format === '7z' || (format === 'zip' && payload.password) || payload.splitVolumeSize) {
+      return this.compress7z(sources, outputPath, level, payload.password, payload.splitVolumeSize);
     }
 
     const archiverFormat = format as 'zip' | 'tar' | 'targz';
@@ -184,7 +189,7 @@ export class CompressorService extends EventEmitter {
     });
   }
 
-  private async compress7z(sources: string[], outputPath: string, level: number, password?: string): Promise<CompressResult> {
+  private async compress7z(sources: string[], outputPath: string, level: number, password?: string, splitVolumeSize?: string): Promise<CompressResult> {
     return new Promise((resolve) => {
       const pathTo7z = sevenBin.path7za;
       const args = sources.map((s) => path.resolve(s));
@@ -194,6 +199,10 @@ export class CompressorService extends EventEmitter {
       const rawFlags = [
         `-mx=${clampedLevel}`     // Compression level
       ];
+
+      if (splitVolumeSize) {
+        rawFlags.push(`-v${splitVolumeSize}`);
+      }
 
       const is7z = outputPath.toLowerCase().endsWith('.7z');
 
@@ -234,6 +243,22 @@ export class CompressorService extends EventEmitter {
         if (isResolved) return;
         isResolved = true;
         if (success) {
+          if (splitVolumeSize) {
+            try {
+              const outDir = path.dirname(outputPath);
+              const baseName = path.basename(outputPath);
+              const files = fs.readdirSync(outDir).filter(f => f.startsWith(baseName + '.00'));
+              for (const f of files) {
+                const match = f.match(/(.*)\.(\w{2,4})\.(\d{3,})$/i);
+                if (match) {
+                  const newName = `${match[1]}.${match[3]}.${match[2]}`;
+                  fs.renameSync(path.join(outDir, f), path.join(outDir, newName));
+                }
+              }
+            } catch (err) {
+              console.error('Error renaming split volumes:', err);
+            }
+          }
           this.progress(100, 'Complete');
           resolve({ success: true, outputPath });
         } else {
@@ -270,56 +295,98 @@ export class CompressorService extends EventEmitter {
       return { success: false, error: 'Archive not found' };
     }
 
-    const format = getFormatFromPath(archivePath);
-    if (!format) {
-      return { success: false, error: 'Unsupported archive format' };
-    }
-
-    const pathTo7z = sevenBin.path7za;
-
-    return new Promise((resolve) => {
-      const extractOptions: any = {
-        $bin: pathTo7z,
-        $progress: true,
-      };
-
-      if (payload.password) {
-        extractOptions.password = payload.password;
+    return this.withSplitWorkaround(archivePath, async (actualPath) => {
+      const format = getFormatFromPath(actualPath);
+      if (!format) {
+        return { success: false, error: 'Unsupported archive format' };
       }
 
-      const stream = Seven.extractFull(archivePath, outputDir, extractOptions);
+      const pathTo7z = sevenBin.path7za;
 
-      // Smooth progress ticker: interpolates between node-7z's coarse ~10% jumps
-      let targetPercent = 1;
-      let currentPercent = 0;
-      this.progress(1, 'Extracting... 1%');
+      return new Promise((resolve) => {
+        const extractOptions: any = {
+          $bin: pathTo7z,
+          $progress: true,
+        };
 
-      const ticker = setInterval(() => {
-        if (currentPercent < targetPercent) {
-          currentPercent = Math.min(targetPercent, currentPercent + Math.max(0.5, (targetPercent - currentPercent) * 0.3));
-          const displayPct = Math.round(currentPercent);
-          this.progress(displayPct, `Extracting... ${displayPct}%`);
+        if (payload.password) {
+          extractOptions.password = payload.password;
         }
-      }, 80);
 
-      stream.on('progress', (p: { percent?: number }) => {
-        const pct = p.percent ?? 0;
-        if (pct > targetPercent) targetPercent = Math.min(99, pct);
-      });
+        const stream = Seven.extractFull(actualPath, outputDir, extractOptions);
 
-      stream.on('end', () => {
-        clearInterval(ticker);
-        this.progress(100, 'Complete');
-        resolve({ success: true, outputDir });
-      });
+        // Smooth progress ticker: interpolates between node-7z's coarse ~10% jumps
+        let targetPercent = 1;
+        let currentPercent = 0;
+        this.progress(1, 'Extracting... 1%');
 
-      stream.on('error', (err: any) => {
-        clearInterval(ticker);
-        this.progress(0, '');
-        const detailedError = err.stderr ? String(err.stderr) : String(err.message);
-        resolve({ success: false, error: detailedError });
+        const ticker = setInterval(() => {
+          if (currentPercent < targetPercent) {
+            currentPercent = Math.min(targetPercent, currentPercent + Math.max(0.5, (targetPercent - currentPercent) * 0.3));
+            const displayPct = Math.round(currentPercent);
+            this.progress(displayPct, `Extracting... ${displayPct}%`);
+          }
+        }, 80);
+
+        stream.on('progress', (p: { percent?: number }) => {
+          const pct = p.percent ?? 0;
+          if (pct > targetPercent) targetPercent = Math.min(99, pct);
+        });
+
+        stream.on('end', () => {
+          clearInterval(ticker);
+          this.progress(100, 'Complete');
+          resolve({ success: true, outputDir });
+        });
+
+        stream.on('error', (err: any) => {
+          clearInterval(ticker);
+          this.progress(0, '');
+          const detailedError = err.stderr ? String(err.stderr) : String(err.message);
+          resolve({ success: false, error: detailedError });
+        });
       });
     });
+  }
+
+  private async withSplitWorkaround<T>(
+    archivePath: string, 
+    operation: (actualPath: string) => Promise<T>
+  ): Promise<T> {
+    const match = archivePath.match(/(.*)\.(\d{3,})\.(\w{2,4})$/i);
+    if (!match) return operation(archivePath);
+    
+    const baseStr = match[1];
+    const seqNum = match[2];
+    const ext = match[3];
+    const outDir = path.dirname(archivePath);
+    const tempDir = path.join(outDir, `.ic-tmp-${Date.now()}`);
+    
+    fs.mkdirSync(tempDir, { recursive: true });
+    
+    try {
+      const files = fs.readdirSync(outDir).filter(f => {
+        const fMatch = f.match(/(.*)\.(\d{3,})\.(\w{2,4})$/i);
+        return fMatch && fMatch[1] === path.basename(baseStr) && fMatch[3].toLowerCase() === ext.toLowerCase();
+      });
+      
+      for (const f of files) {
+        const parts = f.match(/(.*)\.(\d{3,})\.(\w{2,4})$/i);
+        if (parts) {
+          const original7zName = `${parts[1]}.${parts[3]}.${parts[2]}`;
+          try {
+            fs.linkSync(path.join(outDir, f), path.join(tempDir, original7zName));
+          } catch (e) {}
+        }
+      }
+      
+      const targetArchive = path.join(tempDir, `${path.basename(baseStr)}.${ext}.${seqNum}`);
+      return await operation(targetArchive);
+    } finally {
+      if (fs.existsSync(tempDir)) {
+        try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch (e) {}
+      }
+    }
   }
 
   async test(archivePath: string, password?: string): Promise<{ success: boolean; error?: string }> {
@@ -327,36 +394,38 @@ export class CompressorService extends EventEmitter {
       return { success: false, error: 'Archive not found' };
     }
 
-    const pathTo7z = sevenBin.path7za;
+    return this.withSplitWorkaround(archivePath, async (actualPath) => {
+      const pathTo7z = sevenBin.path7za;
 
-    return new Promise((resolve) => {
-      const { execFile } = require('child_process');
-      const args = ['l', '-slt'];
-      if (password) {
-        args.push(`-p${password}`);
-      }
-      args.push(archivePath);
+      return new Promise((resolve) => {
+        const { execFile } = require('child_process');
+        const args = ['l', '-slt'];
+        if (password) {
+          args.push(`-p${password}`);
+        }
+        args.push(actualPath);
 
-      execFile(pathTo7z, args, (error: any, stdout: string, stderr: string) => {
-        if (error) {
-          // If the test command actually failed (e.g., wrong password supplied, or file is bad)
-          // `7za` often outputs "Wrong password" or similar in stdout/stderr
-          const outStr = (stdout + stderr).toLowerCase();
-          if (outStr.includes('wrong password') || outStr.includes('cannot open encrypted archive') || outStr.includes('data error')) {
-            resolve({ success: false, error: 'Wrong password' });
-          } else {
-            resolve({ success: false, error: error.message });
+        execFile(pathTo7z, args, (error: any, stdout: string, stderr: string) => {
+          if (error) {
+            // If the test command actually failed (e.g., wrong password supplied, or file is bad)
+            // `7za` often outputs "Wrong password" or similar in stdout/stderr
+            const outStr = (stdout + stderr).toLowerCase();
+            if (outStr.includes('wrong password') || outStr.includes('cannot open encrypted archive') || outStr.includes('data error')) {
+              resolve({ success: false, error: 'Wrong password' });
+            } else {
+              resolve({ success: false, error: error.message });
+            }
+            return;
           }
-          return;
-        }
 
-        // If no password was provided but stdout shows Encrypted = +, it requires a password
-        if (!password && stdout.includes('Encrypted = +')) {
-          resolve({ success: false, error: 'Password required' });
-          return;
-        }
+          // If no password was provided but stdout shows Encrypted = +, it requires a password
+          if (!password && stdout.includes('Encrypted = +')) {
+            resolve({ success: false, error: 'Password required' });
+            return;
+          }
 
-        resolve({ success: true });
+          resolve({ success: true });
+        });
       });
     });
   }
@@ -366,72 +435,115 @@ export class CompressorService extends EventEmitter {
       return { success: false, error: 'Archive not found' };
     }
 
-    const pathTo7z = sevenBin.path7za;
+    return this.withSplitWorkaround(archivePath, async (actualPath) => {
+      const pathTo7z = sevenBin.path7za;
 
-    return new Promise((resolve) => {
-      const { execFile } = require('child_process');
-      // -slt outputs data in a machine-readable block format (Path = ..., Size = ...)
-      const args = ['l', '-slt'];
-      if (password) args.push(`-p${password}`);
-      args.push(archivePath);
+      return new Promise((resolve) => {
+        const { execFile } = require('child_process');
+        // -slt outputs data in a machine-readable block format (Path = ..., Size = ...)
+        const args = ['l', '-slt'];
+        if (password) args.push(`-p${password}`);
+        args.push(actualPath);
 
-      execFile(pathTo7z, args, (error: any, stdout: string, stderr: string) => {
-        if (error) {
-          const outStr = (stdout + stderr).toLowerCase();
-          if (outStr.includes('wrong password') || outStr.includes('cannot open encrypted archive')) {
-            resolve({ success: false, error: 'Wrong password or encrypted archive' });
-          } else {
-            resolve({ success: false, error: error.message });
+        execFile(pathTo7z, args, (error: any, stdout: string, stderr: string) => {
+          if (error) {
+            const outStr = (stdout + stderr).toLowerCase();
+            if (outStr.includes('wrong password') || outStr.includes('cannot open encrypted archive')) {
+              resolve({ success: false, error: 'Wrong password or encrypted archive' });
+            } else {
+              resolve({ success: false, error: error.message });
+            }
+            return;
           }
-          return;
-        }
 
-        const files: ArchiveFileEntry[] = [];
-        
-        // Parse the -slt output blocks
-        // Data usually starts after a line containing "----------"
-        const blocks = stdout.split(/\r?\n\r?\n/);
-        
-        for (const block of blocks) {
-          if (!block.includes('Path = ')) continue;
+          const files: ArchiveFileEntry[] = [];
           
-          const lines = block.split(/\r?\n/);
-          let pathValue = '';
-          let size = 0;
-          let packedSize = 0;
-          let isDirectory = false;
-          let modified = '';
-
-          for (const line of lines) {
-            const eqIdx = line.indexOf('=');
-            if (eqIdx === -1) continue;
+          // Parse the -slt output blocks
+          // Data usually starts after a line containing "----------"
+          const blocks = stdout.split(/\r?\n\r?\n/);
+          
+          for (const block of blocks) {
+            if (!block.includes('Path = ')) continue;
             
-            const key = line.substring(0, eqIdx).trim();
-            const value = line.substring(eqIdx + 1).trim();
+            const lines = block.split(/\r?\n/);
+            let pathValue = '';
+            let size = 0;
+            let packedSize = 0;
+            let isDirectory = false;
+            let modified = '';
 
-            if (key === 'Path') pathValue = value;
-            else if (key === 'Size') size = parseInt(value, 10) || 0;
-            else if (key === 'Packed Size') packedSize = parseInt(value, 10) || 0;
-            else if (key === 'Modified') modified = value;
-            else if (key === 'Folder') isDirectory = value === '+';
-            // Often attributes line dictates folder if Folder field isn't explicitly +
-            else if (key === 'Attributes' && value.startsWith('D')) isDirectory = true;
+            for (const line of lines) {
+              const eqIdx = line.indexOf('=');
+              if (eqIdx === -1) continue;
+              
+              const key = line.substring(0, eqIdx).trim();
+              const value = line.substring(eqIdx + 1).trim();
+
+              if (key === 'Path') pathValue = value;
+              else if (key === 'Size') size = parseInt(value, 10) || 0;
+              else if (key === 'Packed Size') packedSize = parseInt(value, 10) || 0;
+              else if (key === 'Modified') modified = value;
+              else if (key === 'Folder') isDirectory = value === '+';
+              // Often attributes line dictates folder if Folder field isn't explicitly +
+              else if (key === 'Attributes' && value.startsWith('D')) isDirectory = true;
+            }
+
+            // Skip the archive root itself which 7-Zip sometimes lists first
+            if (pathValue && pathValue !== path.basename(actualPath) && !block.includes('Type = ')) {
+              files.push({
+                name: path.basename(pathValue),
+                path: pathValue,
+                isDirectory,
+                size,
+                packedSize,
+                modified
+              });
+            }
           }
 
-          // Skip the archive root itself which 7-Zip sometimes lists first
-          if (pathValue && pathValue !== path.basename(archivePath) && !block.includes('Type = ')) {
-            files.push({
-              name: path.basename(pathValue),
-              path: pathValue,
-              isDirectory,
-              size,
-              packedSize,
-              modified
-            });
-          }
+          resolve({ success: true, files });
+        });
+      });
+    });
+  }
+
+
+
+  async extractSingleFile(
+    archivePath: string, 
+    internalPath: string, 
+    outputDir: string, 
+    password?: string
+  ): Promise<CompressResult> {
+    return this.withSplitWorkaround(archivePath, async (actualPath) => {
+      return new Promise((resolve) => {
+        const pathTo7z = sevenBin.path7za;
+        const options: any = {
+          $bin: pathTo7z,
+          $cherryPick: [internalPath],
+        };
+
+        if (password) {
+          options.password = password;
         }
 
-        resolve({ success: true, files });
+        // 'extract' in node-7z uses 'e' internally, dropping directory paths, 
+        // which is ideal for single-file drag and drop to temp
+        const stream = Seven.extract(actualPath, outputDir, options);
+
+        let isResolved = false;
+        const finish = (success: boolean, error?: string) => {
+          if (isResolved) return;
+          isResolved = true;
+          if (success) {
+            resolve({ success: true, outputPath: path.join(outputDir, path.basename(internalPath)) });
+          } else {
+            resolve({ success: false, error });
+          }
+        };
+
+        stream.on('end', () => finish(true));
+        stream.on('error', (err: any) => finish(false, err.message));
       });
     });
   }

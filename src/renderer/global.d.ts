@@ -40,6 +40,7 @@ interface ICompressorAPI {
   getVersion: () => Promise<string>;
   openPath: (path: string) => Promise<{ success: boolean }>;
   onProgress: (callback: (data: { percent: number; status: string }) => void) => () => void;
+  startNativeDrag: (archivePath: string, internalPath: string, password?: string) => void;
 }
 
 declare global {

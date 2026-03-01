@@ -6,6 +6,7 @@
 import { app, BrowserWindow, ipcMain, dialog, shell, screen } from 'electron';
 import windowStateKeeper from 'electron-window-state';
 import * as path from 'path';
+import * as fs from 'fs';
 import { IPC_CHANNELS, PROGRESS_CHANNEL } from './ipc-channels';
 
 let mainWindow: BrowserWindow | null = null;
@@ -21,7 +22,7 @@ if (app) {
       mainWindow.webContents.send(IPC_CHANNELS.OPEN_WITH, { filePath, action });
       mainWindow.show();
     } else {
-      pendingOpen = { filePath, action };
+      pendingOpens.push({ filePath, action });
     }
   });
 }
@@ -30,15 +31,22 @@ if (app) {
 const ARCHIVE_EXTENSIONS = new Set(['.zip', '.7z', '.rar', '.tar', '.gz', '.tgz']);
 
 function getActionForPath(filePath: string): 'compress' | 'extract' {
-  const ext = filePath.includes('.') ? '.' + filePath.split('.').slice(1).join('.').toLowerCase() : '';
+  const normalized = filePath.toLowerCase();
+  
   // Check multi-part extensions like .tar.gz first
-  if (ext.endsWith('.tar.gz') || ext.endsWith('.tgz') || ARCHIVE_EXTENSIONS.has(ext)) {
+  if (normalized.endsWith('.tar.gz') || normalized.endsWith('.tgz')) {
     return 'extract';
   }
+
+  const ext = normalized.includes('.') ? '.' + normalized.split('.').pop() : '';
+  if (ARCHIVE_EXTENSIONS.has(ext)) {
+    return 'extract';
+  }
+  
   return 'compress';
 }
 
-let pendingOpen: { filePath: string; action: 'compress' | 'extract' } | null = null;
+let pendingOpens: { filePath: string; action: 'compress' | 'extract' }[] = [];
 
 function createWindow(): void {
   const primaryDisplay = screen.getPrimaryDisplay();
@@ -323,43 +331,86 @@ function registerIpcHandlers(): void {
   ipcMain.on(IPC_CHANNELS.WINDOW_CLOSE, () => {
     mainWindow?.close();
   });
+
+  ipcMain.on(IPC_CHANNELS.START_NATIVE_DRAG, async (event, archivePath, internalPath, password) => {
+    try {
+      const tempRoot = app.getPath('temp');
+      const sessionSubfolder = `icompressor-drag-${Date.now()}`;
+      const extractDir = path.join(tempRoot, sessionSubfolder);
+
+      fs.mkdirSync(extractDir, { recursive: true });
+
+      const result = await compressor.extractSingleFile(archivePath, internalPath, extractDir, password);
+
+      if (result.success && result.outputPath) {
+        event.sender.startDrag({
+          file: result.outputPath,
+          icon: path.join(__dirname, '../../build/icon.png')
+        });
+      }
+    } catch (err) {
+      console.error('Drag extraction error:', err);
+    }
+  });
 }
 
 // ─── Handle open-file from macOS Services / file associations ─────────────────
 // Moved to top of file
 
-// ─── Also handle plain CLI arg (e.g. `electron . /path/to/file.zip`) ──────────
-function checkCliArgs(): void {
-  // Filter out electron flags and our own entry points
-  const args = process.argv.slice(isDev ? 3 : 2).filter(a => !a.startsWith('-') && a !== '.');
-  if (args.length > 0) {
-    const filePath = args[0];
-    pendingOpen = { filePath, action: getActionForPath(filePath) };
-  }
+// ─── Also handle plain CLI args (e.g. `electron . /path/to/file.zip`) ──────────
+function checkCliArgs(argsToParse: string[] = process.argv): void {
+  // Filter out electron flags, the exe itself, and our own entry points
+  const args = argsToParse.filter(a => !a.startsWith('-') && !a.endsWith('iCompressor.exe') && !a.endsWith('electron.exe') && a !== '.' && !a.includes('main.js') && !a.includes('app.asar'));
+  
+  args.forEach(filePath => {
+    const action = getActionForPath(filePath);
+    if (mainWindow?.webContents) {
+      mainWindow.webContents.send(IPC_CHANNELS.OPEN_WITH, { filePath, action });
+    } else {
+      pendingOpens.push({ filePath, action });
+    }
+  });
 }
 
-app.whenReady().then(() => {
-  checkCliArgs();
-  registerIpcHandlers();
-  createWindow();
+const gotTheLock = app.requestSingleInstanceLock();
 
-  // Once the renderer signals it's ready, flush any pending open-with intent
-  ipcMain.on('renderer:ready', () => {
-    if (pendingOpen && mainWindow?.webContents) {
-      mainWindow.webContents.send(IPC_CHANNELS.OPEN_WITH, pendingOpen);
-      pendingOpen = null;
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', (event, commandLine, workingDirectory) => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
     }
+    // We pass the new command line args to be parsed and sent
+    checkCliArgs(commandLine);
   });
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+  app.whenReady().then(() => {
+    checkCliArgs();
+    registerIpcHandlers();
+    createWindow();
+
+    // Once the renderer signals it's ready, flush any pending open-with intents
+    ipcMain.on('renderer:ready', () => {
+      if (pendingOpens.length > 0 && mainWindow?.webContents) {
+        pendingOpens.forEach(item => {
+          mainWindow!.webContents.send(IPC_CHANNELS.OPEN_WITH, item);
+        });
+        pendingOpens = [];
+      }
+    });
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+      }
+    });
+  });
+
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+      app.quit();
     }
   });
-});
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
+}

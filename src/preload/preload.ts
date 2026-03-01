@@ -27,6 +27,7 @@ const IPC_CHANNELS = {
   WINDOW_MAXIMIZE: 'window:maximize',
   WINDOW_CLOSE: 'window:close',
   OPEN_WITH: 'app:open-with',
+  START_NATIVE_DRAG: 'app:start-native-drag',
 } as const;
 
 const PROGRESS_CHANNEL = 'compressor:progress';
@@ -71,6 +72,7 @@ export interface ICompressorAPI {
   closeWindow: () => void;
   getPlatform: () => string;
   onOpenWith: (callback: (data: { filePath: string; action: 'compress' | 'extract' }) => void) => () => void;
+  startNativeDrag: (archivePath: string, internalPath: string, password?: string) => void;
 }
 
 export interface AppSettings {
@@ -127,6 +129,9 @@ const api: ICompressorAPI = {
     ipcRenderer.on(IPC_CHANNELS.OPEN_WITH, handler);
     return () => ipcRenderer.removeListener(IPC_CHANNELS.OPEN_WITH, handler);
   },
+  startNativeDrag: (archivePath: string, internalPath: string, password?: string) => {
+    ipcRenderer.send(IPC_CHANNELS.START_NATIVE_DRAG, archivePath, internalPath, password);
+  }
 };
 
 contextBridge.exposeInMainWorld('compressorAPI', api);

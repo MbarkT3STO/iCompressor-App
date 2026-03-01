@@ -308,7 +308,8 @@ export function renderArchiveViewerPath(archiveName: string, pathParts: string[]
 
 export function renderArchiveViewerTable(
   files: any[], 
-  onFolderClick: (folderName: string) => void
+  onFolderClick: (folderName: string) => void,
+  onDragStart?: (file: any) => void
 ): void {
   const tbody = document.getElementById('archive-viewer-tbody');
   const stats = document.getElementById('archive-viewer-stats');
@@ -339,6 +340,12 @@ export function renderArchiveViewerTable(
 
     if (file.isDirectory) {
       tr.addEventListener('dblclick', () => onFolderClick(file.name));
+    } else if (onDragStart) {
+      tr.draggable = true;
+      tr.addEventListener('dragstart', (e) => {
+        e.preventDefault();
+        onDragStart(file);
+      });
     }
 
     tbody.appendChild(tr);
