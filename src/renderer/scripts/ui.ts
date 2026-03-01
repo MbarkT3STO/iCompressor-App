@@ -138,6 +138,63 @@ export function showToast(containerId: string, message: string, type: 'success' 
   }, duration);
 }
 
+// History
+export function renderHistory(entries: import('../types').HistoryEntry[], clearCallback?: () => void) {
+  const list = document.getElementById('history-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  if (!entries || entries.length === 0) {
+    list.innerHTML = `
+      <div class="history-empty">
+        <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+        <p>No activity history yet.</p>
+      </div>
+    `;
+    return;
+  }
+
+  entries.forEach(entry => {
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    
+    // Icon based on action and status
+    const isError = entry.status === 'error';
+    const actionIcon = isError ? 'icon-error' : (entry.action === 'compress' ? 'icon-compress' : 'icon-extract');
+    const svgIcon = isError 
+      ? '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>'
+      : (entry.action === 'compress' 
+          ? '<path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 10H6v-2h8v2zm4-4H6v-2h12v2z"/>'
+          : '<path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>');
+
+    const date = new Date(entry.timestamp);
+    const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+    let titleText = '';
+    if (entry.action === 'compress') {
+      titleText = entry.output ? `Compressed to ${entry.output}` : `Compressing ${entry.source}`;
+    } else {
+      titleText = entry.output ? `Extracted to ${entry.output}` : `Extracting ${entry.source}`;
+    }
+
+    item.innerHTML = `
+      <div class="history-item-icon ${actionIcon}">
+        <svg viewBox="0 0 24 24">${svgIcon}</svg>
+      </div>
+      <div class="history-item-details">
+        <div class="history-item-title" title="${titleText}">${titleText}</div>
+        <div class="history-item-meta">
+          <span>${entry.action === 'compress' ? 'Compression' : 'Extraction'}</span>
+          <span class="separator"></span>
+          <span>${dateStr}</span>
+        </div>
+        ${isError ? `<div class="history-item-error">${entry.errorMessage || 'Unknown error'}</div>` : ''}
+      </div>
+    `;
+    list.appendChild(item);
+  });
+}
+
 
 
 // Settings form
@@ -146,6 +203,7 @@ export function applySettingsToForm(settings: AppSettings): void {
   const levelValueEl = document.getElementById('compression-level-value');
   const outputDirEl = document.getElementById('setting-output-dir') as HTMLInputElement;
   const autoOpenEl = document.getElementById('setting-auto-open') as HTMLInputElement;
+  const minimizeTrayEl = document.getElementById('setting-minimize-tray') as HTMLInputElement;
   const themeEl = document.getElementById('setting-theme') as HTMLSelectElement;
   const animationsEl = document.getElementById('setting-animations') as HTMLInputElement;
   
@@ -158,6 +216,7 @@ export function applySettingsToForm(settings: AppSettings): void {
   if (outputDirEl) outputDirEl.value = settings.outputDirectory || '';
   if (outputDirEl) outputDirEl.placeholder = 'Same as source';
   if (autoOpenEl) autoOpenEl.checked = settings.autoOpenResultFolder ?? true;
+  if (minimizeTrayEl) minimizeTrayEl.checked = settings.minimizeToTray ?? true;
   if (themeEl) themeEl.value = settings.theme || 'system';
   if (animationsEl) animationsEl.checked = settings.animationsEnabled ?? true;
 
@@ -462,7 +521,8 @@ export function renderArchiveViewerPath(archiveName: string, pathParts: string[]
 export function renderArchiveViewerTable(
   files: any[], 
   onFolderClick: (folderName: string) => void,
-  onDragStart?: (file: any) => void
+  onDragStart?: (file: any) => void,
+  onFileClick?: (file: any) => void
 ): void {
   const tbody = document.getElementById('archive-viewer-tbody');
   const stats = document.getElementById('archive-viewer-stats');
@@ -493,12 +553,17 @@ export function renderArchiveViewerTable(
 
     if (file.isDirectory) {
       tr.addEventListener('dblclick', () => onFolderClick(file.name));
-    } else if (onDragStart) {
-      tr.draggable = true;
-      tr.addEventListener('dragstart', (e) => {
-        e.preventDefault();
-        onDragStart(file);
-      });
+    } else {
+      if (onFileClick) {
+        tr.addEventListener('dblclick', () => onFileClick(file));
+      }
+      if (onDragStart) {
+        tr.draggable = true;
+        tr.addEventListener('dragstart', (e) => {
+          e.preventDefault();
+          onDragStart(file);
+        });
+      }
     }
 
     tbody.appendChild(tr);
@@ -649,28 +714,42 @@ export function showContextMenu(x: number, y: number, items: ContextMenuItem[]):
 
 // Folder Size Modal
 
-export function showFolderSizeModal(folderName: string, sizeStr: string): void {
+export function showFolderSizeModal(folderName: string, size?: number, error?: string): void {
   const modal = document.getElementById('folder-size-modal');
   const nameEl = document.getElementById('folder-size-name');
   const valueEl = document.getElementById('folder-size-value');
   
-  if (nameEl) nameEl.textContent = folderName;
-  if (valueEl) valueEl.textContent = sizeStr;
+  if (!modal || !nameEl || !valueEl) return;
   
-  if (modal) {
-    modal.classList.remove('hidden');
-    // Ensure OK button binds click
-    const okBtn = document.getElementById('btn-close-folder-size');
-    const backdrop = document.getElementById('folder-size-modal-backdrop');
+  nameEl.textContent = folderName;
+  
+  if (error) {
+    valueEl.textContent = 'Error calculating size';
+    valueEl.style.color = '#ff4b4b';
+  } else if (size !== undefined) {
+    valueEl.textContent = formatSize(size);
+    valueEl.style.color = 'var(--color-text-secondary)';
+  } else {
+    valueEl.textContent = 'Calculating...';
+    valueEl.style.color = 'var(--color-text-secondary)';
+  }
+  
+  modal.classList.remove('hidden');
+  
+  const handleClose = () => hideFolderSizeModal();
+  
+  const backdrop = document.getElementById('folder-size-modal-backdrop');
+  const closeBtn = document.getElementById('btn-close-folder-size');
+  
+  // Cleanup old listeners if any by replacing elements
+  if (backdrop && closeBtn) {
+    const newBackdrop = backdrop.cloneNode(true);
+    const newCloseBtn = closeBtn.cloneNode(true);
+    backdrop.parentNode?.replaceChild(newBackdrop, backdrop);
+    closeBtn.parentNode?.replaceChild(newCloseBtn, closeBtn);
     
-    const closeHandler = () => {
-      hideFolderSizeModal();
-      okBtn?.removeEventListener('click', closeHandler);
-      backdrop?.removeEventListener('click', closeHandler);
-    };
-    
-    okBtn?.addEventListener('click', closeHandler);
-    backdrop?.addEventListener('click', closeHandler);
+    newBackdrop.addEventListener('click', handleClose);
+    newCloseBtn.addEventListener('click', handleClose);
   }
 }
 
@@ -678,6 +757,77 @@ export function hideFolderSizeModal(): void {
   const modal = document.getElementById('folder-size-modal');
   if (modal) {
     modal.classList.add('hidden');
+  }
+}
+
+// File Preview
+export function showFilePreview(title: string, data?: string, type?: 'text' | 'image' | 'unsupported', error?: string): void {
+  const modal = document.getElementById('file-preview-modal');
+  const titleEl = document.getElementById('preview-modal-title');
+  const bodyEl = document.getElementById('preview-modal-body');
+
+  if (!modal || !titleEl || !bodyEl) return;
+
+  titleEl.textContent = title;
+  bodyEl.innerHTML = '';
+
+  if (error) {
+    bodyEl.innerHTML = `
+      <div class="preview-unsupported">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+        <p style="color: #ff4b4b;">${error}</p>
+      </div>
+    `;
+  } else if (type === 'image' && data) {
+    bodyEl.innerHTML = `<img src="${data}" class="preview-image" alt="Preview">`;
+  } else if (type === 'text' && data) {
+    const textEl = document.createElement('pre');
+    textEl.className = 'preview-text';
+    textEl.textContent = data;
+    bodyEl.appendChild(textEl);
+  } else {
+    bodyEl.innerHTML = `
+      <div class="preview-unsupported">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-2h2v2zm0-4V7h2v6z"/></svg>
+        <p>Preview not available for this file type or size.</p>
+        <p style="font-size: 0.8rem; color: var(--color-text-muted);">Please extract the file to view it.</p>
+      </div>
+    `;
+  }
+
+  modal.classList.remove('hidden');
+
+  const handleClose = () => {
+    hideFilePreview();
+  };
+
+  const backdrop = document.getElementById('preview-modal-backdrop');
+  const closeBtn = document.getElementById('btn-close-preview');
+
+  if (backdrop && closeBtn) {
+    const newBackdrop = backdrop.cloneNode(true);
+    const newCloseBtn = closeBtn.cloneNode(true);
+    backdrop.parentNode?.replaceChild(newBackdrop, backdrop);
+    closeBtn.parentNode?.replaceChild(newCloseBtn, closeBtn);
+
+    newBackdrop.addEventListener('click', handleClose);
+    newCloseBtn.addEventListener('click', handleClose);
+  }
+}
+
+export function hideFilePreview(): void {
+  const modal = document.getElementById('file-preview-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    const bodyEl = document.getElementById('preview-modal-body');
+    if (bodyEl) {
+      bodyEl.innerHTML = `
+        <div class="preview-loading">
+          <svg class="spinner" viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle></svg>
+          <p>Loading preview...</p>
+        </div>
+      `;
+    }
   }
 }
 

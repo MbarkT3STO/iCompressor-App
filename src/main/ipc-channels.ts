@@ -12,8 +12,13 @@ export const IPC_CHANNELS = {
   EXTRACT: 'compressor:extract',
   TEST: 'compressor:test',
   LIST_ARCHIVE: 'compressor:list',
+  EXTRACT_PREVIEW_FILE: 'compressor:preview',
+
   GET_SETTINGS: 'settings:get',
   SAVE_SETTINGS: 'settings:save',
+  GET_HISTORY: 'history:get',
+  CLEAR_HISTORY: 'history:clear',
+
 
   GET_VERSION: 'app:version',
   OPEN_PATH: 'shell:open-path',

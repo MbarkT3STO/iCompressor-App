@@ -34,9 +34,12 @@ import {
   renderArchiveViewerTable,
   applySettingsToForm,
   formatSize,
-  showFolderSizeModal
+  showFolderSizeModal,
+  hideFolderSizeModal,
+  renderHistory,
+  showFilePreview
 } from './ui';
-import type { FileEntry } from '../types';
+import type { AppSettings, FileEntry, HistoryEntry } from '../types';
 
 // Path utilities (renderer-safe - we receive paths as strings from main)
 function basename(p: string): string {
@@ -116,6 +119,7 @@ function setupNavigation(): void {
 
         if (panelId === 'settings') loadSettings();
         if (panelId === 'browse') initBrowse();
+        if (panelId === 'history') initHistory();
       }
     });
   });
@@ -126,6 +130,7 @@ let currentBrowsePath = '';
 let selectedBrowsePaths = new Set<string>();
 let browseEntries: FileEntry[] = [];
 let browseSearchQuery = '';
+let browseSortMode = 'name-asc';
 
 // Recents
 let recentArchives: string[] = JSON.parse(localStorage.getItem('recent_archives') || '[]');
@@ -136,6 +141,20 @@ async function initBrowse() {
   }
   await loadDirectory(currentBrowsePath);
 }
+
+// History
+async function initHistory() {
+  const entries = await ipc.getHistory();
+  renderHistory(entries, async () => {
+    // Optional clear callback if needed inside ui.ts
+  });
+}
+
+document.getElementById('btn-clear-history')?.addEventListener('click', async () => {
+  await ipc.clearHistory();
+  await initHistory();
+  showToast('toast-browse', 'History cleared', 'success');
+});
 
 async function loadDirectory(dirPath: string) {
   const result = await ipc.readDir(dirPath);
@@ -220,9 +239,31 @@ function updateBrowseUI() {
   renderBreadcrumbs('browse-breadcrumbs', pieces, (path: string) => loadDirectory(path));
   
   // Render based on selected view mode
-  const filteredEntries = browseSearchQuery 
+  let filteredEntries = browseSearchQuery 
     ? browseEntries.filter(e => e.name.toLowerCase().includes(browseSearchQuery.toLowerCase()))
-    : browseEntries;
+    : [...browseEntries];
+
+  filteredEntries.sort((a, b) => {
+    if (a.isDirectory !== b.isDirectory) {
+      return a.isDirectory ? -1 : 1;
+    }
+    switch (browseSortMode) {
+      case 'name-asc':
+        return a.name.localeCompare(b.name);
+      case 'name-desc':
+        return b.name.localeCompare(a.name);
+      case 'size-desc':
+        return (b.size || 0) - (a.size || 0);
+      case 'size-asc':
+        return (a.size || 0) - (b.size || 0);
+      case 'date-desc':
+        return (b.modifiedAt || 0) - (a.modifiedAt || 0);
+      case 'date-asc':
+        return (a.modifiedAt || 0) - (b.modifiedAt || 0);
+      default:
+        return a.name.localeCompare(b.name);
+    }
+  });
 
   ipc.getSettings().then(settings => {
     if (settings.browseViewMode === 'tree') {
@@ -309,7 +350,7 @@ function handleBrowseContextMenu(entry: FileEntry, x: number, y: number) {
         showToast('toast-browse', `Calculating...`, 'info');
         const res = await ipc.getFolderSize(entry.path);
         if (res.success && res.size !== undefined) {
-          showFolderSizeModal(entry.name, formatSize(res.size));
+          showFolderSizeModal(entry.name, res.size);
         } else {
           showToast('toast-browse', `Failed to calculate size`, 'error');
         }
@@ -394,6 +435,15 @@ function setupBrowse() {
     browseSearchQuery = (e.target as HTMLInputElement).value;
     updateBrowseUI();
   });
+
+  const sortSelect = document.getElementById('browse-sort-select') as HTMLSelectElement;
+  if (sortSelect) {
+    sortSelect.value = browseSortMode;
+    sortSelect.addEventListener('change', () => {
+      browseSortMode = sortSelect.value;
+      updateBrowseUI();
+    });
+  }
 
   document.getElementById('btn-toggle-recents')?.addEventListener('click', (e) => {
     // Only toggle if not clicking the clear button
@@ -674,6 +724,15 @@ function setupExtract(): void {
         },
         (file) => {
           ipc.startNativeDrag(currentViewerArchive, file.path, currentViewerPassword);
+        },
+        async (file) => {
+          showFilePreview(basename(file.path));
+          const res = await ipc.extractPreviewFile(currentViewerArchive, file.path, currentViewerPassword);
+          if (res.success) {
+            showFilePreview(basename(file.path), res.data, res.type, res.error);
+          } else {
+            showFilePreview(basename(file.path), undefined, undefined, res.error || 'Failed to extract preview');
+          }
         }
       );
     }
@@ -827,6 +886,7 @@ function setupSettings(): void {
   const saveSettings = async () => {
     const outputDirEl = document.getElementById('setting-output-dir') as HTMLInputElement;
     const autoOpenEl = document.getElementById('setting-auto-open') as HTMLInputElement;
+    const minimizeTrayEl = document.getElementById('setting-minimize-tray') as HTMLInputElement;
     const themeEl = document.getElementById('setting-theme') as HTMLSelectElement;
     const animationsEl = document.getElementById('setting-animations') as HTMLInputElement;
 
@@ -838,6 +898,7 @@ function setupSettings(): void {
       compressionLevel: Number(levelEl?.value ?? 6),
       outputDirectory: outputDirEl?.value || '',
       autoOpenResultFolder: autoOpenEl?.checked ?? true,
+      minimizeToTray: minimizeTrayEl?.checked ?? true,
       theme: (themeEl?.value as 'light' | 'dark' | 'system') || 'system',
       themeFlavor: (document.querySelector('.flavor-swatch.active')?.getAttribute('data-flavor') as any) || 'midnight',
       animationsEnabled: animationsEl?.checked ?? true,

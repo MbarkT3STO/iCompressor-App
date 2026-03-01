@@ -3,13 +3,14 @@
  * Electron main entry point with window management and IPC handlers
  */
 
-import { app, BrowserWindow, ipcMain, dialog, shell, screen } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell, screen, Tray, Menu, nativeImage } from 'electron';
 import windowStateKeeper from 'electron-window-state';
 import * as path from 'path';
 import * as fs from 'fs';
 import { IPC_CHANNELS, PROGRESS_CHANNEL } from './ipc-channels';
 
 let mainWindow: BrowserWindow | null = null;
+let tray: Tray | null = null;
 const isDev = process.argv.includes('--dev');
 
 // ─── Handle open-file from macOS Services / file associations ─────────────────
@@ -103,10 +104,11 @@ function createWindow(): void {
 function registerIpcHandlers(): void {
   const { CompressorService } = require('../services/compressor');
   const { SettingsService } = require('../services/settings');
-
+  const { HistoryService } = require('../services/history');
 
   const compressor = new CompressorService();
   const settings = new SettingsService();
+  const history = new HistoryService();
 
 
   // Send progress to renderer
@@ -186,8 +188,28 @@ function registerIpcHandlers(): void {
       try {
         const result = await compressor.compress(payload);
 
+        if (result.success && result.outputPath) {
+          history.addEntry({
+            id: Date.now().toString(),
+            timestamp: Date.now(),
+            action: 'compress',
+            source: payload.sources.map(s => require('path').basename(s)).join(', '),
+            output: require('path').basename(result.outputPath),
+            status: 'success'
+          });
+        }
+
         return result;
       } catch (err) {
+        history.addEntry({
+          id: Date.now().toString(),
+          timestamp: Date.now(),
+          action: 'compress',
+          source: payload.sources[0] ? require('path').basename(payload.sources[0]) : 'Unknown',
+          output: '',
+          status: 'error',
+          errorMessage: err instanceof Error ? err.message : 'Unknown error'
+        });
         return {
           success: false,
           error: err instanceof Error ? err.message : 'Unknown error',
@@ -205,8 +227,28 @@ function registerIpcHandlers(): void {
       try {
         const result = await compressor.extract(payload);
 
+        if (result.success && result.outputDir) {
+          history.addEntry({
+            id: Date.now().toString(),
+            timestamp: Date.now(),
+            action: 'extract',
+            source: require('path').basename(payload.archivePath),
+            output: result.outputDir,
+            status: 'success'
+          });
+        }
+
         return result;
       } catch (err) {
+        history.addEntry({
+          id: Date.now().toString(),
+          timestamp: Date.now(),
+          action: 'extract',
+          source: require('path').basename(payload.archivePath),
+          output: '',
+          status: 'error',
+          errorMessage: err instanceof Error ? err.message : 'Unknown error'
+        });
         return {
           success: false,
           error: err instanceof Error ? err.message : 'Unknown error',
@@ -221,6 +263,59 @@ function registerIpcHandlers(): void {
     async (_, payload: { archivePath: string; password?: string }) => {
       try {
         return await compressor.listArchive(payload.archivePath, payload.password);
+      } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+      }
+    }
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.EXTRACT_PREVIEW_FILE,
+    async (_, payload: { archivePath: string; internalPath: string; password?: string }) => {
+      try {
+        const os = require('os');
+        const crypto = require('crypto');
+        const tempDir = path.join(os.tmpdir(), `icompressor_preview_${crypto.randomBytes(4).toString('hex')}`);
+        fs.mkdirSync(tempDir, { recursive: true });
+        
+        const result = await compressor.extractSingleFile(payload.archivePath, payload.internalPath, tempDir, payload.password);
+        if (!result.success || !result.outputPath) {
+          return { success: false, error: result.error || 'Failed to extract file for preview' };
+        }
+        
+        const buffer = fs.readFileSync(result.outputPath);
+        fs.unlinkSync(result.outputPath);
+        fs.rmdirSync(tempDir);
+        
+        const ext = path.extname(payload.internalPath).toLowerCase();
+        const imageExts = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.bmp'];
+        const textExts = ['.txt', '.md', '.json', '.xml', '.csv', '.js', '.ts', '.css', '.html', '.ini', '.log'];
+        
+        if (imageExts.includes(ext)) {
+          let mime = 'image/png';
+          if (ext === '.jpg' || ext === '.jpeg') mime = 'image/jpeg';
+          else if (ext === '.gif') mime = 'image/gif';
+          else if (ext === '.webp') mime = 'image/webp';
+          else if (ext === '.svg') mime = 'image/svg+xml';
+          else if (ext === '.bmp') mime = 'image/bmp';
+          
+          return {
+            success: true,
+            type: 'image',
+            data: `data:${mime};base64,${buffer.toString('base64')}`
+          };
+        } else if (textExts.includes(ext) || buffer.length < 50000) {
+          return {
+            success: true,
+            type: 'text',
+            data: buffer.toString('utf8')
+          };
+        } else {
+          return {
+            success: true,
+            type: 'unsupported'
+          };
+        }
       } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
       }
@@ -244,6 +339,10 @@ function registerIpcHandlers(): void {
   // Settings
   ipcMain.handle(IPC_CHANNELS.GET_SETTINGS, () => settings.get());
   ipcMain.handle(IPC_CHANNELS.SAVE_SETTINGS, (_, s) => settings.saveSettings(s));
+
+  // History
+  ipcMain.handle(IPC_CHANNELS.GET_HISTORY, () => history.getHistory());
+  ipcMain.handle(IPC_CHANNELS.CLEAR_HISTORY, () => history.clearHistory());
 
 
 
@@ -367,7 +466,12 @@ function registerIpcHandlers(): void {
   });
 
   ipcMain.on(IPC_CHANNELS.WINDOW_CLOSE, () => {
-    mainWindow?.close();
+    const s = settings.get();
+    if (s.minimizeToTray) {
+      mainWindow?.hide();
+    } else {
+      mainWindow?.close();
+    }
   });
 
   ipcMain.on(IPC_CHANNELS.START_NATIVE_DRAG, async (event, archivePath, internalPath, password) => {
@@ -429,6 +533,52 @@ if (!gotTheLock) {
     registerIpcHandlers();
     createWindow();
 
+    // Setup Tray
+    const createTray = () => {
+      if (tray) return;
+      
+      const iconPath = path.join(__dirname, '../../node_modules/app-builder-lib/templates/icons/electron-linux/16x16.png');
+      const trayIcon = nativeImage.createFromPath(iconPath);
+      tray = new Tray(trayIcon);
+      
+      const contextMenu = Menu.buildFromTemplate([
+        { label: 'Show iCompressor', click: () => {
+            if (mainWindow) {
+              mainWindow.show();
+            } else {
+              createWindow();
+            }
+          } 
+        },
+        { type: 'separator' },
+        { label: 'Quit', click: () => {
+            app.quit();
+          }
+        }
+      ]);
+      
+      tray.setToolTip('iCompressor');
+      tray.setContextMenu(contextMenu);
+      
+      tray.on('click', () => {
+        if (mainWindow) {
+          if (mainWindow.isVisible()) {
+            if (mainWindow.isFocused()) {
+              mainWindow.hide();
+            } else {
+              mainWindow.focus();
+            }
+          } else {
+            mainWindow.show();
+          }
+        } else {
+          createWindow();
+        }
+      });
+    };
+    
+    createTray();
+
     // Once the renderer signals it's ready, flush any pending open-with intents
     ipcMain.on('renderer:ready', () => {
       if (pendingOpens.length > 0 && mainWindow?.webContents) {
@@ -442,6 +592,8 @@ if (!gotTheLock) {
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {
         createWindow();
+      } else if (mainWindow) {
+        mainWindow.show();
       }
     });
   });

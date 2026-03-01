@@ -13,6 +13,7 @@ export interface AppSettings {
   autoOpenResultFolder: boolean;
   theme: 'light' | 'dark' | 'system';
   animationsEnabled: boolean;
+  minimizeToTray: boolean;
 
   deleteSourcesAfterProcess: boolean;
   overwriteBehavior: 'overwrite' | 'skip' | 'prompt';
@@ -24,6 +25,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   autoOpenResultFolder: true,
   theme: 'system',
   animationsEnabled: true,
+  minimizeToTray: true,
 
   deleteSourcesAfterProcess: false,
   overwriteBehavior: 'prompt',

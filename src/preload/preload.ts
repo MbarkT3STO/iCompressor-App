@@ -17,6 +17,9 @@ const IPC_CHANNELS = {
   LIST_ARCHIVE: 'compressor:list',
   GET_SETTINGS: 'settings:get',
   SAVE_SETTINGS: 'settings:save',
+  EXTRACT_PREVIEW_FILE: 'compressor:preview',
+  GET_HISTORY: 'history:get',
+  CLEAR_HISTORY: 'history:clear',
 
   GET_VERSION: 'app:version',
   OPEN_PATH: 'shell:open-path',
@@ -67,6 +70,9 @@ export interface ICompressorAPI {
   onProgress: (callback: (data: { percent: number; status: string }) => void) => () => void;
   getHomeDir: () => Promise<string>;
   getFolderSize: (path: string) => Promise<{ success: boolean; size?: number; error?: string }>;
+  getHistory: () => Promise<any[]>;
+  clearHistory: () => Promise<void>;
+  extractPreviewFile: (archivePath: string, internalPath: string, password?: string) => Promise<{ success: boolean; data?: string; type?: 'text' | 'image' | 'unsupported'; error?: string }>;
   readDir: (path: string) => Promise<{ success: boolean; entries?: FileEntry[]; error?: string }>;
   openExternal: (url: string) => Promise<{ success: boolean }>;
   minimizeWindow: () => void;
@@ -134,7 +140,11 @@ const api: ICompressorAPI = {
   },
   startNativeDrag: (archivePath: string, internalPath: string, password?: string) => {
     ipcRenderer.send(IPC_CHANNELS.START_NATIVE_DRAG, archivePath, internalPath, password);
-  }
+  },
+  getHistory: () => ipcRenderer.invoke(IPC_CHANNELS.GET_HISTORY),
+  clearHistory: () => ipcRenderer.invoke(IPC_CHANNELS.CLEAR_HISTORY),
+  extractPreviewFile: (archivePath: string, internalPath: string, password?: string) => 
+    ipcRenderer.invoke(IPC_CHANNELS.EXTRACT_PREVIEW_FILE, { archivePath, internalPath, password })
 };
 
 contextBridge.exposeInMainWorld('compressorAPI', api);

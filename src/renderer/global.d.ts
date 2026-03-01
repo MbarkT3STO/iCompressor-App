@@ -3,11 +3,14 @@
  */
 
 interface HistoryEntry {
-  type: 'compress' | 'extract';
-  sources: string[];
-  output: string;
-  format: string;
+  id: string;
   timestamp: number;
+  action: 'compress' | 'extract';
+  source: string;
+  output: string;
+  status: 'success' | 'error';
+  errorMessage?: string;
+  sizeReduction?: string;
 }
 
 interface AppSettings {
@@ -37,6 +40,7 @@ interface ICompressorAPI {
   saveSettings: (settings: Partial<AppSettings>) => Promise<void>;
   getHistory: () => Promise<HistoryEntry[]>;
   clearHistory: () => Promise<void>;
+  extractPreviewFile: (archivePath: string, internalPath: string, password?: string) => Promise<{ success: boolean; data?: string; type?: 'text' | 'image' | 'unsupported'; error?: string }>;
   getVersion: () => Promise<string>;
   openPath: (path: string) => Promise<{ success: boolean }>;
   getFolderSize: (path: string) => Promise<{ success: boolean; size?: number; error?: string }>;

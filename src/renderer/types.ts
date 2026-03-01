@@ -11,6 +11,7 @@ export interface AppSettings {
   theme: 'light' | 'dark' | 'system';
   themeFlavor?: 'midnight' | 'strawberry' | 'matcha' | 'ocean';
   animationsEnabled: boolean;
+  minimizeToTray: boolean;
 
   deleteSourcesAfterProcess: boolean;
   overwriteBehavior: 'overwrite' | 'skip' | 'prompt';
@@ -23,4 +24,15 @@ export interface FileEntry {
   isDirectory: boolean;
   size: number;
   modifiedAt: number;
+}
+
+export interface HistoryEntry {
+  id: string;
+  timestamp: number;
+  action: 'compress' | 'extract';
+  source: string;
+  output: string;
+  status: 'success' | 'error';
+  errorMessage?: string;
+  sizeReduction?: string; // Optional field to store "500MB -> 120MB" info if calculated
 }
