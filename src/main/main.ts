@@ -119,8 +119,8 @@ function registerIpcHandlers(): void {
   // File dialogs
   ipcMain.handle(IPC_CHANNELS.SELECT_FILES, async () => {
     const result = await dialog.showOpenDialog(mainWindow!, {
-      properties: ['openFile', 'openDirectory', 'multiSelections'],
-      title: 'Select files or folders to compress',
+      properties: ['openFile', 'multiSelections'],
+      title: 'Select files to compress',
     });
     return result.canceled ? [] : result.filePaths;
   });

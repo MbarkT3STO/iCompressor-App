@@ -336,6 +336,16 @@ function setupCompress(): void {
     });
   });
 
+  document.getElementById('btn-add-folder')?.addEventListener('click', () => {
+    ipc.selectFolder().then((path) => {
+      if (path) {
+        const existing = getPathsFromList('compress-files-list');
+        const merged = [...new Set([...existing, path])];
+        setFileList('compress-files-list', merged);
+      }
+    });
+  });
+
   const speedEl = document.getElementById('compression-speed') as HTMLInputElement;
   const speedLabel = document.getElementById('speed-label');
   const speedMap: Record<string, string> = {
