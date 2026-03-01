@@ -2499,8 +2499,107 @@ body {
 .recent-item:hover {
   border-color: var(--color-accent);
   background: var(--color-bg-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Browse Tree View */
+.browse-tree {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 2px;
+}
+
+.tree-node {
+  display: flex;
+  flex-direction: column;
+}
+
+.tree-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  border: 1px solid transparent;
+}
+
+.tree-row:hover {
+  background: var(--color-bg-hover);
+}
+
+.tree-row.selected {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.tree-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  color: var(--color-text-muted);
+  transition: all var(--transition-fast);
+}
+
+.tree-row:hover .tree-toggle {
+  color: var(--color-text);
+}
+
+.tree-toggle svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  transform: rotate(-90deg);
+  transition: transform var(--transition-normal);
+}
+
+.tree-node.expanded>.tree-row .tree-toggle svg {
+  transform: rotate(0deg);
+}
+
+.tree-children {
+  display: none;
+  padding-left: 24px;
+  flex-direction: column;
+  gap: 2px;
+  animation: slide-down 0.2s ease-out;
+}
+
+.tree-node.expanded>.tree-children {
+  display: flex;
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tree-icon {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.tree-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .recent-name {

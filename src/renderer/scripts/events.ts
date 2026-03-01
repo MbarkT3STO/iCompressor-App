@@ -19,6 +19,9 @@ import {
   playSound,
   renderBreadcrumbs,
   renderBrowseList,
+  renderBrowseTree,
+  renderTreeChildren,
+  updateBrowseSelection,
   showArchiveViewerModal,
   hideArchiveViewerModal,
   setArchiveViewerState,
@@ -207,22 +210,49 @@ function updateBrowseUI() {
     });
   }
 
-  renderBreadcrumbs('browse-breadcrumbs', pieces, (path) => loadDirectory(path));
+  renderBreadcrumbs('browse-breadcrumbs', pieces, (path: string) => loadDirectory(path));
   
-  // Render list (filtered by search)
+  // Render based on selected view mode
   const filteredEntries = browseSearchQuery 
     ? browseEntries.filter(e => e.name.toLowerCase().includes(browseSearchQuery.toLowerCase()))
     : browseEntries;
 
-  renderBrowseList(
-    'browse-list', 
-    filteredEntries, 
-    handleBrowseSelect, 
-    handleBrowseOpen,
-    (path) => selectedBrowsePaths.has(path)
-  );
+  ipc.getSettings().then(settings => {
+    if (settings.browseViewMode === 'tree') {
+      renderBrowseTree(
+        'browse-list',
+        filteredEntries,
+        handleBrowseSelect,
+        handleBrowseOpen,
+        handleBrowseExpand,
+        (path: string) => selectedBrowsePaths.has(path)
+      );
+    } else {
+      renderBrowseList(
+        'browse-list', 
+        filteredEntries, 
+        handleBrowseSelect, 
+        handleBrowseOpen,
+        (path: string) => selectedBrowsePaths.has(path)
+      );
+    }
+  });
 
   updateBrowseButtons();
+}
+
+async function handleBrowseExpand(entry: FileEntry, container: HTMLElement) {
+  const result = await ipc.readDir(entry.path);
+  if (result.success && result.entries) {
+    renderTreeChildren(
+      container,
+      result.entries,
+      handleBrowseSelect,
+      handleBrowseOpen,
+      handleBrowseExpand,
+      (path: string) => selectedBrowsePaths.has(path)
+    );
+  }
 }
 
 function handleBrowseSelect(entry: FileEntry, multi: boolean) {
@@ -241,7 +271,8 @@ function handleBrowseSelect(entry: FileEntry, multi: boolean) {
       selectedBrowsePaths.add(entry.path);
     }
   }
-  updateBrowseUI();
+  updateBrowseSelection('browse-list', selectedBrowsePaths);
+  updateBrowseButtons();
 }
 
 function handleBrowseOpen(entry: FileEntry) {
@@ -745,10 +776,12 @@ function setupSettings(): void {
       theme: (themeEl?.value as 'light' | 'dark' | 'system') || 'system',
       themeFlavor: (document.querySelector('.flavor-swatch.active')?.getAttribute('data-flavor') as any) || 'midnight',
       animationsEnabled: animationsEl?.checked ?? true,
+      browseViewMode: (document.getElementById('setting-browse-view') as HTMLSelectElement)?.value as any || 'explorer',
 
       deleteSourcesAfterProcess: deleteSourcesEl?.checked ?? false,
       overwriteBehavior: (overwriteBehaviorEl?.value as 'overwrite' | 'skip' | 'prompt') || 'prompt',
     });
+    updateBrowseUI(); // Refresh browser tab if open
   };
 
   levelEl?.addEventListener('change', saveSettings);
@@ -761,6 +794,7 @@ function setupSettings(): void {
     await saveSettings();
   });
   document.getElementById('setting-animations')?.addEventListener('change', saveSettings);
+  document.getElementById('setting-browse-view')?.addEventListener('change', saveSettings);
   
   // Flavor swatches
   document.querySelectorAll('.flavor-swatch').forEach(sw => {
@@ -773,7 +807,6 @@ function setupSettings(): void {
     });
   });
   
-
   document.getElementById('setting-delete-sources')?.addEventListener('change', saveSettings);
   document.getElementById('setting-overwrite-behavior')?.addEventListener('change', saveSettings);
 }

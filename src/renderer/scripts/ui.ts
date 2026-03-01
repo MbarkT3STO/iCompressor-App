@@ -161,6 +161,9 @@ export function applySettingsToForm(settings: AppSettings): void {
   if (themeEl) themeEl.value = settings.theme || 'system';
   if (animationsEl) animationsEl.checked = settings.animationsEnabled ?? true;
 
+  const browseViewEl = document.getElementById('setting-browse-view') as HTMLSelectElement;
+  if (browseViewEl) browseViewEl.value = settings.browseViewMode || 'explorer';
+
   // Flavor
   const flavor = settings.themeFlavor || 'midnight';
   document.querySelectorAll('.flavor-swatch').forEach(sw => {
@@ -243,6 +246,7 @@ export function renderBrowseList(containerId: string, entries: FileEntry[], onSe
   entries.forEach((entry) => {
     const el = document.createElement('div');
     el.className = `file-item ${entry.isDirectory ? 'folder' : 'file'}`;
+    el.setAttribute('data-path', entry.path);
     if (isSelected(entry.path)) el.classList.add('selected');
 
     el.innerHTML = `
@@ -258,6 +262,118 @@ export function renderBrowseList(containerId: string, entries: FileEntry[], onSe
     el.addEventListener('dblclick', () => onOpen(entry));
     
     container.appendChild(el);
+  });
+}
+
+const chevronIcon = `<svg class="tree-toggle-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M7 10l5 5 5-5z"/></svg>`;
+
+export function renderBrowseTree(
+  containerId: string, 
+  entries: FileEntry[], 
+  onSelect: (entry: FileEntry, multi: boolean) => void, 
+  onOpen: (entry: FileEntry) => void, 
+  onExpand: (entry: FileEntry, childrenContainer: HTMLElement) => Promise<void>,
+  isSelected: (path: string) => boolean
+): void {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+
+  const tree = document.createElement('div');
+  tree.className = 'browse-tree';
+
+  if (entries.length === 0) {
+    container.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--color-text-muted);">Empty folder</div>';
+    return;
+  }
+
+  entries.forEach(entry => {
+    const node = createTreeNode(entry, onSelect, onOpen, onExpand, isSelected);
+    tree.appendChild(node);
+  });
+
+  container.appendChild(tree);
+}
+
+function createTreeNode(
+  entry: FileEntry,
+  onSelect: (entry: FileEntry, multi: boolean) => void,
+  onOpen: (entry: FileEntry) => void,
+  onExpand: (entry: FileEntry, childrenContainer: HTMLElement) => Promise<void>,
+  isSelected: (path: string) => boolean
+): HTMLElement {
+  const node = document.createElement('div');
+  node.className = 'tree-node';
+  if (isSelected(entry.path)) node.classList.add('selected');
+
+  const row = document.createElement('div');
+  row.className = 'tree-row';
+  row.setAttribute('data-path', entry.path);
+  if (isSelected(entry.path)) row.classList.add('selected');
+
+  const toggle = document.createElement('div');
+  toggle.className = 'tree-toggle';
+  if (entry.isDirectory) {
+    toggle.innerHTML = chevronIcon;
+    toggle.onclick = async (e) => {
+      e.stopPropagation();
+      const isExpanded = node.classList.toggle('expanded');
+      if (isExpanded && children.children.length === 0) {
+        await onExpand(entry, children);
+      }
+    };
+  }
+
+  const icon = document.createElement('div');
+  icon.className = 'tree-icon';
+  icon.innerHTML = entry.isDirectory ? folderIcon : fileIcon;
+
+  const name = document.createElement('div');
+  name.className = 'tree-name';
+  name.textContent = entry.name;
+
+  row.appendChild(toggle);
+  row.appendChild(icon);
+  row.appendChild(name);
+
+  row.onclick = (e) => onSelect(entry, e.metaKey || e.ctrlKey);
+  row.ondblclick = () => onOpen(entry);
+
+  const children = document.createElement('div');
+  children.className = 'tree-children';
+
+  node.appendChild(row);
+  node.appendChild(children);
+
+  return node;
+}
+
+export function renderTreeChildren(
+  container: HTMLElement,
+  entries: FileEntry[],
+  onSelect: (entry: FileEntry, multi: boolean) => void,
+  onOpen: (entry: FileEntry) => void,
+  onExpand: (entry: FileEntry, childrenContainer: HTMLElement) => Promise<void>,
+  isSelected: (path: string) => boolean
+): void {
+  container.innerHTML = '';
+  entries.forEach(entry => {
+    const node = createTreeNode(entry, onSelect, onOpen, onExpand, isSelected);
+    container.appendChild(node);
+  });
+}
+
+export function updateBrowseSelection(containerId: string, selectedPaths: Set<string>): void {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const items = container.querySelectorAll('[data-path]');
+  items.forEach(item => {
+    const path = item.getAttribute('data-path');
+    if (path && selectedPaths.has(path)) {
+      item.classList.add('selected');
+    } else {
+      item.classList.remove('selected');
+    }
   });
 }
 
