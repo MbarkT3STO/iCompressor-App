@@ -815,6 +815,10 @@ body {
   padding: 8px 18px;
   border-radius: var(--radius-full);
   transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .btn-text:hover {
@@ -834,6 +838,10 @@ body {
   cursor: pointer;
   transition: all var(--transition-fast);
   box-shadow: var(--shadow-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -2126,11 +2134,30 @@ body {
 
   .panel-head {
     margin-bottom: 4px;
+    align-items: center;
   }
 
   .browse-actions {
     flex: 1;
-    justify-content: space-between;
+    justify-content: flex-end;
+    /* Align icons to the right */
+    gap: 6px;
+  }
+
+  .browse-actions .btn-label {
+    display: none;
+    /* Hide button text labels */
+  }
+
+  .browse-actions button {
+    padding: 10px;
+    /* Square proportions for icons */
+    min-width: 42px;
+    min-height: 42px;
+  }
+
+  .browse-actions .btn-text {
+    padding: 8px;
   }
 }
 
