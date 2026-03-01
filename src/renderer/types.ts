@@ -9,6 +9,7 @@ export interface AppSettings {
   outputDirectory: string;
   autoOpenResultFolder: boolean;
   theme: 'light' | 'dark' | 'system';
+  themeFlavor?: 'midnight' | 'strawberry' | 'matcha' | 'ocean';
   animationsEnabled: boolean;
 
   deleteSourcesAfterProcess: boolean;

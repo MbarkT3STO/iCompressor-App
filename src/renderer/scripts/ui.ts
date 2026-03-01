@@ -160,10 +160,14 @@ export function applySettingsToForm(settings: AppSettings): void {
   if (autoOpenEl) autoOpenEl.checked = settings.autoOpenResultFolder ?? true;
   if (themeEl) themeEl.value = settings.theme || 'system';
   if (animationsEl) animationsEl.checked = settings.animationsEnabled ?? true;
-  
 
-  if (deleteSourcesEl) deleteSourcesEl.checked = settings.deleteSourcesAfterProcess ?? false;
-  if (overwriteBehaviorEl) overwriteBehaviorEl.value = settings.overwriteBehavior || 'prompt';
+  // Flavor
+  const flavor = settings.themeFlavor || 'midnight';
+  document.querySelectorAll('.flavor-swatch').forEach(sw => {
+    sw.classList.toggle('active', sw.getAttribute('data-flavor') === flavor);
+  });
+  applyTheme(settings.theme || 'system');
+  applyFlavor(flavor);
 }
 
 // Theme
@@ -175,6 +179,16 @@ export function applyTheme(theme: 'light' | 'dark' | 'system'): void {
     root.setAttribute('data-theme', theme);
   }
 }
+
+export function applyFlavor(flavor: string): void {
+  const root = document.documentElement;
+  if (flavor === 'midnight') {
+    root.removeAttribute('data-flavor');
+  } else {
+    root.setAttribute('data-flavor', flavor);
+  }
+}
+
 
 // File Browser
 export function renderBreadcrumbs(containerId: string, pathPieces: { name: string; fullPath: string }[], onNav: (path: string) => void): void {
@@ -350,4 +364,63 @@ export function renderArchiveViewerTable(
 
     tbody.appendChild(tr);
   });
+}
+
+// Micro-sounds generator
+let audioCtx: AudioContext | null = null;
+export function playSound(type: 'click' | 'success' | 'error' | 'switch'): void {
+  try {
+    if (typeof window === 'undefined') return;
+    if (!audioCtx) audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+
+    switch (type) {
+      case 'click':
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(440, now + 0.1);
+        gain.gain.setValueAtTime(0.04, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
+        break;
+      case 'switch':
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
+        gain.gain.setValueAtTime(0.02, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.08);
+        break;
+      case 'success':
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.2); // G5
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+        break;
+      case 'error':
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(110, now + 0.2);
+        gain.gain.setValueAtTime(0.03, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+        break;
+    }
+  } catch (e) {
+    console.warn('Audio play failed', e);
+  }
 }

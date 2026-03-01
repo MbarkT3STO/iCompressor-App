@@ -123,3 +123,179 @@
     --shadow-glow: 0 0 40px rgba(247, 37, 133, 0.2);
   }
 }
+
+/* --- Theme Flavors (Cute Customization) --- */
+
+/* 1. Strawberry Milk (Pastel Pink) */
+[data-flavor='strawberry'] {
+  /* Dark Flavor (Base) */
+  --color-bg: #1a050a;
+  --color-bg-gradient: radial-gradient(circle at top left, #2d0b14 0%, #0b0507 100%);
+  --color-bg-elevated: rgba(45, 11, 20, 0.4);
+  --color-bg-glass: rgba(255, 71, 87, 0.12);
+  --color-bg-glass-strong: rgba(255, 71, 87, 0.22);
+  --color-bg-sidebar: rgba(26, 5, 10, 0.85);
+  --color-bg-hover: rgba(255, 71, 87, 0.15);
+
+  --color-text: #fdfcff;
+  --color-text-secondary: #ffdfe5;
+  --color-text-muted: #d6a3ac;
+
+  --color-accent: #ff4757;
+  --color-accent-secondary: #ff6b81;
+  --color-accent-gradient: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
+  --color-accent-soft: rgba(255, 71, 87, 0.2);
+
+  --color-border: rgba(255, 71, 87, 0.3);
+  --color-border-strong: rgba(255, 71, 87, 0.5);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+  --shadow-glow: 0 0 30px rgba(255, 71, 87, 0.2);
+}
+
+[data-theme='light'][data-flavor='strawberry'] {
+  --color-bg: #fff5f8;
+  --color-bg-gradient: radial-gradient(circle at top left, #fff0f3 0%, #ffe3e8 100%);
+  --color-bg-elevated: rgba(255, 230, 235, 0.7);
+  --color-bg-glass: rgba(255, 107, 129, 0.1);
+  --color-bg-glass-strong: rgba(255, 107, 129, 0.2);
+  --color-bg-sidebar: rgba(255, 245, 248, 0.95);
+  --color-bg-hover: rgba(255, 107, 129, 0.12);
+  --color-border: rgba(255, 107, 129, 0.25);
+  --color-border-strong: rgba(255, 71, 87, 0.4);
+  --color-text: #5d1a2a;
+  --color-text-secondary: #8e4a5a;
+  --color-text-muted: #b38a94;
+  --glass-border: 1px solid rgba(255, 107, 129, 0.15);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark'])[data-flavor='strawberry'] {
+    --color-bg: #fff5f8;
+    --color-bg-gradient: radial-gradient(circle at top left, #fff0f3 0%, #ffe3e8 100%);
+    --color-bg-elevated: rgba(255, 230, 235, 0.7);
+    --color-bg-glass: rgba(255, 107, 129, 0.1);
+    --color-bg-glass-strong: rgba(255, 107, 129, 0.2);
+    --color-bg-sidebar: rgba(255, 245, 248, 0.95);
+    --color-bg-hover: rgba(255, 107, 129, 0.12);
+    --color-border: rgba(255, 107, 129, 0.25);
+    --color-border-strong: rgba(255, 71, 87, 0.4);
+    --color-text: #5d1a2a;
+    --color-text-secondary: #8e4a5a;
+    --color-text-muted: #b38a94;
+    --glass-border: 1px solid rgba(255, 107, 129, 0.15);
+  }
+}
+
+/* 2. Matcha Latte (Nature Greens) */
+[data-flavor='matcha'] {
+  /* Dark Flavor (Base) */
+  --color-bg: #0a1405;
+  --color-bg-gradient: radial-gradient(circle at top left, #12220b 0%, #050a04 100%);
+  --color-bg-elevated: rgba(18, 34, 11, 0.4);
+  --color-bg-glass: rgba(67, 160, 71, 0.12);
+  --color-bg-glass-strong: rgba(67, 160, 71, 0.22);
+  --color-bg-sidebar: rgba(10, 20, 5, 0.85);
+  --color-bg-hover: rgba(67, 160, 71, 0.15);
+  --color-text: #f0fdf4;
+  --color-text-secondary: #dcfce7;
+  --color-text-muted: #78a57a;
+  --color-accent: #43a047;
+  --color-accent-secondary: #66bb6a;
+  --color-accent-gradient: linear-gradient(135deg, #2e7d32 0%, #66bb6a 100%);
+  --color-accent-soft: rgba(67, 160, 71, 0.2);
+  --color-border: rgba(67, 160, 71, 0.3);
+  --color-border-strong: rgba(67, 160, 71, 0.5);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+  --shadow-glow: 0 0 30px rgba(67, 160, 71, 0.2);
+}
+
+[data-theme='light'][data-flavor='matcha'] {
+  --color-bg: #f8faf5;
+  --color-bg-gradient: radial-gradient(circle at top left, #f1f8e9 0%, #e8f5e9 100%);
+  --color-bg-elevated: rgba(232, 245, 233, 0.8);
+  --color-bg-glass: rgba(102, 187, 106, 0.1);
+  --color-bg-glass-strong: rgba(102, 187, 106, 0.2);
+  --color-bg-sidebar: rgba(248, 250, 245, 0.95);
+  --color-bg-hover: rgba(102, 187, 106, 0.15);
+  --color-border: rgba(102, 187, 106, 0.3);
+  --color-border-strong: rgba(67, 160, 71, 0.4);
+  --color-text: #1b3022;
+  --color-text-secondary: #3a5a40;
+  --color-text-muted: #588157;
+  --glass-border: 1px solid rgba(102, 187, 106, 0.2);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark'])[data-flavor='matcha'] {
+    --color-bg: #f8faf5;
+    --color-bg-gradient: radial-gradient(circle at top left, #f1f8e9 0%, #e8f5e9 100%);
+    --color-bg-elevated: rgba(232, 245, 233, 0.8);
+    --color-bg-glass: rgba(102, 187, 106, 0.1);
+    --color-bg-glass-strong: rgba(102, 187, 106, 0.2);
+    --color-bg-sidebar: rgba(248, 250, 245, 0.95);
+    --color-bg-hover: rgba(102, 187, 106, 0.15);
+    --color-border: rgba(102, 187, 106, 0.3);
+    --color-border-strong: rgba(67, 160, 71, 0.4);
+    --color-text: #1b3022;
+    --color-text-secondary: #3a5a40;
+    --color-text-muted: #588157;
+    --glass-border: 1px solid rgba(102, 187, 106, 0.2);
+  }
+}
+
+/* 3. Ocean Breeze (Cool Blues) */
+[data-flavor='ocean'] {
+  /* Dark Flavor (Base) */
+  --color-bg: #050a14;
+  --color-bg-gradient: radial-gradient(circle at top left, #0b1a36 0%, #050a14 100%);
+  --color-bg-elevated: rgba(11, 26, 54, 0.4);
+  --color-bg-glass: rgba(3, 169, 244, 0.12);
+  --color-bg-glass-strong: rgba(3, 169, 244, 0.22);
+  --color-bg-sidebar: rgba(5, 10, 20, 0.85);
+  --color-bg-hover: rgba(3, 169, 244, 0.15);
+  --color-text: #f0f9ff;
+  --color-text-secondary: #e0f2fe;
+  --color-text-muted: #7dd3fc;
+  --color-accent: #0288d1;
+  --color-accent-secondary: #03a9f4;
+  --color-accent-gradient: linear-gradient(135deg, #01497c 0%, #4cc9f0 100%);
+  --color-accent-soft: rgba(2, 136, 209, 0.2);
+  --color-border: rgba(3, 169, 244, 0.3);
+  --color-border-strong: rgba(3, 169, 244, 0.5);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+  --shadow-glow: 0 0 30px rgba(3, 169, 244, 0.2);
+}
+
+[data-theme='light'][data-flavor='ocean'] {
+  --color-bg: #f0f7ff;
+  --color-bg-gradient: radial-gradient(circle at top left, #ffffff 0%, #e1f5fe 100%);
+  --color-bg-elevated: rgba(225, 245, 254, 0.8);
+  --color-bg-glass: rgba(3, 169, 244, 0.1);
+  --color-bg-glass-strong: rgba(3, 169, 244, 0.2);
+  --color-bg-sidebar: rgba(240, 247, 255, 0.95);
+  --color-bg-hover: rgba(3, 169, 244, 0.15);
+  --color-border: rgba(3, 169, 244, 0.3);
+  --color-border-strong: rgba(2, 136, 209, 0.4);
+  --color-text: #012a4a;
+  --color-text-secondary: #01497c;
+  --color-text-muted: #2c7da0;
+  --glass-border: 1px solid rgba(3, 169, 244, 0.2);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark'])[data-flavor='ocean'] {
+    --color-bg: #f0f7ff;
+    --color-bg-gradient: radial-gradient(circle at top left, #ffffff 0%, #e1f5fe 100%);
+    --color-bg-elevated: rgba(225, 245, 254, 0.8);
+    --color-bg-glass: rgba(3, 169, 244, 0.1);
+    --color-bg-glass-strong: rgba(3, 169, 244, 0.2);
+    --color-bg-sidebar: rgba(240, 247, 255, 0.95);
+    --color-bg-hover: rgba(3, 169, 244, 0.15);
+    --color-border: rgba(3, 169, 244, 0.3);
+    --color-border-strong: rgba(2, 136, 209, 0.4);
+    --color-text: #012a4a;
+    --color-text-secondary: #01497c;
+    --color-text-muted: #2c7da0;
+    --glass-border: 1px solid rgba(3, 169, 244, 0.2);
+  }
+}

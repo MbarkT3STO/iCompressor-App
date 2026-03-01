@@ -48,6 +48,7 @@ export const ipc: {
   closeWindow: () => void;
   getPlatform: () => string;
   onOpenWith: (callback: (data: { filePath: string; action: 'compress' | 'extract' }) => void) => () => void;
+  startNativeDrag: (archivePath: string, internalPath: string, password?: string) => void;
 } = {
   selectFiles: () => api.selectFiles(),
   selectFolder: () => api.selectFolder(),
@@ -65,6 +66,7 @@ export const ipc: {
     archivePath: string;
     outputDir: string;
     format?: string;
+    password?: string;
   }) => api.extract(payload),
   test: (archivePath: string, password?: string) => api.test(archivePath, password),
   listArchive: (archivePath: string, password?: string) => api.listArchive(archivePath, password),
@@ -83,4 +85,6 @@ export const ipc: {
   closeWindow: () => api.closeWindow(),
   getPlatform: () => api.getPlatform(),
   onOpenWith: (callback) => api.onOpenWith(callback),
+  startNativeDrag: (archivePath: string, internalPath: string, password?: string) =>
+    api.startNativeDrag(archivePath, internalPath, password),
 };

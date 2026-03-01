@@ -15,6 +15,8 @@ import {
   showToast,
 
   applyTheme,
+  applyFlavor,
+  playSound,
   renderBreadcrumbs,
   renderBrowseList,
   showArchiveViewerModal,
@@ -99,6 +101,7 @@ function setupNavigation(): void {
     btn.addEventListener('click', () => {
       const panelId = btn.getAttribute('data-panel');
       if (panelId) {
+        playSound('switch');
         showPanel(panelId);
 
         if (panelId === 'settings') loadSettings();
@@ -112,6 +115,10 @@ function setupNavigation(): void {
 let currentBrowsePath = '';
 let selectedBrowsePaths = new Set<string>();
 let browseEntries: FileEntry[] = [];
+let browseSearchQuery = '';
+
+// Recents
+let recentArchives: string[] = JSON.parse(localStorage.getItem('recent_archives') || '[]');
 
 async function initBrowse() {
   if (!currentBrowsePath) {
@@ -130,7 +137,55 @@ async function loadDirectory(dirPath: string) {
   currentBrowsePath = dirPath;
   browseEntries = result.entries;
   selectedBrowsePaths.clear();
+  
+  // Clear search on directory change
+  browseSearchQuery = '';
+  const searchInput = document.getElementById('browse-search-input') as HTMLInputElement;
+  if (searchInput) searchInput.value = '';
+  
   updateBrowseUI();
+}
+
+function saveRecent(path: string) {
+  if (!path) return;
+  recentArchives = [path, ...recentArchives.filter(p => p !== path)].slice(0, 10);
+  localStorage.setItem('recent_archives', JSON.stringify(recentArchives));
+  renderRecents();
+}
+
+function renderRecents() {
+  const container = document.getElementById('browse-recents');
+  const list = document.getElementById('recents-list');
+  if (!container || !list) return;
+
+  if (recentArchives.length === 0) {
+    container.classList.add('hidden');
+    return;
+  }
+
+  container.classList.remove('hidden');
+  list.innerHTML = '';
+
+  recentArchives.forEach(path => {
+    const name = path.split(/[/\\]/).pop() || path;
+    const item = document.createElement('div');
+    item.className = 'recent-item';
+    item.title = path;
+    item.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+      <span class="recent-name">${name}</span>
+    `;
+    item.onclick = async () => {
+      const isArchive = /\.(zip|7z|rar|tar|gz|tgz)$/i.test(path);
+      if (isArchive) {
+        showPanel('extract');
+        if (globalOpenArchiveHandler) globalOpenArchiveHandler(path);
+      } else {
+        ipc.openPath(path);
+      }
+    };
+    list.appendChild(item);
+  });
 }
 
 function updateBrowseUI() {
@@ -154,10 +209,14 @@ function updateBrowseUI() {
 
   renderBreadcrumbs('browse-breadcrumbs', pieces, (path) => loadDirectory(path));
   
-  // Render list
+  // Render list (filtered by search)
+  const filteredEntries = browseSearchQuery 
+    ? browseEntries.filter(e => e.name.toLowerCase().includes(browseSearchQuery.toLowerCase()))
+    : browseEntries;
+
   renderBrowseList(
     'browse-list', 
-    browseEntries, 
+    filteredEntries, 
     handleBrowseSelect, 
     handleBrowseOpen,
     (path) => selectedBrowsePaths.has(path)
@@ -234,6 +293,29 @@ function setupBrowse() {
       }
     }
   });
+
+  document.getElementById('browse-search-input')?.addEventListener('input', (e) => {
+    browseSearchQuery = (e.target as HTMLInputElement).value;
+    updateBrowseUI();
+  });
+
+  document.getElementById('btn-toggle-recents')?.addEventListener('click', (e) => {
+    // Only toggle if not clicking the clear button
+    const target = e.target as HTMLElement;
+    if (target.closest('#btn-clear-recents')) return;
+    
+    const recents = document.getElementById('browse-recents');
+    recents?.classList.toggle('collapsed');
+    playSound('click');
+  });
+
+  document.getElementById('btn-clear-recents')?.addEventListener('click', () => {
+    recentArchives = [];
+    localStorage.removeItem('recent_archives');
+    renderRecents();
+  });
+
+  renderRecents();
 }
 
 // Compress
@@ -252,6 +334,30 @@ function setupCompress(): void {
         setFileList('compress-files-list', merged);
       }
     });
+  });
+
+  const speedEl = document.getElementById('compression-speed') as HTMLInputElement;
+  const speedLabel = document.getElementById('speed-label');
+  const speedMap: Record<string, string> = {
+    '1': 'Store',
+    '3': 'Fast',
+    '5': 'Normal',
+    '7': 'Good',
+    '9': 'Ultra'
+  };
+
+  speedEl?.addEventListener('input', () => {
+    if (speedLabel) speedLabel.textContent = speedMap[speedEl.value] || 'Normal';
+  });
+
+  const pwdToggle = document.getElementById('archive-password-toggle') as HTMLInputElement;
+  const pwdInput = document.getElementById('archive-password') as HTMLInputElement;
+  pwdToggle?.addEventListener('change', () => {
+    if (pwdInput) {
+      pwdInput.classList.toggle('hidden', !pwdToggle.checked);
+      if (pwdToggle.checked) pwdInput.focus();
+      else pwdInput.value = '';
+    }
   });
 
   document.getElementById('btn-compress')?.addEventListener('click', async () => {
@@ -284,7 +390,7 @@ function setupCompress(): void {
     const outputPath = await ipc.selectOutput(defaultPath, format);
     if (!outputPath) return;
 
-    const compressionLevel = settings.compressionLevel ?? 6;
+    const compressionLevel = speedEl ? Number(speedEl.value) : 6;
 
     showGlobalProgress(0, 'Preparing...', 'Compressing...');
 
@@ -304,12 +410,15 @@ function setupCompress(): void {
       });
 
       if (result.success) {
+        playSound('success');
         showToast('toast-compress', `Compressed to ${basename(result.outputPath!)}`, 'success');
+        if (result.outputPath) saveRecent(result.outputPath);
         setFileList('compress-files-list', []);
         if (settings.autoOpenResultFolder && result.outputPath) {
           ipc.openPath(result.outputPath);
         }
       } else {
+        playSound('error');
         showToast('toast-compress', result.error || 'Compression failed', 'error');
       }
     } catch (err: any) {
@@ -383,8 +492,10 @@ function setupExtract(): void {
     unsub();
 
     if (result.success) {
+      playSound('success');
       // Show 100% briefly so the bar finishes cleanly, then hide
       showGlobalProgress(100, 'Complete', 'Extracting...');
+      if (archivePath) saveRecent(archivePath);
       setTimeout(() => {
         hideGlobalProgress();
         hidePasswordModal();
@@ -405,9 +516,11 @@ function setupExtract(): void {
         errLower.includes('encrypt') || 
         errLower.includes('data error')
       ) {
+        playSound('error');
         hideGlobalProgress(); // Force hide in case any async progress events trickled
         showPasswordModal(!!password); // Keep it open, but flash the red error text
       } else {
+        playSound('error');
         hideGlobalProgress();
         hidePasswordModal();
         showToast('toast-extract', result.error || 'Extraction failed', 'error');
@@ -620,6 +733,7 @@ function setupSettings(): void {
       outputDirectory: outputDirEl?.value || '',
       autoOpenResultFolder: autoOpenEl?.checked ?? true,
       theme: (themeEl?.value as 'light' | 'dark' | 'system') || 'system',
+      themeFlavor: (document.querySelector('.flavor-swatch.active')?.getAttribute('data-flavor') as any) || 'midnight',
       animationsEnabled: animationsEl?.checked ?? true,
 
       deleteSourcesAfterProcess: deleteSourcesEl?.checked ?? false,
@@ -637,6 +751,17 @@ function setupSettings(): void {
     await saveSettings();
   });
   document.getElementById('setting-animations')?.addEventListener('change', saveSettings);
+  
+  // Flavor swatches
+  document.querySelectorAll('.flavor-swatch').forEach(sw => {
+    sw.addEventListener('click', async () => {
+      document.querySelectorAll('.flavor-swatch').forEach(s => s.classList.remove('active'));
+      sw.classList.add('active');
+      const flavor = sw.getAttribute('data-flavor') || 'midnight';
+      applyFlavor(flavor);
+      await saveSettings();
+    });
+  });
   
 
   document.getElementById('setting-delete-sources')?.addEventListener('change', saveSettings);
