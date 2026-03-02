@@ -10,13 +10,19 @@ export function showPanel(panelId: string): void {
   document.querySelectorAll('.panel').forEach((p) => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach((n) => {
     n.classList.remove('active');
-    n.setAttribute('aria-selected', n.getAttribute('data-panel') === panelId ? 'true' : 'false');
+    n.setAttribute('aria-selected', 'false');
   });
+  
   const panel = document.getElementById(`panel-${panelId}`);
-  const navItem = document.querySelector(`.nav-item[data-panel="${panelId}"]`);
   panel?.classList.add('active');
-  if (navItem) {
-    navItem.classList.add('active');
+  
+  // Only activate nav item if not the welcome panel
+  if (panelId !== 'welcome') {
+    const navItem = document.querySelector(`.nav-item[data-panel="${panelId}"]`);
+    if (navItem) {
+      navItem.classList.add('active');
+      navItem.setAttribute('aria-selected', 'true');
+    }
   }
 
   // Trigger animations
@@ -452,7 +458,10 @@ export function setBrowseLoading(loading: boolean): void {
     if (browseCard) {
       const div = document.createElement('div');
       div.className = 'browse-loading-overlay active';
-      div.innerHTML = '<div class="spinner"></div><p>Reading directory...</p>';
+      div.innerHTML = `
+        <div class="spinner"></div>
+        <p>Loading directory...</p>
+      `;
       browseCard.appendChild(div);
     }
   }

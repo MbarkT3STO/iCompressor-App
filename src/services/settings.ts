@@ -41,7 +41,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   layout: 'header',
   sidebarCollapsed: true,
   showHistoryTab: false,
-  showBrowseRecents: true,
+  showBrowseRecents: false,
   autoResizeWindow: true,
 };
 

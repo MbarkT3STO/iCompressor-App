@@ -152,6 +152,22 @@ let browseHistoryForward: string[] = [];
 // Recents
 let recentArchives: string[] = JSON.parse(localStorage.getItem('recent_archives') || '[]');
 
+// Keyboard navigation for browse tab
+document.addEventListener('keydown', (e) => {
+  if (document.getElementById('panel-browse')?.classList.contains('active')) {
+    if (e.key === 'Enter' && selectedBrowsePaths.size > 0) {
+      e.preventDefault();
+      const selectedPath = Array.from(selectedBrowsePaths)[0];
+      if (selectedPath) {
+        const entry = browseEntries.find(e => e.path === selectedPath);
+        if (entry) {
+          handleBrowseOpen(entry);
+        }
+      }
+    }
+  }
+});
+
 async function initBrowse() {
   if (!currentBrowsePath) {
     currentBrowsePath = await ipc.getHomeDir();
@@ -236,12 +252,10 @@ function renderRecents() {
       <span class="recent-name">${name}</span>
     `;
     item.onclick = async () => {
-      const isArchive = /\.(zip|7z|rar|tar|gz|tgz)$/i.test(path);
-      if (isArchive) {
-        showPanel('extract');
-        if (globalOpenArchiveHandler) globalOpenArchiveHandler(path);
-      } else {
-        ipc.openPath(path);
+      console.log('Recent item clicked:', path);
+      // Always try to open as archive preview, just like in extract tab
+      if (globalOpenArchiveHandler) {
+        globalOpenArchiveHandler(path);
       }
     };
     list.appendChild(item);
@@ -433,13 +447,19 @@ function updateBrowseButtons() {
   const btnExtract = document.getElementById('btn-browse-extract') as HTMLButtonElement;
   const btnBack = document.getElementById('btn-browse-back') as HTMLButtonElement;
   const btnForward = document.getElementById('btn-browse-forward') as HTMLButtonElement;
+  const btnUp = document.getElementById('btn-browse-up') as HTMLButtonElement;
   
   if (btnBack) btnBack.disabled = browseHistoryBack.length === 0;
   if (btnForward) btnForward.disabled = browseHistoryForward.length === 0;
+  
+  // Disable Up button if we're at root or can't go up
+  if (btnUp) {
+    const canGoUp = currentBrowsePath && dirname(currentBrowsePath) !== currentBrowsePath;
+    btnUp.disabled = !canGoUp;
+  }
 
   const selectedCount = selectedBrowsePaths.size;
   if (btnCompress) btnCompress.disabled = selectedCount === 0;
-  
   if (btnExtract) {
     // Only allow extract if exactly one supported archive is selected
     if (selectedCount === 1) {
@@ -544,6 +564,16 @@ function setupBrowse() {
       if (next) {
         browseHistoryBack.push(currentBrowsePath);
         loadDirectory(next, false);
+      }
+    }
+  });
+
+  // Up Navigation
+  document.getElementById('btn-browse-up')?.addEventListener('click', () => {
+    if (currentBrowsePath) {
+      const parentPath = dirname(currentBrowsePath);
+      if (parentPath && parentPath !== currentBrowsePath) {
+        loadDirectory(parentPath);
       }
     }
   });
@@ -902,6 +932,27 @@ function setupExtract(): void {
   };
 
   document.getElementById('btn-close-viewer')?.addEventListener('click', hideArchiveViewerModal);
+
+  // Add ESC key support for closing archive viewer
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('archive-viewer-modal');
+      if (modal && !modal.classList.contains('hidden')) {
+        hideArchiveViewerModal();
+      }
+    }
+  });
+
+  // Add backdrop click support for closing archive viewer
+  document.addEventListener('click', (e) => {
+    const modal = document.getElementById('archive-viewer-modal');
+    if (modal && !modal.classList.contains('hidden')) {
+      const backdrop = modal.querySelector('.progress-modal-backdrop');
+      if (backdrop && e.target === backdrop) {
+        hideArchiveViewerModal();
+      }
+    }
+  });
 
   let currentViewerPassword = '';
 

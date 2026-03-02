@@ -38,7 +38,7 @@
           <span class="logo-text">iCompressor</span>
         </div>
         <nav class="nav" role="navigation">
-          <button class="nav-item active" data-panel="compress" aria-selected="true" title="Compress Files">
+          <button class="nav-item" data-panel="compress" aria-selected="false" title="Compress Files">
             <div class="nav-icon-wrapper">
               <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M14.5 11l-3 6v-4H9l3-6v4h2.5z"/>
@@ -322,7 +322,6 @@
           </div>
           <div class="panel-head">
             <div class="browse-title-group">
-              <h2 class="panel-title">File Browser</h2>
             </div>
           </div>
 
@@ -780,7 +779,7 @@
                 </div>
                 <div class="setting-control">
                   <label class="toggle-switch-v2">
-                    <input type="checkbox" id="setting-show-recents" checked>
+                    <input type="checkbox" id="setting-show-recents">
                     <span class="toggle-slider-v2"></span>
                   </label>
                 </div>
@@ -912,7 +911,15 @@
 
             <!-- Empty State -->
             <div id="archive-viewer-empty" class="archive-viewer-state hidden">
-              <p>No compatible files found in this directory.</p>
+              <div class="empty-state-content">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" opacity="0.3">
+                  <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H5v-2h14v2zm0-4H5v-2h14v2z"/>
+                </svg>
+                <p>This folder is empty</p>
+                <button type="button" class="btn-secondary" onclick="document.getElementById('btn-close-viewer').click()">
+                  Go Back
+                </button>
+              </div>
             </div>
 
             <!-- Data Table -->
