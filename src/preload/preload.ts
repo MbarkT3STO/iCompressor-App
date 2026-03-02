@@ -32,6 +32,7 @@ const IPC_CHANNELS = {
   WINDOW_CLOSE: 'window:close',
   OPEN_WITH: 'app:open-with',
   START_NATIVE_DRAG: 'app:start-native-drag',
+  SET_TRAY_ENABLED: 'tray:set-enabled',
 } as const;
 
 const PROGRESS_CHANNEL = 'compressor:progress';
@@ -81,6 +82,7 @@ export interface ICompressorAPI {
   getPlatform: () => string;
   onOpenWith: (callback: (data: { filePath: string; action: 'compress' | 'extract' }) => void) => () => void;
   startNativeDrag: (archivePath: string, internalPath: string, password?: string) => void;
+  setTrayEnabled: (enabled: boolean) => void;
 }
 
 export interface AppSettings {
@@ -141,6 +143,7 @@ const api: ICompressorAPI = {
   startNativeDrag: (archivePath: string, internalPath: string, password?: string) => {
     ipcRenderer.send(IPC_CHANNELS.START_NATIVE_DRAG, archivePath, internalPath, password);
   },
+  setTrayEnabled: (enabled: boolean) => ipcRenderer.send(IPC_CHANNELS.SET_TRAY_ENABLED, enabled),
   getHistory: () => ipcRenderer.invoke(IPC_CHANNELS.GET_HISTORY),
   clearHistory: () => ipcRenderer.invoke(IPC_CHANNELS.CLEAR_HISTORY),
   extractPreviewFile: (archivePath: string, internalPath: string, password?: string) => 

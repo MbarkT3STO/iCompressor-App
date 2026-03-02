@@ -95,5 +95,6 @@ export const ipc: {
   getHistory: () => api.getHistory(),
   clearHistory: () => api.clearHistory(),
   extractPreviewFile: (archivePath: string, internalPath: string, password?: string) => 
-    api.extractPreviewFile(archivePath, internalPath, password)
+    api.extractPreviewFile(archivePath, internalPath, password),
+  setTrayEnabled: (enabled: boolean) => api.setTrayEnabled(enabled),
 };

@@ -31,6 +31,7 @@ export const IPC_CHANNELS = {
   WINDOW_CLOSE: 'window:close',
   OPEN_WITH: 'app:open-with',
   START_NATIVE_DRAG: 'app:start-native-drag',
+  SET_TRAY_ENABLED: 'tray:set-enabled',
 } as const;
 
 export const PROGRESS_CHANNEL = 'compressor:progress';

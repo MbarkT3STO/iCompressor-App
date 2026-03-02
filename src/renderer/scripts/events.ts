@@ -113,6 +113,7 @@ function setupDropZone(
 }
 
 // Navigation
+let settingsLoaded = false;
 function setupNavigation(): void {
   document.querySelectorAll('.nav-item').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -121,7 +122,12 @@ function setupNavigation(): void {
         playSound('switch');
         showPanel(panelId);
 
-        if (panelId === 'settings') loadSettings();
+        // Load settings only on the first visit — subsequent visits keep the
+        // current form state since every control saves to disk immediately on change.
+        if (panelId === 'settings' && !settingsLoaded) {
+          loadSettings();
+          settingsLoaded = true;
+        }
         if (panelId === 'browse') initBrowse();
         if (panelId === 'history') initHistory();
       }
@@ -1015,6 +1021,12 @@ function setupSettings(): void {
   levelEl?.addEventListener('change', saveSettings);
   document.getElementById('setting-output-dir')?.addEventListener('change', saveSettings);
   document.getElementById('setting-auto-open')?.addEventListener('change', saveSettings);
+  document.getElementById('setting-minimize-tray')?.addEventListener('change', () => {
+    const el = document.getElementById('setting-minimize-tray') as HTMLInputElement;
+    const enabled = el?.checked ?? false;
+    ipc.setTrayEnabled(enabled);  // tell main to create or destroy the tray immediately
+    saveSettings();
+  });
   document.getElementById('setting-theme')?.addEventListener('change', async () => {
     const themeEl = document.getElementById('setting-theme') as HTMLSelectElement;
     const theme = (themeEl?.value as 'light' | 'dark' | 'system') || 'system';

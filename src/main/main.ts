@@ -91,6 +91,21 @@ function createWindow(): void {
     mainWindow?.show();
   });
 
+  // Handle native OS window close button (e.g. macOS red dot, Alt+F4, Cmd+Q)
+  // This is separate from WINDOW_CLOSE IPC (our custom titlebar buttons).
+  mainWindow.on('close', (e) => {
+    // Read the latest setting each time so it always reflects current state
+    const { SettingsService } = require('../services/settings');
+    const settingsSvc = new SettingsService();
+    const s = settingsSvc.get();
+
+    if (s.minimizeToTray) {
+      e.preventDefault();   // stop the window from actually closing
+      mainWindow?.hide();   // hide it to the tray instead
+    }
+    // else: let the event proceed → window closes → app quits
+  });
+
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
@@ -530,30 +545,37 @@ if (!gotTheLock) {
     // Setup Tray
     const createTray = () => {
       if (tray) return;
-      
+
       const iconPath = path.join(__dirname, '../../node_modules/app-builder-lib/templates/icons/electron-linux/16x16.png');
       const trayIcon = nativeImage.createFromPath(iconPath);
       tray = new Tray(trayIcon);
-      
+
       const contextMenu = Menu.buildFromTemplate([
-        { label: 'Show iCompressor', click: () => {
+        {
+          label: 'Show iCompressor', click: () => {
             if (mainWindow) {
               mainWindow.show();
+              mainWindow.focus();
             } else {
               createWindow();
             }
-          } 
+          }
         },
         { type: 'separator' },
-        { label: 'Quit', click: () => {
+        {
+          label: 'Quit', click: () => {
+            // Bypass close handler so it doesn't hide to tray again
+            if (mainWindow) mainWindow.removeAllListeners('close');
+            tray?.destroy();
+            tray = null;
             app.quit();
           }
         }
       ]);
-      
+
       tray.setToolTip('iCompressor');
       tray.setContextMenu(contextMenu);
-      
+
       tray.on('click', () => {
         if (mainWindow) {
           if (mainWindow.isVisible()) {
@@ -570,8 +592,31 @@ if (!gotTheLock) {
         }
       });
     };
-    
-    createTray();
+
+    const destroyTray = () => {
+      if (tray) {
+        tray.destroy();
+        tray = null;
+      }
+    };
+
+    // IPC: renderer notifies main when minimize-to-tray is toggled in settings
+    ipcMain.on(IPC_CHANNELS.SET_TRAY_ENABLED, (_event, enabled: boolean) => {
+      if (enabled) {
+        createTray();
+      } else {
+        destroyTray();
+      }
+    });
+
+    // Only create tray at startup if the setting is enabled
+    {
+      const { SettingsService } = require('../services/settings');
+      const startupS = new SettingsService().get();
+      if (startupS.minimizeToTray) {
+        createTray();
+      }
+    }
 
     // Once the renderer signals it's ready, flush any pending open-with intents
     ipcMain.on('renderer:ready', () => {
