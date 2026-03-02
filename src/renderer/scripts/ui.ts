@@ -18,6 +18,13 @@ export function showPanel(panelId: string): void {
   if (navItem) {
     navItem.classList.add('active');
   }
+
+  // Trigger animations
+  panel?.querySelectorAll('.animate-in').forEach(el => {
+    (el as HTMLElement).style.animation = 'none';
+    void (el as HTMLElement).offsetHeight; // Trigger reflow
+    (el as HTMLElement).style.animation = '';
+  });
 }
 
 // File list helpers
@@ -53,25 +60,139 @@ export function getFileListPaths(listId: string): string[] {
 }
 
 // Store paths on list items - we need to pass path when adding
-export function setFileList(listId: string, paths: string[], onRemove?: (path: string) => void): void {
+export async function setFileList(listId: string, paths: string[], onRemove?: (path: string) => void): Promise<void> {
   const list = document.getElementById(listId);
   if (!list) return;
   list.innerHTML = '';
-  paths.forEach((path) => {
+  
+  await updateCompressDest();
+  
+  const emptyHero = document.getElementById('compress-empty-hero');
+  const populatedView = document.getElementById('compress-populated-view');
+  
+  if (paths.length === 0) {
+    if (emptyHero) emptyHero.classList.remove('hidden');
+    if (populatedView) populatedView.classList.add('hidden');
+  } else {
+    if (emptyHero) emptyHero.classList.add('hidden');
+    if (populatedView) populatedView.classList.remove('hidden');
+  }
+
+  paths.forEach((path, index) => {
     const li = document.createElement('li');
     li.setAttribute('data-path', path);
+    li.style.animationDelay = `${index * 0.05}s`;
+    
     const name = path.split(/[/\\]/).pop() || path;
+    const dir = path.includes('/') || path.includes('\\') ? path.substring(0, path.lastIndexOf(/[/\\]/.exec(path)![0])) : '';
+    
+    // Simple icon picker
+    const ext = name.split('.').pop()?.toLowerCase();
+    const isDir = !ext || !name.includes('.');
+    let icon = `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" fill="currentColor"/></svg>`;
+    
+    if (isDir) {
+      li.classList.add('folder');
+      icon = `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" fill="currentColor"/></svg>`;
+    } else if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(ext)) {
+      icon = `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" fill="currentColor"/></svg>`;
+    } else if (['zip', '7z', 'rar', 'tar', 'gz', 'tgz'].includes(ext)) {
+      icon = `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H5v-2h14v2zm0-4H5v-2h14v2z" fill="currentColor"/></svg>`;
+    }
+
     li.innerHTML = `
-      <span class="file-name" title="${path}">${name}</span>
+      <div class="file-icon-box">
+        ${icon}
+      </div>
+      <div class="file-info">
+        <span class="file-name-v2" title="${path}">${name}</span>
+        <span class="file-path-v2" title="${path}">${dir}</span>
+      </div>
       <button type="button" class="file-remove" aria-label="Remove">×</button>
     `;
     const removeBtn = li.querySelector('.file-remove') as HTMLButtonElement;
     removeBtn?.addEventListener('click', () => {
-      li.remove();
-      onRemove?.(path);
+      li.classList.add('removing');
+      setTimeout(() => {
+        li.remove();
+        onRemove?.(path);
+        updateCompressStats(listId);
+      }, 300);
     });
     list.appendChild(li);
   });
+
+  updateCompressStats(listId);
+}
+
+async function updateCompressStats(listId: string) {
+  const paths = getPathsFromList(listId);
+  const statsEl = document.getElementById('compress-stats-v2');
+  const countEl = statsEl?.querySelector('.stats-count');
+  const sizeEl = statsEl?.querySelector('.stats-size');
+  
+  const emptyHero = document.getElementById('compress-empty-hero');
+  const populatedView = document.getElementById('compress-populated-view');
+
+  if (paths.length === 0) {
+    if (emptyHero) emptyHero.classList.remove('hidden');
+    if (populatedView) populatedView.classList.add('hidden');
+    return;
+  }
+
+  if (emptyHero) emptyHero.classList.add('hidden');
+  if (populatedView) populatedView.classList.remove('hidden');
+  
+  if (countEl) countEl.textContent = `${paths.length} item${paths.length === 1 ? '' : 's'}`;
+
+  if (sizeEl) {
+    sizeEl.textContent = 'Calculating...';
+    try {
+      const { ipc } = require('./ipc');
+      let total = 0;
+      for (const p of paths) {
+        const res = await ipc.getFolderSize(p);
+        if (res.success && res.size) total += res.size;
+      }
+      sizeEl.textContent = formatSize(total);
+    } catch {
+      sizeEl.textContent = '--';
+    }
+  }
+}
+
+export async function updateCompressDest(customPath?: string) {
+  const destEl = document.getElementById('compress-dest-path');
+  if (!destEl) return;
+
+  if (customPath) {
+    destEl.textContent = customPath;
+    destEl.title = customPath;
+    destEl.classList.add('custom');
+    return;
+  }
+
+  // Fallback to settings or source
+  try {
+    const { ipc } = require('./ipc');
+    const settings = await ipc.getSettings();
+    if (settings.outputDirectory) {
+      destEl.textContent = settings.outputDirectory;
+      destEl.title = settings.outputDirectory;
+    } else {
+      const sources = getPathsFromList('compress-files-list');
+      if (sources.length > 0) {
+        const path = sources[0];
+        const dir = path.substring(0, Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')));
+        destEl.textContent = dir || 'Same as source';
+        destEl.title = dir || 'Same as source';
+      } else {
+        destEl.textContent = 'Select items to see destination';
+      }
+    }
+  } catch {
+    destEl.textContent = 'Default Output';
+  }
 }
 
 export function getPathsFromList(listId: string): string[] {
@@ -241,9 +362,21 @@ export function applySettingsToForm(settings: AppSettings): void {
   if (animationsEl) animationsEl.checked = settings.animationsEnabled ?? true;
   if (showHistoryEl) showHistoryEl.checked = settings.showHistoryTab ?? true;
   if (autoResizeWindowEl) autoResizeWindowEl.checked = settings.autoResizeWindow ?? true;
+  
+  const browseViewEl = document.getElementById('setting-browse-view') as HTMLSelectElement;
+  if (browseViewEl) browseViewEl.value = settings.browseViewMode || 'explorer';
+
+  const layoutEl = document.getElementById('setting-layout') as HTMLSelectElement;
+  if (layoutEl) layoutEl.value = settings.layout || 'header';
 
   const showRecentsEl = document.getElementById('setting-show-recents') as HTMLInputElement;
   if (showRecentsEl) showRecentsEl.checked = settings.showBrowseRecents ?? true;
+
+  // Flavor swatches (v2)
+  const favor = settings.themeFlavor || 'midnight';
+  document.querySelectorAll('.flavor-swatch-v2').forEach(sw => {
+    sw.classList.toggle('active', sw.getAttribute('data-flavor') === favor);
+  });
 
   // Apply recents panel visibility
   const browseRecentsEl = document.getElementById('browse-recents');
@@ -257,19 +390,8 @@ export function applySettingsToForm(settings: AppSettings): void {
     historyNavItem.classList.toggle('hidden', settings.showHistoryTab === false);
   }
 
-  const browseViewEl = document.getElementById('setting-browse-view') as HTMLSelectElement;
-  if (browseViewEl) browseViewEl.value = settings.browseViewMode || 'explorer';
-
-  const layoutEl = document.getElementById('setting-layout') as HTMLSelectElement;
-  if (layoutEl) layoutEl.value = settings.layout || 'header';
-
-  // Flavor
-  const flavor = settings.themeFlavor || 'midnight';
-  document.querySelectorAll('.flavor-swatch').forEach(sw => {
-    sw.classList.toggle('active', sw.getAttribute('data-flavor') === flavor);
-  });
   applyTheme(settings.theme || 'system');
-  applyFlavor(flavor);
+  applyFlavor(favor);
   applyLayout(settings.layout || 'header');
   applyAnimations(settings.animationsEnabled ?? true);
 }
@@ -365,8 +487,8 @@ export function formatSize(bytes: number): string {
 }
 
 export function renderExtractRecents(paths: string[], onSelect: (path: string) => void): void {
-  const container = document.getElementById('extract-recents-container');
-  const list = document.getElementById('extract-recents-list');
+  const container = document.getElementById('extract-recents-v2');
+  const list = document.getElementById('extract-recents-list-v2');
   if (!container || !list) return;
 
   if (!paths || paths.length === 0) {
@@ -377,19 +499,20 @@ export function renderExtractRecents(paths: string[], onSelect: (path: string) =
   container.classList.remove('hidden');
   list.innerHTML = '';
 
-  paths.forEach(p => {
-    const btn = document.createElement('button');
-    btn.className = 'recent-item-btn';
+  paths.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = 'recent-card-mini animate-in';
+    card.style.animationDelay = `${i * 0.1}s`;
     const name = p.split(/[\\/]/).pop() || p;
-    btn.innerHTML = `
-      <svg class="recent-icon" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H5v-2h14v2zm0-4H5v-2h14v2z"/></svg>
-      <div class="recent-info">
-        <div class="recent-name">${name}</div>
-        <div class="recent-path">${p}</div>
+    
+    card.innerHTML = `
+      <div class="recent-icon-mini">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H5v-2h14v2zm0-4H5v-2h14v2z"/></svg>
       </div>
+      <div class="recent-name-mini" title="${p}">${name}</div>
     `;
-    btn.onclick = () => onSelect(p);
-    list.appendChild(btn);
+    card.onclick = () => onSelect(p);
+    list.appendChild(card);
   });
 }
 
@@ -401,8 +524,8 @@ function formatDate(ms: number): string {
   });
 }
 
-const folderIcon = `<svg class="file-icon" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>`;
-const fileIcon = `<svg class="file-icon" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
+const folderIcon = `<svg class="file-icon folder-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>`;
+const fileIcon = `<svg class="file-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
 
 function getFileIcon(name: string, isDirectory: boolean): string {
   if (isDirectory) return folderIcon;
@@ -410,17 +533,17 @@ function getFileIcon(name: string, isDirectory: boolean): string {
   
   // Archive types
   if (['zip', '7z', 'rar', 'tar', 'gz', 'tgz'].includes(ext)) {
-    return `<svg class="file-icon archive-icon" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H5v-2h14v2zm0-4H5v-2h14v2z"/></svg>`;
+    return `<svg class="file-icon archive-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H5v-2h14v2zm0-4H5v-2h14v2z"/></svg>`;
   }
   
   // Image types
   if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(ext)) {
-    return `<svg class="file-icon image-icon" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>`;
+    return `<svg class="file-icon image-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>`;
   }
   
   // Document types
   if (['pdf', 'doc', 'docx', 'txt', 'rtf'].includes(ext)) {
-    return `<svg class="file-icon doc-icon" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
+    return `<svg class="file-icon doc-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
   }
   
   // Code types
@@ -470,7 +593,9 @@ export function renderBrowseList(
 
     el.innerHTML = `
       <div class="col-name" title="${entry.name}">
-        ${getFileIcon(entry.name, entry.isDirectory)}
+        <div class="file-icon-box">
+          ${entry.isDirectory ? folderIcon : getFileIcon(entry.name, false)}
+        </div>
         <span>${entry.name}</span>
       </div>
       <div class="col-date">${formatDate(entry.modifiedAt)}</div>
@@ -540,7 +665,7 @@ function createTreeNode(
   onContextMenu: (entry: FileEntry, x: number, y: number) => void
 ): HTMLElement {
   const node = document.createElement('div');
-  node.className = 'tree-node';
+  node.className = `tree-node ${entry.isDirectory ? 'folder' : ''}`;
   if (isSelected(entry.path)) node.classList.add('selected');
 
   const row = document.createElement('div');
@@ -693,22 +818,26 @@ export function renderArchiveViewerTable(
   if (!tbody) return;
 
   tbody.innerHTML = '';
-  if (stats) stats.textContent = `${files.length} items`;
+  if (stats) stats.textContent = `${files.length} items found`;
 
-  files.forEach(file => {
+  files.forEach((file, i) => {
     const tr = document.createElement('tr');
-    tr.className = 'viewer-row-item';
+    tr.className = 'animate-in';
+    tr.style.animationDelay = `${i * 0.03}s`;
     
     // Size formatting
     const sizeStr = file.isDirectory ? '--' : formatSize(file.size || 0);
     const packedStr = file.isDirectory ? '--' : formatSize(file.packedSize || 0);
-    // Parse the 7z output "yyyy-MM-dd HH:mm:ss" if present
     const dateStr = file.modified ? file.modified.substring(0, 16) : '--';
     
     tr.innerHTML = `
       <td class="col-name" title="${file.name}">
-        ${file.isDirectory ? folderIcon.replace('file-icon', 'viewer-icon folder-icon') : fileIcon.replace('file-icon', 'viewer-icon file-icon')}
-        <span>${file.name}</span>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="file-icon-box" style="width: 28px; height: 28px; background: rgba(255,255,255,0.05);">
+            ${file.isDirectory ? folderIcon : getFileIcon(file.name, false)}
+          </div>
+          <span style="font-weight: 600;">${file.name}</span>
+        </div>
       </td>
       <td class="col-size">${sizeStr}</td>
       <td class="col-packed">${packedStr}</td>

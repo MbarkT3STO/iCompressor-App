@@ -91,6 +91,15 @@ export interface AppSettings {
   autoOpenResultFolder: boolean;
   theme: 'light' | 'dark' | 'system';
   animationsEnabled: boolean;
+  minimizeToTray: boolean;
+  deleteSourcesAfterProcess: boolean;
+  overwriteBehavior: 'overwrite' | 'skip' | 'prompt';
+  themeFlavor?: string;
+  browseViewMode: 'explorer' | 'tree';
+  layout: 'header' | 'sidebar';
+  showHistoryTab: boolean;
+  showBrowseRecents: boolean;
+  autoResizeWindow: boolean;
 }
 
 

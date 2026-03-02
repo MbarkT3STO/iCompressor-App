@@ -93,162 +93,218 @@
     <main class="main">
       <!-- Welcome Panel (Initial) -->
       <section id="panel-welcome" class="panel active">
-        <div class="panel-layout panel-full welcome-full-layout">
-          <div class="welcome-orb welcome-orb-1"></div>
-          <div class="welcome-orb welcome-orb-2"></div>
-          
-          <div class="welcome-content">
-            <div class="welcome-hero">
-              <div class="welcome-badge">
+        <div class="welcome-minimal-viewport">
+          <div class="welcome-minimal-content animate-in">
+            <!-- Simple Hero Section -->
+            <div class="welcome-hero-minimal">
+              <div class="welcome-icon-wrapper">
                 <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 10H6v-2h8v2zm4-4H6v-2h12v2z"/></svg>
               </div>
-              <h1 class="welcome-title">Welcome to iCompressor</h1>
-              <p class="welcome-subtitle">A modern Archiver</p>
+              <h1 class="welcome-headline">iCompressor</h1>
+              <p class="welcome-tagline">Fast. Modern. Crystal Clear.</p>
             </div>
-            
-            <div class="welcome-actions">
-              <button type="button" class="btn-primary btn-get-started" id="btn-welcome-start">
+
+            <!-- Clean Action Grid -->
+            <div class="welcome-grid-minimal">
+              <button class="welcome-card-minimal" onclick="showPanel('compress')">
+                <div class="card-icon pink">
+                  <svg viewBox="0 0 24 24"><path d="M14.5 11l-3 6v-4H9l3-6v4h2.5zM20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12z"/></svg>
+                </div>
+                <h3>Compress</h3>
+                <p>Reduce file size instantly</p>
+              </button>
+
+              <button class="welcome-card-minimal" onclick="showPanel('extract')">
+                <div class="card-icon blue">
+                  <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                </div>
+                <h3>Extract</h3>
+                <p>Unpack archives safely</p>
+              </button>
+
+              <button class="welcome-card-minimal" onclick="showPanel('browse')">
+                <div class="card-icon amber">
+                  <svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+                </div>
+                <h3>Browse</h3>
+                <p>Manage your filesystem</p>
+              </button>
+            </div>
+
+            <div class="welcome-footer-minimal">
+              <button class="btn-primary btn-get-started-minimal" id="btn-welcome-start">
                 <span>Get Started</span>
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
               </button>
+              <div class="version-info">Platinum Edition v1.3</div>
             </div>
-          </div>
-
-          <div class="welcome-footer">
-            <p>Version 1.1.0 · Beta Phase</p>
           </div>
         </div>
       </section>
 
       <section id="panel-compress" class="panel">
-        <div class="panel-layout panel-split">
-          <!-- Left side: Drop Zone -->
-          <div class="card card-drop" id="drop-zone-compress" data-drop-type="compress">
-            <svg class="drop-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/>
-            </svg>
-            <h2 class="panel-title">Add Files</h2>
-            <p class="drop-text">Drop files and folders here or click to browse</p>
-            <p class="drop-hint">Don't add compressed files with password</p>
-          </div>
+        <div class="panel-layout panel-centered compress-unified-layout">
           
-          <!-- Right side: File List & Options -->
-          <div class="panel-actions">
-            <div class="card">
-              <div class="card-header">
-                <span class="files-label">Selected files & Folders</span>
-                <div class="header-btns">
-                  <button type="button" class="btn-text" id="btn-add-files" title="Add individual files">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                      <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                    </svg>
-                    Files
-                  </button>
-                  <button type="button" class="btn-text" id="btn-add-folder" title="Add a whole folder">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                      <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2zM15 15v-3h2v3h3v2h-3v3h-2v-3h-3v-2h3z"/>
-                    </svg>
-                    Folder
-                  </button>
-                  <button type="button" class="btn-text btn-danger-soft" id="btn-clear-compress-list" title="Clear all selected files">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                    </svg>
-                    Clear All
-                  </button>
-                </div>
+          <!-- State 1: Empty Hero Drop Zone -->
+          <div id="compress-empty-hero" class="compress-hero">
+            <div id="interactive-orb" class="hero-orb"></div>
+            <div class="card card-drop-hero" id="drop-zone-compress-hero" data-drop-type="compress">
+              <div class="drop-icon-wrapper">
+                <svg class="drop-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
               </div>
-              <ul class="files-list" id="compress-files-list"></ul>
-              <div class="card-footer">
-                <div class="format-row">
-                  <label for="archive-name">Archive Name</label>
-                  <input type="text" id="archive-name" class="input-path" placeholder="Archive name (optional)">
-                </div>
-                
-                <details class="advanced-options">
-                  <summary class="advanced-options-summary">
-                    <span>Advanced Options</span>
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
-                  </summary>
-                  <div class="advanced-options-body">
-                    <div class="format-row">
-                      <div class="row-label-group">
-                        <label for="archive-password-toggle">Password Protection</label>
-                        <label class="toggle-switch mini">
-                          <input type="checkbox" id="archive-password-toggle">
-                          <span class="toggle-slider"></span>
-                        </label>
-                      </div>
-                      <input type="password" id="archive-password" class="input-path hidden" placeholder="Enter password...">
-                    </div>
-                    <div class="format-row">
-                      <div class="row-label-group">
-                        <label for="compression-speed">Speed vs Size</label>
-                        <span id="speed-label" class="setting-value mini">Normal</span>
-                      </div>
-                      <div class="slider-container">
-                        <span class="slider-hint">Fast</span>
-                        <input type="range" id="compression-speed" min="1" max="9" value="6" step="2">
-                        <span class="slider-hint">Ultra</span>
-                      </div>
-                    </div>
-                    <div class="format-row">
-                      <label for="format-select">Format</label>
-                      <select id="format-select">
-                        <option value="zip">ZIP</option>
-                        <option value="7z">7Z</option>
-                        <option value="tar">TAR</option>
-                        <option value="targz">TAR.GZ</option>
-                      </select>
-                    </div>
-                    <div class="format-row">
-                      <label for="archive-split">Split Volume</label>
-                      <select id="archive-split">
-                        <option value="">None</option>
-                        <option value="10m">10 MB</option>
-                        <option value="50m">50 MB</option>
-                        <option value="100m">100 MB</option>
-                        <option value="700m">700 MB (CD)</option>
-                        <option value="4g">4 GB</option>
-                      </select>
-                    </div>
-                  </div>
-                </details>
-                <button type="button" class="btn-primary btn-block" id="btn-compress">Compress Now</button>
+              <h2 class="hero-title">Compress Files</h2>
+              <p class="hero-subtitle">Drag and drop folders or files to begin</p>
+              <div class="hero-actions">
+                <button type="button" class="btn-secondary" id="btn-add-files-hero" title="Choose multiple files to compress">
+                  <svg viewBox="0 0 24 24" width="18" height="18"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" fill="currentColor"/></svg>
+                  <span>Add Files</span>
+                </button>
+                <button type="button" class="btn-secondary" id="btn-add-folder-hero" title="Choose an entire folder to compress">
+                  <svg viewBox="0 0 24 24" width="18" height="18"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" fill="currentColor"/></svg>
+                  <span>Add Folder</span>
+                </button>
               </div>
             </div>
           </div>
+
+          <!-- State 2: Populated Layout (Hidden by default) -->
+          <div id="compress-populated-view" class="compress-populated hidden">
+            <div class="compress-main-card card">
+              <div class="card-header">
+                <div class="files-header-left">
+                  <h2 class="panel-title">Selected Items</h2>
+                  <div id="compress-stats-v2" class="files-stats-v2">
+                    <span class="stats-count">0 items</span>
+                    <span class="stats-sep">•</span>
+                    <span class="stats-size">0 B</span>
+                  </div>
+                </div>
+                <div class="header-btns">
+                  <button type="button" class="btn-icon-text" id="btn-add-files-v2" title="Add more files to the list">
+                    <svg viewBox="0 0 24 24" width="16" height="16"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" fill="currentColor"/></svg>
+                    <span>Files</span>
+                  </button>
+                  <button type="button" class="btn-icon-text" id="btn-add-folder-v2" title="Add another folder to the list">
+                    <svg viewBox="0 0 24 24" width="16" height="16"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" fill="currentColor"/></svg>
+                    <span>Folder</span>
+                  </button>
+                  <button type="button" class="btn-icon-text btn-danger-soft" id="btn-clear-all-v2" title="Remove all items from the list">
+                    <svg viewBox="0 0 24 24" width="16" height="16"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/></svg>
+                    <span>Clear</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="files-scroll-area">
+                <ul class="files-list-v2" id="compress-files-list"></ul>
+              </div>
+
+              <div class="card-footer-v2">
+                <div class="settings-pod">
+                  <div class="input-glow-group">
+                    <input type="text" id="archive-name-v2" class="input-modern" placeholder="Archive name (optional)">
+                    <div class="input-focus-glow"></div>
+                  </div>
+                  
+                  <div class="format-chips" id="format-chips">
+                    <button type="button" class="chip active" data-value="zip">ZIP</button>
+                    <button type="button" class="chip" data-value="7z">7Z</button>
+                    <button type="button" class="chip" data-value="tar">TAR</button>
+                    <button type="button" class="chip" data-value="targz">TGZ</button>
+                  </div>
+
+                  <details class="advanced-settings-v2">
+                    <summary class="advanced-summary-v2">
+                      <span>Advanced Settings</span>
+                      <svg viewBox="0 0 24 24" width="18" height="18"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>
+                    </summary>
+                    <div class="advanced-body-v2">
+                      <div class="setting-item">
+                        <label>Compression Level</label>
+                        <div class="slider-wrapper">
+                          <input type="range" id="compression-level-v2" min="1" max="9" value="6" step="1">
+                          <div class="slider-labels">
+                            <span>Fast</span>
+                            <span id="level-label-v2">6</span>
+                            <span>Ultra</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="setting-item split">
+                        <div class="toggle-group">
+                          <label>Encryption</label>
+                          <label class="toggle-switch-v2">
+                            <input type="checkbox" id="archive-password-toggle-v2">
+                            <span class="toggle-slider-v2"></span>
+                          </label>
+                        </div>
+                        <input type="password" id="archive-password-v2" class="input-modern hidden" placeholder="Password...">
+                      </div>
+                    </div>
+                  </details>
+                </div>
+
+                <div class="destination-info-v2">
+                  <span class="dest-label">Output Destination:</span>
+                  <span id="compress-dest-path" class="dest-path">Default Output</span>
+                  <button type="button" class="btn-dest-change" id="btn-change-dest-compress" title="Change destination folder">
+                    Change
+                  </button>
+                </div>
+
+                <div class="compress-action-bar">
+                  <button type="button" class="btn-prime-large" id="btn-compress-v2" title="Start compression process">
+                    <div class="btn-shine"></div>
+                    <span>Compress Now</span>
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" fill="currentColor"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
         <div class="toast-container" id="toast-compress"></div>
       </section>
 
       <section id="panel-extract" class="panel">
-        <div class="panel-layout panel-full">
-          <div class="card" style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-            <div class="card-body" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;">
-              <svg viewBox="0 0 24 24" width="64" height="64" fill="var(--color-accent-secondary)" style="margin-bottom: 8px;">
-                <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H5v-2h14v2zm0-4H5v-2h14v2z"/>
-              </svg>
-              <h2 class="panel-title" style="font-size: 1.5rem; margin-bottom: 4px;">Open an Archive</h2>
-              <p class="panel-subtitle" style="margin-bottom: 24px; max-width: 300px; color: var(--color-text-muted);">
-                Select an archive file to instantly view its contents and extract them.
-              </p>
-              <button type="button" class="btn-primary" id="btn-open-archive" style="font-size: 1.1rem; padding: 16px 36px; display: inline-flex; align-items: center; gap: 12px;">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                  <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-                </svg>
-                Select Archive...
-              </button>
-              <p class="drop-hint" style="margin-top: 16px;">ZIP · 7Z · RAR · TAR · TAR.GZ</p>
+        <!-- Centered Layout Wrapper -->
+        <div class="section-inner-centered">
+          <div class="extract-container">
+            
+            <!-- State: Empty Hero -->
+            <div id="extract-empty-hero" class="extract-hero">
+              <div id="interactive-orb-extract" class="hero-orb extract-orb"></div>
               
-              <!-- Recent Archives Section -->
-              <div id="extract-recents-container" class="extract-recents-container hidden" style="margin-top: 32px; width: 100%; max-width: 400px; text-align: left;">
-                <h3 style="font-size: 0.9rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; padding-left: 8px;">Recent Archives</h3>
-                <div id="extract-recents-list" class="extract-recents-list" style="display: flex; flex-direction: column; gap: 8px;">
-                  <!-- Populated by JS -->
+              <div class="card card-drop-hero" id="drop-zone-extract-hero" data-drop-type="extract" title="Drag and drop an archive to open it">
+                <div class="drop-icon-wrapper extract-icon-glow">
+                  <svg class="drop-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H5v-2h14v2zm0-4H5v-2h14v2z" fill="currentColor"/>
+                  </svg>
+                </div>
+                <h2 class="hero-title">Open Archive</h2>
+                <p class="hero-subtitle">Drop your ZIP, 7Z, or RAR here to begin</p>
+                
+                <div class="hero-actions">
+                  <button type="button" class="btn-prime-large" id="btn-open-archive-v2" title="Select an archive from your computer">
+                    <div class="btn-shine"></div>
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                    <span>Select Archive</span>
+                  </button>
+                </div>
+                
+                <!-- Recent Archives Integration -->
+                <div id="extract-recents-v2" class="extract-recents-mini hidden">
+                  <h3 class="recent-title-mini">Quick Access</h3>
+                  <div id="extract-recents-list-v2" class="recents-list-mini">
+                    <!-- Populated by JS -->
+                  </div>
                 </div>
               </div>
             </div>
+
           </div>
         </div>
         <div class="toast-container" id="toast-extract"></div>
@@ -258,6 +314,12 @@
 
       <section id="panel-browse" class="panel">
         <div class="panel-layout panel-full panel-browse-layout">
+          <!-- Ambient background orbs -->
+          <div class="browse-orb-container">
+            <div class="about-orb about-orb-1 browse-orb-1"></div>
+            <div class="about-orb about-orb-2 browse-orb-2"></div>
+            <div class="about-orb about-orb-3 browse-orb-3"></div>
+          </div>
           <div class="panel-head">
             <div class="browse-title-group">
               <h2 class="panel-title">File Browser</h2>
@@ -488,7 +550,13 @@
       </section>
 
       <section id="panel-settings" class="panel">
-        <div class="panel-layout panel-full">
+        <div class="panel-layout panel-full settings-full-layout">
+          <!-- Ambient background orbs -->
+          <div class="settings-orb-container">
+            <div class="about-orb about-orb-1 settings-orb-1"></div>
+            <div class="about-orb about-orb-2 settings-orb-2"></div>
+            <div class="about-orb about-orb-3 settings-orb-3"></div>
+          </div>
           <div class="panel-head">
             <div>
               <h2 class="panel-title">Settings</h2>
@@ -497,129 +565,131 @@
           </div>
           <div class="settings-list-container">
             <!-- Group: General -->
-            <div class="settings-group">
+            <div class="settings-group card animate-in" style="--index: 1;">
               <h3 class="settings-group-title">General</h3>
               
               <div class="setting-row">
                 <div class="setting-info">
-                  <div class="setting-icon">
+                  <div class="setting-icon-box">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-2v2h-2v-2h-2v-2h2v-2h2v2h2v2z"/></svg>
                   </div>
                   <label for="setting-compression-level">Compression Level</label>
                 </div>
-                <div class="setting-control">
-                  <input type="range" id="setting-compression-level" min="0" max="9" value="6" step="1">
+                <div class="setting-control premium-slider-group">
+                  <input type="range" id="setting-compression-level" class="premium-slider" min="0" max="9" value="6" step="1">
                   <span id="compression-level-value" class="setting-value">6</span>
                 </div>
               </div>
 
               <div class="setting-row">
                 <div class="setting-info">
-                  <div class="setting-icon">
+                  <div class="setting-icon-box">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
                   </div>
                   <label for="setting-output-dir">Output Directory</label>
                 </div>
                 <div class="setting-control control-expand">
-                  <div class="input-group">
-                    <input type="text" id="setting-output-dir" class="input-path" readonly placeholder="Same as source">
-                    <button type="button" class="btn-text" id="btn-select-output-dir">Browse</button>
+                  <div class="input-glow-group">
+                    <input type="text" id="setting-output-dir" class="input-modern" readonly placeholder="Same as source">
+                    <button type="button" class="btn-icon-text btn-browse-small" id="btn-select-output-dir">
+                      <span>Browse</span>
+                    </button>
                   </div>
                 </div>
               </div>
 
               <div class="setting-row setting-toggle">
                 <div class="setting-info">
-                  <div class="setting-icon">
+                  <div class="setting-icon-box">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
                   </div>
                   <label for="setting-auto-open">Auto-open result folder</label>
                 </div>
                 <div class="setting-control">
-                  <label class="toggle-switch">
+                  <label class="toggle-switch-v2">
                     <input type="checkbox" id="setting-auto-open" checked>
-                    <span class="toggle-slider"></span>
+                    <span class="toggle-slider-v2"></span>
                   </label>
                 </div>
               </div>
 
               <div class="setting-row setting-toggle">
                 <div class="setting-info">
-                  <div class="setting-icon">
+                  <div class="setting-icon-box">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13H5v-2h14v2z"/></svg>
                   </div>
                   <label for="setting-minimize-tray">Minimize to Tray on close</label>
                 </div>
                 <div class="setting-control">
-                  <label class="toggle-switch">
+                  <label class="toggle-switch-v2">
                     <input type="checkbox" id="setting-minimize-tray" checked>
-                    <span class="toggle-slider"></span>
+                    <span class="toggle-slider-v2"></span>
                   </label>
                 </div>
               </div>
 
               <div class="setting-row setting-toggle">
                 <div class="setting-info">
-                  <div class="setting-icon">
+                  <div class="setting-icon-box">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
                   </div>
                   <label for="setting-show-history">Show History Tab</label>
                 </div>
                 <div class="setting-control">
-                  <label class="toggle-switch">
+                  <label class="toggle-switch-v2">
                     <input type="checkbox" id="setting-show-history">
-                    <span class="toggle-slider"></span>
+                    <span class="toggle-slider-v2"></span>
                   </label>
                 </div>
               </div>
 
               <div class="setting-row setting-toggle">
                 <div class="setting-info">
-                  <div class="setting-icon">
+                  <div class="setting-icon-box">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 11H6.83l3.58-3.59L9 6l-6 6 6 6 1.41-1.41L6.83 13H21v-2z"/><path d="M3 3h18v2H3V3zm0 16h18v2H3v-2z"/></svg>
                   </div>
-                  <div>
+                  <div class="setting-text-group">
                     <label for="setting-auto-resize-window">Auto-resize Window on Startup</label>
                     <p class="setting-desc">Automatically set the ideal window size when the app starts</p>
                   </div>
                 </div>
                 <div class="setting-control">
-                  <label class="toggle-switch">
+                  <label class="toggle-switch-v2">
                     <input type="checkbox" id="setting-auto-resize-window" checked>
-                    <span class="toggle-slider"></span>
+                    <span class="toggle-slider-v2"></span>
                   </label>
                 </div>
               </div>
             </div>
 
             <!-- Group: File Management & Security -->
-            <div class="settings-group">
+            <div class="settings-group card animate-in" style="--index: 2;">
               <h3 class="settings-group-title">File Management</h3>
 
               <div class="setting-row setting-toggle">
                 <div class="setting-info">
-                  <div class="setting-icon">
+                  <div class="setting-icon-box">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                   </div>
                   <label for="setting-delete-sources">Delete Sources After Process</label>
                 </div>
                 <div class="setting-control">
-                  <label class="toggle-switch">
+                  <label class="toggle-switch-v2">
                     <input type="checkbox" id="setting-delete-sources">
-                    <span class="toggle-slider"></span>
+                    <span class="toggle-slider-v2"></span>
                   </label>
                 </div>
               </div>
 
               <div class="setting-row">
                 <div class="setting-info">
-                  <div class="setting-icon">
+                  <div class="setting-icon-box">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zM8 5h8v3H8V5zm8 14H8v-4h8v4z"/></svg>
                   </div>
                   <label for="setting-overwrite-behavior">Overwrite Behavior</label>
                 </div>
                 <div class="setting-control">
-                  <select id="setting-overwrite-behavior" class="setting-select">
+                  <select id="setting-overwrite-behavior" class="input-modern select-modern">
                     <option value="prompt">Prompt Me</option>
                     <option value="overwrite">Always Overwrite</option>
                     <option value="skip">Always Skip</option>
@@ -629,18 +699,18 @@
             </div>
 
             <!-- Group: Appearance -->
-            <div class="settings-group">
+            <div class="settings-group card animate-in" style="--index: 3;">
               <h3 class="settings-group-title">Appearance</h3>
 
-              <div class="setting-row setting-toggle">
+              <div class="setting-row">
                 <div class="setting-info">
-                  <div class="setting-icon">
+                  <div class="setting-icon-box">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
                   </div>
                   <label for="setting-theme">Theme</label>
                 </div>
                 <div class="setting-control">
-                  <select id="setting-theme" class="setting-select">
+                  <select id="setting-theme" class="input-modern select-modern">
                     <option value="light">Light</option>
                     <option value="dark">Dark</option>
                     <option value="system">System Default</option>
@@ -650,48 +720,48 @@
 
               <div class="setting-row">
                 <div class="setting-info">
-                  <div class="setting-icon">
+                  <div class="setting-icon-box">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm-5-8a5 5 0 1 1 10 0 5 5 0 0 1-10 0z"/></svg>
                   </div>
                   <label>Theme Flavor</label>
                 </div>
                 <div class="setting-control">
-                  <div class="flavor-picker">
-                    <button type="button" class="flavor-swatch active" data-flavor="midnight" title="Midnight Grape" style="background: #8a2be2;"></button>
-                    <button type="button" class="flavor-swatch" data-flavor="strawberry" title="Strawberry Milk" style="background: #ff4757;"></button>
-                    <button type="button" class="flavor-swatch" data-flavor="matcha" title="Matcha Latte" style="background: #43a047;"></button>
-                    <button type="button" class="flavor-swatch" data-flavor="ocean" title="Ocean Breeze" style="background: #0288d1;"></button>
-                    <button type="button" class="flavor-swatch" data-flavor="moonlight" title="Moonlight Serenade" style="background: #6320ee;"></button>
-                    <button type="button" class="flavor-swatch" data-flavor="twilight" title="Golden Twilight" style="background: #ffc300;"></button>
-                    <button type="button" class="flavor-swatch" data-flavor="sunset" title="Vibrant Sunset" style="background: #ff6d00;"></button>
+                  <div class="flavor-picker-v2">
+                    <button type="button" class="flavor-swatch-v2 active" data-flavor="midnight" title="Midnight Grape" style="--swatch-color: #8a2be2;"></button>
+                    <button type="button" class="flavor-swatch-v2" data-flavor="strawberry" title="Strawberry Milk" style="--swatch-color: #ff4757;"></button>
+                    <button type="button" class="flavor-swatch-v2" data-flavor="matcha" title="Matcha Latte" style="--swatch-color: #43a047;"></button>
+                    <button type="button" class="flavor-swatch-v2" data-flavor="ocean" title="Ocean Breeze" style="--swatch-color: #0288d1;"></button>
+                    <button type="button" class="flavor-swatch-v2" data-flavor="moonlight" title="Moonlight Serenade" style="--swatch-color: #6320ee;"></button>
+                    <button type="button" class="flavor-swatch-v2" data-flavor="twilight" title="Golden Twilight" style="--swatch-color: #ffc300;"></button>
+                    <button type="button" class="flavor-swatch-v2" data-flavor="sunset" title="Vibrant Sunset" style="--swatch-color: #ff6d00;"></button>
                   </div>
                 </div>
               </div>
 
               <div class="setting-row setting-toggle">
                 <div class="setting-info">
-                  <div class="setting-icon">
+                  <div class="setting-icon-box">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 9h-2V7h-2v5H6v2h2v5h2v-5h2v-2z"/></svg>
                   </div>
                   <label for="setting-animations">Interface Animations</label>
                 </div>
                 <div class="setting-control">
-                  <label class="toggle-switch">
+                  <label class="toggle-switch-v2">
                     <input type="checkbox" id="setting-animations" checked>
-                    <span class="toggle-slider"></span>
+                    <span class="toggle-slider-v2"></span>
                   </label>
                 </div>
               </div>
 
               <div class="setting-row">
                 <div class="setting-info">
-                  <div class="setting-icon">
+                  <div class="setting-icon-box">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z"/></svg>
                   </div>
                   <label for="setting-browse-view">Browse View Mode</label>
                 </div>
                 <div class="setting-control">
-                  <select id="setting-browse-view" class="setting-select">
+                  <select id="setting-browse-view" class="input-modern select-modern">
                     <option value="explorer">File Explorer (Default)</option>
                     <option value="tree">Tree View</option>
                   </select>
@@ -700,31 +770,31 @@
 
               <div class="setting-row setting-toggle">
                 <div class="setting-info">
-                  <div class="setting-icon">
+                  <div class="setting-icon-box">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
                   </div>
-                  <div>
+                  <div class="setting-text-group">
                     <label for="setting-show-recents">Show Recent Locations</label>
                     <p class="setting-desc">Display the recents panel in the Browse tab</p>
                   </div>
                 </div>
                 <div class="setting-control">
-                  <label class="toggle-switch">
+                  <label class="toggle-switch-v2">
                     <input type="checkbox" id="setting-show-recents" checked>
-                    <span class="toggle-slider"></span>
+                    <span class="toggle-slider-v2"></span>
                   </label>
                 </div>
               </div>
 
               <div class="setting-row">
                 <div class="setting-info">
-                  <div class="setting-icon">
+                  <div class="setting-icon-box">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z"/></svg>
                   </div>
                   <label for="setting-layout">UI Layout Style</label>
                 </div>
                 <div class="setting-control">
-                  <select id="setting-layout" class="setting-select">
+                  <select id="setting-layout" class="input-modern select-modern">
                     <option value="header">Modern Header (Default)</option>
                     <option value="sidebar">Sidebar Layout</option>
                   </select>
@@ -799,47 +869,61 @@
 
       <!-- Archive Viewer Modal -->
       <div id="archive-viewer-modal" class="progress-modal hidden">
-        <div class="progress-modal-backdrop"></div>
-        <div class="archive-viewer-content">
-          <div class="archive-viewer-header">
-            <div>
-              <h3 class="archive-viewer-title" id="archive-viewer-title">Archive Contents</h3>
-              <div class="archive-viewer-breadcrumbs" id="archive-viewer-breadcrumbs">
-                <!-- Populated by JS -->
+        <div class="progress-modal-backdrop" id="archive-viewer-backdrop"></div>
+        <div class="archive-viewer-content-v2">
+          <!-- Background Orb inside Modal -->
+          <div id="interactive-orb-viewer" class="hero-orb viewer-orb"></div>
+
+          <div class="archive-viewer-header-v2">
+            <div class="viewer-title-group">
+              <div class="viewer-icon-badge">
+                <svg viewBox="0 0 24 24" width="24" height="24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H5v-2h14v2zm0-4H5v-2h14v2z" fill="currentColor"/></svg>
+              </div>
+              <div>
+                <h3 class="viewer-title-text" id="archive-viewer-title">Archive Explorer</h3>
+                <div class="archive-viewer-breadcrumbs" id="archive-viewer-breadcrumbs">
+                  <!-- Populated by JS -->
+                </div>
               </div>
             </div>
-            <button type="button" class="btn-text" id="btn-close-viewer" title="Close Viewer">Close</button>
+            <div class="viewer-header-actions">
+              <button type="button" class="btn-icon-close" id="btn-close-viewer" title="Close Viewer">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+              </button>
+            </div>
           </div>
           
-          <div class="archive-viewer-body">
+          <div class="archive-viewer-body-v2">
             <!-- Loading State -->
             <div id="archive-viewer-loading" class="archive-viewer-state hidden">
               <div class="spinner"></div>
-              <p>Reading archive...</p>
+              <p>Reading archive index...</p>
             </div>
             
             <!-- Error State -->
             <div id="archive-viewer-error" class="archive-viewer-state hidden">
-              <svg viewBox="0 0 24 24" width="48" height="48" fill="var(--color-error)">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-              </svg>
-              <p id="archive-viewer-error-msg">Failed to read archive</p>
+              <div class="viewer-error-icon">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+              </div>
+              <p id="archive-viewer-error-msg">Encrypted or unsupported archive</p>
             </div>
 
             <!-- Empty State -->
             <div id="archive-viewer-empty" class="archive-viewer-state hidden">
-              <p>This folder is empty.</p>
+              <p>No compatible files found in this directory.</p>
             </div>
 
             <!-- Data Table -->
-            <div class="archive-table-container" id="archive-viewer-table-container">
-              <table class="archive-table">
+            <div class="archive-table-container-v2" id="archive-viewer-table-container">
+              <table class="archive-table-v2">
                 <thead>
                   <tr>
-                    <th class="col-name">Name</th>
-                    <th class="col-size">Size</th>
+                    <th class="col-name">File Name</th>
+                    <th class="col-size">Actual Size</th>
                     <th class="col-packed">Packed</th>
-                    <th class="col-date">Modified</th>
+                    <th class="col-date">Date</th>
                   </tr>
                 </thead>
                 <tbody id="archive-viewer-tbody">
@@ -849,9 +933,17 @@
             </div>
           </div>
           
-          <div class="archive-viewer-footer">
-            <span id="archive-viewer-stats" class="archive-stats">0 files</span>
-            <button type="button" class="btn-primary" id="btn-extract-from-viewer">Extract Archive</button>
+          <div class="archive-viewer-footer-v2">
+            <div class="archive-meta-info">
+              <span id="archive-viewer-stats" class="archive-stats-badge">0 items found</span>
+            </div>
+            <div class="viewer-footer-btns">
+              <button type="button" class="btn-prime-large" id="btn-extract-from-viewer">
+                <div class="btn-shine"></div>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                <span>Extract All Files</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

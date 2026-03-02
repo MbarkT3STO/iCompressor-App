@@ -67,7 +67,10 @@ function setupDropZone(
   const zone = document.getElementById(zoneId);
   if (!zone) return;
 
-  zone.addEventListener('click', () => {
+  zone.addEventListener('click', (e) => {
+    // Only trigger if we didn't click on a button or an interactive element
+    if ((e.target as HTMLElement).closest('button')) return;
+    
     if (type === 'compress') {
       ipc.selectFiles().then((paths) => {
         if (paths.length > 0) {
@@ -567,53 +570,95 @@ function setupBrowse() {
 
 // Compress
 function setupCompress(): void {
-  setupDropZone('drop-zone-compress', 'compress', (paths) => {
-    const existing = getPathsFromList('compress-files-list');
+  const listId = 'compress-files-list';
+
+  // Drop Zones
+  setupDropZone('drop-zone-compress-hero', 'compress', (paths) => {
+    const existing = getPathsFromList(listId);
     const merged = [...new Set([...existing, ...paths])];
-    setFileList('compress-files-list', merged);
+    setFileList(listId, merged);
   });
 
-  document.getElementById('btn-add-files')?.addEventListener('click', () => {
+  // Hero Actions
+  document.getElementById('btn-add-files-hero')?.addEventListener('click', (e) => {
+    e.stopPropagation();
     ipc.selectFiles().then((paths) => {
       if (paths.length > 0) {
-        const existing = getPathsFromList('compress-files-list');
+        const existing = getPathsFromList(listId);
         const merged = [...new Set([...existing, ...paths])];
-        setFileList('compress-files-list', merged);
+        setFileList(listId, merged);
       }
     });
   });
 
-  document.getElementById('btn-add-folder')?.addEventListener('click', () => {
+  document.getElementById('btn-add-folder-hero')?.addEventListener('click', (e) => {
+    e.stopPropagation();
     ipc.selectFolder().then((path) => {
       if (path) {
-        const existing = getPathsFromList('compress-files-list');
+        const existing = getPathsFromList(listId);
         const merged = [...new Set([...existing, path])];
-        setFileList('compress-files-list', merged);
+        setFileList(listId, merged);
       }
     });
   });
 
-  document.getElementById('btn-clear-compress-list')?.addEventListener('click', () => {
-    setFileList('compress-files-list', []);
+  // Destination Change
+  let customOutputDir: string | null = null;
+  document.getElementById('btn-change-dest-compress')?.addEventListener('click', async () => {
+    const dir = await ipc.selectFolder();
+    if (dir) {
+      customOutputDir = dir;
+      const { updateCompressDest } = require('./ui');
+      updateCompressDest(dir);
+    }
+  });
+
+  // Action Bar buttons
+  document.getElementById('btn-add-files-v2')?.addEventListener('click', () => {
+    ipc.selectFiles().then((paths) => {
+      if (paths.length > 0) {
+        const existing = getPathsFromList(listId);
+        const merged = [...new Set([...existing, ...paths])];
+        setFileList(listId, merged);
+      }
+    });
+  });
+
+  document.getElementById('btn-add-folder-v2')?.addEventListener('click', () => {
+    ipc.selectFolder().then((path) => {
+      if (path) {
+        const existing = getPathsFromList(listId);
+        const merged = [...new Set([...existing, path])];
+        setFileList(listId, merged);
+      }
+    });
+  });
+
+  // Interactive Background Orb
+  const orb = document.getElementById('interactive-orb');
+  if (orb) {
+    window.addEventListener('mousemove', (e) => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 40;
+      const y = (e.clientY / window.innerHeight - 0.5) * 40;
+      orb.style.transform = `translate(${x}px, ${y}px)`;
+    });
+  }
+
+  document.getElementById('btn-clear-all-v2')?.addEventListener('click', () => {
+    setFileList(listId, []);
     playSound('click');
   });
 
-  const speedEl = document.getElementById('compression-speed') as HTMLInputElement;
-  const speedLabel = document.getElementById('speed-label');
-  const speedMap: Record<string, string> = {
-    '1': 'Store',
-    '3': 'Fast',
-    '5': 'Normal',
-    '7': 'Good',
-    '9': 'Ultra'
-  };
-
-  speedEl?.addEventListener('input', () => {
-    if (speedLabel) speedLabel.textContent = speedMap[speedEl.value] || 'Normal';
+  // Compression Level
+  const levelEl = document.getElementById('compression-level-v2') as HTMLInputElement;
+  const levelLabel = document.getElementById('level-label-v2');
+  levelEl?.addEventListener('input', () => {
+    if (levelLabel) levelLabel.textContent = levelEl.value;
   });
 
-  const pwdToggle = document.getElementById('archive-password-toggle') as HTMLInputElement;
-  const pwdInput = document.getElementById('archive-password') as HTMLInputElement;
+  // Password Toggle
+  const pwdToggle = document.getElementById('archive-password-toggle-v2') as HTMLInputElement;
+  const pwdInput = document.getElementById('archive-password-v2') as HTMLInputElement;
   pwdToggle?.addEventListener('change', () => {
     if (pwdInput) {
       pwdInput.classList.toggle('hidden', !pwdToggle.checked);
@@ -622,37 +667,42 @@ function setupCompress(): void {
     }
   });
 
-  document.getElementById('btn-compress')?.addEventListener('click', async () => {
-    const sources = getPathsFromList('compress-files-list');
+  // Format Chips
+  let selectedFormat = 'zip';
+  const chips = document.querySelectorAll('#format-chips .chip');
+  chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      chips.forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      selectedFormat = chip.getAttribute('data-value') || 'zip';
+      playSound('click');
+    });
+  });
+
+  // Main Compress Action
+  document.getElementById('btn-compress-v2')?.addEventListener('click', async () => {
+    const sources = getPathsFromList(listId);
     if (sources.length === 0) {
       showToast('toast-compress', 'Select at least one file or folder', 'error');
       return;
     }
 
-    const formatSelect = document.getElementById('format-select') as HTMLSelectElement;
-    const format = formatSelect?.value || 'zip';
+    const format = selectedFormat;
     const ext = format === 'targz' ? 'tar.gz' : format;
     
-    // Read optional custom name
-    const nameInput = document.getElementById('archive-name') as HTMLInputElement;
+    const nameInput = document.getElementById('archive-name-v2') as HTMLInputElement;
     const customName = nameInput?.value.trim();
-    const defaultName = customName ? `${customName}.${ext}` : `${basename(sources[0])}.${ext}`;
+    const defaultName = customName ? (customName.endsWith('.' + ext) ? customName : `${customName}.${ext}`) : `${basename(sources[0])}.${ext}`;
     
-    // Read optional custom password
-    const passwordInput = document.getElementById('archive-password') as HTMLInputElement;
-    const password = passwordInput?.value;
-
-    const splitSelect = document.getElementById('archive-split') as HTMLSelectElement;
-    const splitVolumeSize = splitSelect?.value;
-
+    const password = pwdToggle?.checked ? pwdInput?.value : undefined;
     const settings = await ipc.getSettings();
-    const outputDir = settings.outputDirectory || dirname(sources[0]);
+    const outputDir = customOutputDir || settings.outputDirectory || dirname(sources[0]);
     const defaultPath = outputDir ? `${outputDir}/${defaultName}` : defaultName;
 
     const outputPath = await ipc.selectOutput(defaultPath, format);
     if (!outputPath) return;
 
-    const compressionLevel = speedEl ? Number(speedEl.value) : 6;
+    const compressionLevel = levelEl ? Number(levelEl.value) : 6;
 
     showGlobalProgress(0, 'Preparing...', 'Compressing...');
 
@@ -668,14 +718,13 @@ function setupCompress(): void {
         format,
         level: compressionLevel,
         password,
-        splitVolumeSize: splitVolumeSize || undefined,
       });
 
       if (result.success) {
         playSound('success');
         showToast('toast-compress', `Compressed to ${basename(result.outputPath!)}`, 'success');
         if (result.outputPath) saveRecent(result.outputPath);
-        setFileList('compress-files-list', []);
+        setFileList(listId, []);
         if (settings.autoOpenResultFolder && result.outputPath) {
           ipc.openPath(result.outputPath);
         }
@@ -687,7 +736,6 @@ function setupCompress(): void {
       showToast('toast-compress', err.message || 'An unexpected error occurred', 'error');
     } finally {
       if (unsub) unsub();
-      // Brief delay to show 100% or error state before hiding
       setTimeout(() => hideGlobalProgress(), 500);
     }
   });
@@ -930,8 +978,8 @@ function setupExtract(): void {
     }
   });
 
-  document.getElementById('btn-open-archive')?.addEventListener('click', async () => {
-    // 1. Pick file
+  document.getElementById('btn-open-archive-v2')?.addEventListener('click', async (e) => {
+    e.stopPropagation();
     const archivePath = await ipc.selectArchive();
     if (!archivePath) return;
     await handleArchiveSelection(archivePath);
@@ -1074,9 +1122,9 @@ function setupSettings(): void {
   });
   
   // Flavor swatches
-  document.querySelectorAll('.flavor-swatch').forEach(sw => {
+  document.querySelectorAll('.flavor-swatch-v2').forEach(sw => {
     sw.addEventListener('click', async () => {
-      document.querySelectorAll('.flavor-swatch').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.flavor-swatch-v2').forEach(s => s.classList.remove('active'));
       sw.classList.add('active');
       const flavor = sw.getAttribute('data-flavor') || 'midnight';
       applyFlavor(flavor);
@@ -1104,12 +1152,34 @@ function setupAbout(): void {
 
 // Extract drop zone - allow single archive click to browse
 function setupExtractDropZoneClick(): void {
-  const zone = document.getElementById('drop-zone-extract');
-  zone?.addEventListener('click', () => {
+  const zone = document.getElementById('drop-zone-extract-hero');
+  zone?.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    
     ipc.selectArchive().then((archive) => {
-      if (archive) setSingleFile('extract-files-list', archive);
+      if (archive) globalOpenArchiveHandler?.(archive);
     });
   });
+
+  // Interactive Background Orb for Extract
+  const orb = document.getElementById('interactive-orb-extract');
+  if (orb) {
+    window.addEventListener('mousemove', (e) => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 40;
+      const y = (e.clientY / window.innerHeight - 0.5) * 40;
+      orb.style.transform = `translate(${x}px, ${y}px)`;
+    });
+  }
+
+  // Interactive Background Orb for Archive Viewer
+  const viewerOrb = document.getElementById('interactive-orb-viewer');
+  if (viewerOrb) {
+    window.addEventListener('mousemove', (e) => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 30;
+      const y = (e.clientY / window.innerHeight - 0.5) * 30;
+      viewerOrb.style.transform = `translate(${x}px, ${y}px)`;
+    });
+  }
 }
 
 // Titlebar
@@ -1168,6 +1238,14 @@ export function init(): void {
   setupBrowse();
   setupCompress();
   setupExtract();
+  setupExtractDropZoneClick();
+
+  // Setup Drop Zone for Extract
+  setupDropZone('drop-zone-extract-hero', 'extract', (paths) => {
+    if (paths.length > 0) {
+      globalOpenArchiveHandler?.(paths[0]);
+    }
+  });
 
   setupSettings();
   setupAbout();
