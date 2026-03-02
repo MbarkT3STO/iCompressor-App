@@ -146,17 +146,21 @@ export function renderHistory(entries: import('../types').HistoryEntry[], onShow
 
   if (!entries || entries.length === 0) {
     list.innerHTML = `
-      <div class="history-empty">
-        <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
-        <p>No activity history yet.</p>
+      <div class="empty-state-v2 animate-in">
+        <div class="empty-state-icon">
+          <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+        </div>
+        <h3 class="empty-state-title">No History Yet</h3>
+        <p class="empty-state-text">Your processed files and activity will appear here once you start using iCompressor.</p>
       </div>
     `;
     return;
   }
 
-  entries.forEach(entry => {
+  entries.forEach((entry, i) => {
     const item = document.createElement('div');
-    item.className = 'history-item';
+    item.className = 'history-item animate-in';
+    item.style.animationDelay = `${i * 0.05}s`;
     
     // Icon based on action and status
     const isError = entry.status === 'error';
@@ -437,9 +441,10 @@ export function renderBrowseList(
     return;
   }
 
-  entries.forEach((entry) => {
+  entries.forEach((entry, i) => {
     const el = document.createElement('div');
-    el.className = `file-item ${entry.isDirectory ? 'folder' : 'file'}`;
+    el.className = `file-item animate-in ${entry.isDirectory ? 'folder' : 'file'}`;
+    el.style.animationDelay = `${i * 0.03}s`;
     el.setAttribute('data-path', entry.path);
     if (isSelected(entry.path)) el.classList.add('selected');
 
