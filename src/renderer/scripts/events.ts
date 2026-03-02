@@ -69,7 +69,9 @@ function setupDropZone(
 
   zone.addEventListener('click', (e) => {
     // Only trigger if we didn't click on a button or an interactive element
-    if ((e.target as HTMLElement).closest('button')) return;
+    if ((e.target as HTMLElement).closest('button') || 
+        (e.target as HTMLElement).closest('.recent-card-mini') ||
+        (e.target as HTMLElement).closest('.extract-recents-mini')) return;
     
     if (type === 'compress') {
       ipc.selectFiles().then((paths) => {
@@ -1205,7 +1207,10 @@ function setupAbout(): void {
 function setupExtractDropZoneClick(): void {
   const zone = document.getElementById('drop-zone-extract-hero');
   zone?.addEventListener('click', (e) => {
-    if ((e.target as HTMLElement).closest('button')) return;
+    // Prevent event if clicking on interactive elements or their children
+    if ((e.target as HTMLElement).closest('button') || 
+        (e.target as HTMLElement).closest('.recent-card-mini') ||
+        (e.target as HTMLElement).closest('.extract-recents-mini')) return;
     
     ipc.selectArchive().then((archive) => {
       if (archive) globalOpenArchiveHandler?.(archive);
