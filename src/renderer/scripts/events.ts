@@ -18,6 +18,7 @@ import {
   applyTheme,
   applyFlavor,
   applyLayout,
+  applyAnimations,
   playSound,
   renderBreadcrumbs,
   renderBrowseList,
@@ -1020,7 +1021,11 @@ function setupSettings(): void {
     applyTheme(theme);
     await saveSettings();
   });
-  document.getElementById('setting-animations')?.addEventListener('change', saveSettings);
+  document.getElementById('setting-animations')?.addEventListener('change', () => {
+    const animationsEl = document.getElementById('setting-animations') as HTMLInputElement;
+    applyAnimations(animationsEl?.checked ?? true);
+    saveSettings();
+  });
   document.getElementById('setting-show-history')?.addEventListener('change', () => {
     const showHistoryEl = document.getElementById('setting-show-history') as HTMLInputElement;
     const isVisible = showHistoryEl?.checked ?? true;

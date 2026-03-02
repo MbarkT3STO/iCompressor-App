@@ -260,6 +260,7 @@ export function applySettingsToForm(settings: AppSettings): void {
   applyTheme(settings.theme || 'system');
   applyFlavor(flavor);
   applyLayout(settings.layout || 'header');
+  applyAnimations(settings.animationsEnabled ?? true);
 }
 
 // Theme
@@ -295,6 +296,14 @@ export function applyLayout(layout: 'header' | 'sidebar'): void {
     appEl.classList.remove('layout-sidebar');
     appBodyEl?.classList.remove('sidebar-active');
     appBodyEl?.classList.remove('sidebar-collapsed');
+  }
+}
+
+export function applyAnimations(enabled: boolean): void {
+  if (enabled) {
+    document.documentElement.classList.remove('no-animations');
+  } else {
+    document.documentElement.classList.add('no-animations');
   }
 }
 

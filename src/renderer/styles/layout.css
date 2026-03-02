@@ -11,6 +11,16 @@
   padding: 0;
 }
 
+/* Disable all animations & transitions when user opts out */
+.no-animations *,
+.no-animations *::before,
+.no-animations *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+}
+
 html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
