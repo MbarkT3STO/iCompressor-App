@@ -240,6 +240,15 @@ export function applySettingsToForm(settings: AppSettings): void {
   if (animationsEl) animationsEl.checked = settings.animationsEnabled ?? true;
   if (showHistoryEl) showHistoryEl.checked = settings.showHistoryTab ?? true;
 
+  const showRecentsEl = document.getElementById('setting-show-recents') as HTMLInputElement;
+  if (showRecentsEl) showRecentsEl.checked = settings.showBrowseRecents ?? true;
+
+  // Apply recents panel visibility
+  const browseRecentsEl = document.getElementById('browse-recents');
+  if (browseRecentsEl) {
+    browseRecentsEl.classList.toggle('setting-hidden', settings.showBrowseRecents === false);
+  }
+
   // Nav visibility
   const historyNavItem = document.querySelector('.nav-item[data-panel="history"]');
   if (historyNavItem) {

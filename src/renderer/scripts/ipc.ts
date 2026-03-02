@@ -53,6 +53,7 @@ export const ipc: {
   getHistory: () => Promise<import('../types').HistoryEntry[]>;
   clearHistory: () => Promise<void>;
   extractPreviewFile: (archivePath: string, internalPath: string, password?: string) => Promise<{ success: boolean; data?: string; type?: 'text' | 'image' | 'unsupported'; error?: string }>;
+  setTrayEnabled: (enabled: boolean) => void;
 } = {
   selectFiles: () => api.selectFiles(),
   selectFolder: () => api.selectFolder(),

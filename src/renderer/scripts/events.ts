@@ -1009,6 +1009,7 @@ function setupSettings(): void {
       themeFlavor: (document.querySelector('.flavor-swatch.active')?.getAttribute('data-flavor') as any) || 'midnight',
       animationsEnabled: animationsEl?.checked ?? true,
       showHistoryTab: showHistoryEl?.checked ?? true,
+      showBrowseRecents: (document.getElementById('setting-show-recents') as HTMLInputElement)?.checked ?? true,
       browseViewMode: (document.getElementById('setting-browse-view') as HTMLSelectElement)?.value as any || 'explorer',
 
       deleteSourcesAfterProcess: deleteSourcesEl?.checked ?? false,
@@ -1021,6 +1022,13 @@ function setupSettings(): void {
   levelEl?.addEventListener('change', saveSettings);
   document.getElementById('setting-output-dir')?.addEventListener('change', saveSettings);
   document.getElementById('setting-auto-open')?.addEventListener('change', saveSettings);
+  document.getElementById('setting-show-recents')?.addEventListener('change', () => {
+    const el = document.getElementById('setting-show-recents') as HTMLInputElement;
+    const visible = el?.checked ?? true;
+    const browseRecentsEl = document.getElementById('browse-recents');
+    if (browseRecentsEl) browseRecentsEl.classList.toggle('setting-hidden', !visible);
+    saveSettings();
+  });
   document.getElementById('setting-minimize-tray')?.addEventListener('change', () => {
     const el = document.getElementById('setting-minimize-tray') as HTMLInputElement;
     const enabled = el?.checked ?? false;

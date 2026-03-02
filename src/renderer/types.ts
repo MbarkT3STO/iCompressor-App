@@ -19,6 +19,7 @@ export interface AppSettings {
   layout: 'header' | 'sidebar';
   sidebarCollapsed: boolean;
   showHistoryTab: boolean;
+  showBrowseRecents: boolean;
 }
 
 export interface FileEntry {

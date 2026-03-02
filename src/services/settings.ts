@@ -22,6 +22,7 @@ export interface AppSettings {
   layout: 'header' | 'sidebar';
   sidebarCollapsed: boolean;
   showHistoryTab: boolean;
+  showBrowseRecents: boolean;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -39,6 +40,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   layout: 'header',
   sidebarCollapsed: true,
   showHistoryTab: false,
+  showBrowseRecents: true,
 };
 
 function getSettingsPath(): string {
