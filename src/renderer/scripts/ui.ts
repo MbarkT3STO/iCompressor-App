@@ -225,6 +225,7 @@ export function applySettingsToForm(settings: AppSettings): void {
   const themeEl = document.getElementById('setting-theme') as HTMLSelectElement;
   const animationsEl = document.getElementById('setting-animations') as HTMLInputElement;
   const showHistoryEl = document.getElementById('setting-show-history') as HTMLInputElement;
+  const autoResizeWindowEl = document.getElementById('setting-auto-resize-window') as HTMLInputElement;
   
 
   const deleteSourcesEl = document.getElementById('setting-delete-sources') as HTMLInputElement;
@@ -239,6 +240,7 @@ export function applySettingsToForm(settings: AppSettings): void {
   if (themeEl) themeEl.value = settings.theme || 'system';
   if (animationsEl) animationsEl.checked = settings.animationsEnabled ?? true;
   if (showHistoryEl) showHistoryEl.checked = settings.showHistoryTab ?? true;
+  if (autoResizeWindowEl) autoResizeWindowEl.checked = settings.autoResizeWindow ?? false;
 
   const showRecentsEl = document.getElementById('setting-show-recents') as HTMLInputElement;
   if (showRecentsEl) showRecentsEl.checked = settings.showBrowseRecents ?? true;

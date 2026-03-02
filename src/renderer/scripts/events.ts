@@ -996,6 +996,7 @@ function setupSettings(): void {
     const themeEl = document.getElementById('setting-theme') as HTMLSelectElement;
     const animationsEl = document.getElementById('setting-animations') as HTMLInputElement;
     const showHistoryEl = document.getElementById('setting-show-history') as HTMLInputElement;
+    const autoResizeWindowEl = document.getElementById('setting-auto-resize-window') as HTMLInputElement;
 
     const deleteSourcesEl = document.getElementById('setting-delete-sources') as HTMLInputElement;
     const overwriteBehaviorEl = document.getElementById('setting-overwrite-behavior') as HTMLSelectElement;
@@ -1009,6 +1010,7 @@ function setupSettings(): void {
       themeFlavor: (document.querySelector('.flavor-swatch.active')?.getAttribute('data-flavor') as any) || 'midnight',
       animationsEnabled: animationsEl?.checked ?? true,
       showHistoryTab: showHistoryEl?.checked ?? true,
+      autoResizeWindow: autoResizeWindowEl?.checked ?? false,
       showBrowseRecents: (document.getElementById('setting-show-recents') as HTMLInputElement)?.checked ?? true,
       browseViewMode: (document.getElementById('setting-browse-view') as HTMLSelectElement)?.value as any || 'explorer',
 
@@ -1084,6 +1086,7 @@ function setupSettings(): void {
   
   document.getElementById('setting-delete-sources')?.addEventListener('change', saveSettings);
   document.getElementById('setting-overwrite-behavior')?.addEventListener('change', saveSettings);
+  document.getElementById('setting-auto-resize-window')?.addEventListener('change', saveSettings);
 }
 
 // About

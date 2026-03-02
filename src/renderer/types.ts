@@ -20,6 +20,7 @@ export interface AppSettings {
   sidebarCollapsed: boolean;
   showHistoryTab: boolean;
   showBrowseRecents: boolean;
+  autoResizeWindow: boolean;
 }
 
 export interface FileEntry {

@@ -58,24 +58,64 @@ function createWindow(): void {
     defaultHeight: 600
   });
 
-  mainWindow = new BrowserWindow({
-    x: mainWindowState.x,
-    y: mainWindowState.y,
-    width: mainWindowState.width,
-    height: mainWindowState.height,
-    minWidth: 800,
-    minHeight: 600,
-    show: false,
-    frame: false,
-    titleBarStyle: 'hidden',
-    trafficLightPosition: { x: 16, y: 16 },
-    webPreferences: {
-      preload: path.join(__dirname, '../preload/preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: false, // Required for native modules in preload
-    },
-  });
+  // Check if auto-resize is enabled
+  const { SettingsService } = require('../services/settings');
+  const settings = new SettingsService();
+  const appSettings = settings.get();
+  
+  let windowWidth = mainWindowState.width;
+  let windowHeight = mainWindowState.height;
+  
+  if (appSettings.autoResizeWindow) {
+    // Calculate ideal window size (80% of screen with minimum dimensions)
+    const idealWidth = Math.max(800, Math.floor(width * 0.8));
+    const idealHeight = Math.max(600, Math.floor(height * 0.8));
+    
+    // Center the window on screen
+    const x = Math.floor((width - idealWidth) / 2);
+    const y = Math.floor((height - idealHeight) / 2);
+    
+    windowWidth = idealWidth;
+    windowHeight = idealHeight;
+    
+    mainWindow = new BrowserWindow({
+      x,
+      y,
+      width: windowWidth,
+      height: windowHeight,
+      minWidth: 800,
+      minHeight: 600,
+      show: false,
+      frame: false,
+      titleBarStyle: 'hidden',
+      trafficLightPosition: { x: 16, y: 16 },
+      webPreferences: {
+        preload: path.join(__dirname, '../preload/preload.js'),
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: false, // Required for native modules in preload
+      },
+    });
+  } else {
+    mainWindow = new BrowserWindow({
+      x: mainWindowState.x,
+      y: mainWindowState.y,
+      width: windowWidth,
+      height: windowHeight,
+      minWidth: 800,
+      minHeight: 600,
+      show: false,
+      frame: false,
+      titleBarStyle: 'hidden',
+      trafficLightPosition: { x: 16, y: 16 },
+      webPreferences: {
+        preload: path.join(__dirname, '../preload/preload.js'),
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: false, // Required for native modules in preload
+      },
+    });
+  }
 
   const rendererPath = `file://${path.join(__dirname, '../renderer/index.html')}`;
   mainWindow.loadURL(rendererPath);

@@ -23,6 +23,7 @@ export interface AppSettings {
   sidebarCollapsed: boolean;
   showHistoryTab: boolean;
   showBrowseRecents: boolean;
+  autoResizeWindow: boolean;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -41,6 +42,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   sidebarCollapsed: true,
   showHistoryTab: false,
   showBrowseRecents: true,
+  autoResizeWindow: false,
 };
 
 function getSettingsPath(): string {
