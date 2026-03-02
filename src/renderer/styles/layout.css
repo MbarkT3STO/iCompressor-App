@@ -3628,6 +3628,7 @@ body {
 
 .app-body {
   display: flex;
+  flex-direction: column;
   flex: 1;
   overflow: hidden;
   position: relative;
@@ -3772,14 +3773,38 @@ body {
 }
 
 .browse-search-container {
-  min-width: 100px !important;
-  flex: 1 1 150px !important;
+  min-width: 80px !important;
+  flex: 1 1 120px !important;
   max-width: 300px;
+  position: relative;
+}
+
+.browse-search-container svg {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
 }
 
 #browse-search-input {
   width: 100%;
   min-width: 0;
+  padding-left: 36px;
+}
+
+@media (max-width: 800px) {
+  .browse-search-container svg {
+    display: none;
+  }
+
+  #browse-search-input {
+    padding-left: 12px;
+  }
+
+  .browse-header-actions {
+    gap: 6px !important;
+  }
 }
 
 .browse-layout {

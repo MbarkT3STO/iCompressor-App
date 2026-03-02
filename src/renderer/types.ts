@@ -9,7 +9,7 @@ export interface AppSettings {
   outputDirectory: string;
   autoOpenResultFolder: boolean;
   theme: 'light' | 'dark' | 'system';
-  themeFlavor?: 'midnight' | 'strawberry' | 'matcha' | 'ocean';
+  themeFlavor?: 'midnight' | 'strawberry' | 'matcha' | 'ocean' | 'moonlight' | 'twilight' | 'sunset';
   animationsEnabled: boolean;
   minimizeToTray: boolean;
 

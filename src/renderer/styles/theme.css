@@ -299,3 +299,87 @@
     --glass-border: 1px solid rgba(3, 169, 244, 0.2);
   }
 }
+
+/* 4. Dark Moonlight Serenade (Mystical Purples) */
+[data-flavor='moonlight'] {
+  --color-bg: #140d16;
+  --color-bg-gradient: radial-gradient(circle at top left, #211a1d 0%, #0d090a 100%);
+  --color-bg-elevated: rgba(33, 26, 29, 0.4);
+  --color-bg-glass: rgba(99, 32, 238, 0.12);
+  --color-bg-glass-strong: rgba(128, 117, 255, 0.22);
+  --color-bg-sidebar: rgba(20, 13, 22, 0.85);
+  --color-bg-hover: rgba(99, 32, 238, 0.15);
+
+  --color-text: #f8f0fb;
+  --color-text-secondary: #e2d5e8;
+  --color-text-muted: #9a8cad;
+
+  --color-accent: #6320ee;
+  --color-accent-secondary: #8075ff;
+  --color-accent-gradient: linear-gradient(135deg, #6320ee 0%, #8075ff 100%);
+  --color-accent-soft: rgba(99, 32, 238, 0.2);
+
+  --color-border: rgba(99, 32, 238, 0.3);
+  --color-border-strong: rgba(128, 117, 255, 0.5);
+  --color-success: #cad5ca;
+  --shadow-glow: 0 0 30px rgba(99, 32, 238, 0.2);
+}
+
+[data-theme='light'][data-flavor='moonlight'] {
+  --color-bg: #f8f0fb;
+  --color-bg-gradient: radial-gradient(circle at top left, #ffffff 0%, #f0e6f5 100%);
+  --color-bg-elevated: rgba(255, 255, 255, 0.8);
+  --color-bg-glass: rgba(128, 117, 255, 0.1);
+  --color-bg-sidebar: rgba(248, 240, 251, 0.95);
+  --color-text: #211a1d;
+  --color-text-secondary: #4a3d4d;
+  --color-text-muted: #7c6c7d;
+}
+
+/* 5. Golden Twilight (Midnight & Gold) */
+[data-flavor='twilight'] {
+  --color-bg: #000814;
+  --color-bg-gradient: radial-gradient(circle at top left, #001d3d 0%, #000814 100%);
+  --color-bg-elevated: rgba(0, 29, 61, 0.4);
+  --color-bg-glass: rgba(0, 53, 102, 0.2);
+  --color-bg-glass-strong: rgba(0, 53, 102, 0.35);
+  --color-bg-sidebar: rgba(0, 8, 20, 0.85);
+  --color-bg-hover: rgba(255, 195, 0, 0.1);
+
+  --color-text: #fdfcff;
+  --color-text-secondary: #abb8c3;
+  --color-text-muted: #5c6b7a;
+
+  --color-accent: #ffc300;
+  --color-accent-secondary: #ffd60a;
+  --color-accent-gradient: linear-gradient(135deg, #ffc300 0%, #ffd60a 100%);
+  --color-accent-soft: rgba(255, 195, 0, 0.2);
+
+  --color-border: rgba(255, 195, 0, 0.3);
+  --color-border-strong: rgba(255, 214, 10, 0.5);
+  --shadow-glow: 0 0 30px rgba(255, 195, 0, 0.2);
+}
+
+/* 6. Vibrant Sunset (Orange & Amethyst) */
+[data-flavor='sunset'] {
+  --color-bg: #140026;
+  --color-bg-gradient: radial-gradient(circle at top left, #240046 0%, #0a0014 100%);
+  --color-bg-elevated: rgba(36, 0, 70, 0.4);
+  --color-bg-glass: rgba(255, 109, 0, 0.12);
+  --color-bg-glass-strong: rgba(255, 121, 0, 0.22);
+  --color-bg-sidebar: rgba(20, 0, 38, 0.85);
+  --color-bg-hover: rgba(255, 109, 0, 0.15);
+
+  --color-text: #fdfcff;
+  --color-text-secondary: #9d4edd;
+  --color-text-muted: #7b2cbf;
+
+  --color-accent: #ff6d00;
+  --color-accent-secondary: #ff9100;
+  --color-accent-gradient: linear-gradient(135deg, #ff6d00 0%, #ff9e00 100%);
+  --color-accent-soft: rgba(255, 109, 0, 0.2);
+
+  --color-border: rgba(255, 109, 0, 0.3);
+  --color-border-strong: rgba(255, 145, 0, 0.5);
+  --shadow-glow: 0 0 30px rgba(255, 109, 0, 0.2);
+}
