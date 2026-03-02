@@ -133,6 +133,10 @@ let browseEntries: FileEntry[] = [];
 let browseSearchQuery = '';
 let browseSortMode = 'name-asc';
 
+// Navigation History stacks
+let browseHistoryBack: string[] = [];
+let browseHistoryForward: string[] = [];
+
 // Recents
 let recentArchives: string[] = JSON.parse(localStorage.getItem('recent_archives') || '[]');
 
@@ -157,7 +161,12 @@ document.getElementById('btn-clear-history')?.addEventListener('click', async ()
   showToast('toast-browse', 'History cleared', 'success');
 });
 
-async function loadDirectory(dirPath: string) {
+async function loadDirectory(dirPath: string, addToHistory: boolean = true) {
+  if (addToHistory && currentBrowsePath && currentBrowsePath !== dirPath) {
+    browseHistoryBack.push(currentBrowsePath);
+    browseHistoryForward = []; // Clear forward stack on new navigation
+  }
+
   const result = await ipc.readDir(dirPath);
   if (!result.success || !result.entries) {
     showToast('toast-compress', result.error || 'Failed to read directory', 'error'); // fallback toast
@@ -391,7 +400,12 @@ function handleBrowseOpen(entry: FileEntry) {
 function updateBrowseButtons() {
   const btnCompress = document.getElementById('btn-browse-compress') as HTMLButtonElement;
   const btnExtract = document.getElementById('btn-browse-extract') as HTMLButtonElement;
+  const btnBack = document.getElementById('btn-browse-back') as HTMLButtonElement;
+  const btnForward = document.getElementById('btn-browse-forward') as HTMLButtonElement;
   
+  if (btnBack) btnBack.disabled = browseHistoryBack.length === 0;
+  if (btnForward) btnForward.disabled = browseHistoryForward.length === 0;
+
   const selectedCount = selectedBrowsePaths.size;
   if (btnCompress) btnCompress.disabled = selectedCount === 0;
   
@@ -448,12 +462,44 @@ function setupBrowse() {
 
   document.getElementById('btn-toggle-recents')?.addEventListener('click', (e) => {
     // Only toggle if not clicking the clear button
-    const target = e.target as HTMLElement;
-    if (target.closest('#btn-clear-recents')) return;
-    
-    const recents = document.getElementById('browse-recents');
-    recents?.classList.toggle('collapsed');
-    playSound('click');
+    const isClearBtn = (e.target as HTMLElement).closest('.btn-clear-recents');
+    if (!isClearBtn) {
+      const recents = document.getElementById('browse-recents');
+      recents?.classList.toggle('collapsed');
+      playSound('click');
+    }
+  });
+
+  // History Navigation
+  document.getElementById('btn-browse-back')?.addEventListener('click', () => {
+    if (browseHistoryBack.length > 0) {
+      const prev = browseHistoryBack.pop();
+      if (prev) {
+        browseHistoryForward.push(currentBrowsePath);
+        loadDirectory(prev, false);
+      }
+    }
+  });
+
+  document.getElementById('btn-browse-forward')?.addEventListener('click', () => {
+    if (browseHistoryForward.length > 0) {
+      const next = browseHistoryForward.pop();
+      if (next) {
+        browseHistoryBack.push(currentBrowsePath);
+        loadDirectory(next, false);
+      }
+    }
+  });
+
+  // Keyboard Shortcuts (Back/Forward)
+  document.addEventListener('keydown', (e) => {
+    if (e.altKey) {
+      if (e.key === 'ArrowLeft') {
+        document.getElementById('btn-browse-back')?.click();
+      } else if (e.key === 'ArrowRight') {
+        document.getElementById('btn-browse-forward')?.click();
+      }
+    }
   });
 
   document.getElementById('btn-clear-recents')?.addEventListener('click', () => {
