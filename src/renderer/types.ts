@@ -18,6 +18,7 @@ export interface AppSettings {
   browseViewMode: 'explorer' | 'tree';
   layout: 'header' | 'sidebar';
   sidebarCollapsed: boolean;
+  showHistoryTab: boolean;
 }
 
 export interface FileEntry {

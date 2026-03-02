@@ -21,6 +21,7 @@ export interface AppSettings {
   browseViewMode: 'explorer' | 'tree';
   layout: 'header' | 'sidebar';
   sidebarCollapsed: boolean;
+  showHistoryTab: boolean;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -37,6 +38,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   browseViewMode: 'explorer',
   layout: 'header',
   sidebarCollapsed: true,
+  showHistoryTab: false,
 };
 
 function getSettingsPath(): string {

@@ -63,7 +63,7 @@
             </div>
             <span class="nav-label">Browse</span>
           </button>
-          <button class="nav-item" data-panel="history" aria-selected="false" title="History & Activity">
+          <button class="nav-item hidden" data-panel="history" aria-selected="false" title="History & Activity">
             <div class="nav-icon-wrapper">
               <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
@@ -150,6 +150,12 @@
                     </svg>
                     Folder
                   </button>
+                  <button type="button" class="btn-text btn-danger-soft" id="btn-clear-compress-list" title="Clear all selected files">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                    Clear All
+                  </button>
                 </div>
               </div>
               <ul class="files-list" id="compress-files-list"></ul>
@@ -234,6 +240,14 @@
                 Select Archive...
               </button>
               <p class="drop-hint" style="margin-top: 16px;">ZIP · 7Z · RAR · TAR · TAR.GZ</p>
+              
+              <!-- Recent Archives Section -->
+              <div id="extract-recents-container" class="extract-recents-container hidden" style="margin-top: 32px; width: 100%; max-width: 400px; text-align: left;">
+                <h3 style="font-size: 0.9rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; padding-left: 8px;">Recent Archives</h3>
+                <div id="extract-recents-list" class="extract-recents-list" style="display: flex; flex-direction: column; gap: 8px;">
+                  <!-- Populated by JS -->
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -479,6 +493,21 @@
                 <div class="setting-control">
                   <label class="toggle-switch">
                     <input type="checkbox" id="setting-minimize-tray" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="setting-row setting-toggle">
+                <div class="setting-info">
+                  <div class="setting-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+                  </div>
+                  <label for="setting-show-history">Show History Tab</label>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="setting-show-history">
                     <span class="toggle-slider"></span>
                   </label>
                 </div>

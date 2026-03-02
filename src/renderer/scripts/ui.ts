@@ -139,7 +139,7 @@ export function showToast(containerId: string, message: string, type: 'success' 
 }
 
 // History
-export function renderHistory(entries: import('../types').HistoryEntry[], clearCallback?: () => void) {
+export function renderHistory(entries: import('../types').HistoryEntry[], onShowInFolder: (path: string) => void, clearCallback?: () => void) {
   const list = document.getElementById('history-list');
   if (!list) return;
   list.innerHTML = '';
@@ -190,7 +190,21 @@ export function renderHistory(entries: import('../types').HistoryEntry[], clearC
         </div>
         ${isError ? `<div class="history-item-error">${entry.errorMessage || 'Unknown error'}</div>` : ''}
       </div>
+      ${!isError ? `
+      <button class="btn-icon btn-show-folder" title="Show in Folder">
+        <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-4H6v-2h12v2z"/></svg>
+      </button>
+      ` : ''}
     `;
+    
+    const showFolderBtn = item.querySelector('.btn-show-folder');
+    if (showFolderBtn) {
+      showFolderBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        onShowInFolder(entry.output || entry.source);
+      });
+    }
+
     list.appendChild(item);
   });
 }
@@ -206,6 +220,7 @@ export function applySettingsToForm(settings: AppSettings): void {
   const minimizeTrayEl = document.getElementById('setting-minimize-tray') as HTMLInputElement;
   const themeEl = document.getElementById('setting-theme') as HTMLSelectElement;
   const animationsEl = document.getElementById('setting-animations') as HTMLInputElement;
+  const showHistoryEl = document.getElementById('setting-show-history') as HTMLInputElement;
   
 
   const deleteSourcesEl = document.getElementById('setting-delete-sources') as HTMLInputElement;
@@ -219,6 +234,13 @@ export function applySettingsToForm(settings: AppSettings): void {
   if (minimizeTrayEl) minimizeTrayEl.checked = settings.minimizeToTray ?? true;
   if (themeEl) themeEl.value = settings.theme || 'system';
   if (animationsEl) animationsEl.checked = settings.animationsEnabled ?? true;
+  if (showHistoryEl) showHistoryEl.checked = settings.showHistoryTab ?? true;
+
+  // Nav visibility
+  const historyNavItem = document.querySelector('.nav-item[data-panel="history"]');
+  if (historyNavItem) {
+    historyNavItem.classList.toggle('hidden', settings.showHistoryTab === false);
+  }
 
   const browseViewEl = document.getElementById('setting-browse-view') as HTMLSelectElement;
   if (browseViewEl) browseViewEl.value = settings.browseViewMode || 'explorer';
@@ -318,6 +340,35 @@ export function formatSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
+export function renderExtractRecents(paths: string[], onSelect: (path: string) => void): void {
+  const container = document.getElementById('extract-recents-container');
+  const list = document.getElementById('extract-recents-list');
+  if (!container || !list) return;
+
+  if (!paths || paths.length === 0) {
+    container.classList.add('hidden');
+    return;
+  }
+
+  container.classList.remove('hidden');
+  list.innerHTML = '';
+
+  paths.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'recent-item-btn';
+    const name = p.split(/[\\/]/).pop() || p;
+    btn.innerHTML = `
+      <svg class="recent-icon" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H5v-2h14v2zm0-4H5v-2h14v2z"/></svg>
+      <div class="recent-info">
+        <div class="recent-name">${name}</div>
+        <div class="recent-path">${p}</div>
+      </div>
+    `;
+    btn.onclick = () => onSelect(p);
+    list.appendChild(btn);
+  });
+}
+
 function formatDate(ms: number): string {
   if (!ms) return '--';
   return new Date(ms).toLocaleDateString(undefined, {
@@ -328,6 +379,33 @@ function formatDate(ms: number): string {
 
 const folderIcon = `<svg class="file-icon" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>`;
 const fileIcon = `<svg class="file-icon" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
+
+function getFileIcon(name: string, isDirectory: boolean): string {
+  if (isDirectory) return folderIcon;
+  const ext = name.split('.').pop()?.toLowerCase() || '';
+  
+  // Archive types
+  if (['zip', '7z', 'rar', 'tar', 'gz', 'tgz'].includes(ext)) {
+    return `<svg class="file-icon archive-icon" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H5v-2h14v2zm0-4H5v-2h14v2z"/></svg>`;
+  }
+  
+  // Image types
+  if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(ext)) {
+    return `<svg class="file-icon image-icon" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>`;
+  }
+  
+  // Document types
+  if (['pdf', 'doc', 'docx', 'txt', 'rtf'].includes(ext)) {
+    return `<svg class="file-icon doc-icon" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
+  }
+  
+  // Code types
+  if (['js', 'ts', 'html', 'css', 'json', 'py', 'go', 'rs'].includes(ext)) {
+    return `<svg class="file-icon code-icon" viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>`;
+  }
+
+  return fileIcon;
+}
 
 export const compressIcon = `<svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-2 10h-2v2h-2v-2h-2v-2h2v-2h2v2h2v2z"/></svg>`;
 export const extractIcon = `<svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>`;
@@ -367,7 +445,7 @@ export function renderBrowseList(
 
     el.innerHTML = `
       <div class="col-name" title="${entry.name}">
-        ${entry.isDirectory ? folderIcon : fileIcon}
+        ${getFileIcon(entry.name, entry.isDirectory)}
         <span>${entry.name}</span>
       </div>
       <div class="col-date">${formatDate(entry.modifiedAt)}</div>
@@ -375,7 +453,11 @@ export function renderBrowseList(
     `;
 
     el.addEventListener('click', (e) => onSelect(entry, e.metaKey || e.ctrlKey));
-    el.addEventListener('dblclick', () => onOpen(entry));
+    el.addEventListener('dblclick', () => {
+      el.classList.add('double-click-pulse');
+      setTimeout(() => el.classList.remove('double-click-pulse'), 400);
+      onOpen(entry);
+    });
     el.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       onContextMenu(entry, e.clientX, e.clientY);
@@ -456,7 +538,7 @@ function createTreeNode(
 
   const icon = document.createElement('div');
   icon.className = 'tree-icon';
-  icon.innerHTML = entry.isDirectory ? folderIcon : fileIcon;
+  icon.innerHTML = getFileIcon(entry.name, entry.isDirectory);
 
   const name = document.createElement('div');
   name.className = 'tree-name';
@@ -467,7 +549,11 @@ function createTreeNode(
   row.appendChild(name);
 
   row.onclick = (e) => onSelect(entry, e.metaKey || e.ctrlKey);
-  row.ondblclick = () => onOpen(entry);
+  row.ondblclick = () => {
+    row.classList.add('double-click-pulse');
+    setTimeout(() => row.classList.remove('double-click-pulse'), 400);
+    onOpen(entry);
+  };
   row.oncontextmenu = (e) => {
     e.preventDefault();
     onContextMenu(entry, e.clientX, e.clientY);

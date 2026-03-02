@@ -13,6 +13,7 @@ import {
   showGlobalProgress,
   hideGlobalProgress,
   showToast,
+  renderExtractRecents,
 
   applyTheme,
   applyFlavor,
@@ -151,7 +152,10 @@ async function initBrowse() {
 // History
 async function initHistory() {
   const entries = await ipc.getHistory();
-  renderHistory(entries, async () => {
+  renderHistory(entries, async (path) => {
+    // Show in Folder logic
+    ipc.openPath(path);
+  }, async () => {
     // Optional clear callback if needed inside ui.ts
   });
 }
@@ -193,6 +197,10 @@ function saveRecent(path: string) {
   recentArchives = [path, ...recentArchives.filter(p => p !== path)].slice(0, 10);
   localStorage.setItem('recent_archives', JSON.stringify(recentArchives));
   renderRecents();
+  renderExtractRecents(recentArchives, async (p) => {
+    showPanel('extract');
+    if (globalOpenArchiveHandler) globalOpenArchiveHandler(p);
+  });
 }
 
 function renderRecents() {
@@ -397,6 +405,16 @@ function handleBrowseSelect(entry: FileEntry, multi: boolean) {
 function handleBrowseOpen(entry: FileEntry) {
   if (entry.isDirectory) {
     loadDirectory(entry.path);
+  } else {
+    const isArchive = /\.(zip|7z|rar|tar|gz|tgz)$/i.test(entry.path);
+    if (isArchive) {
+      if (globalOpenArchiveHandler) {
+        globalOpenArchiveHandler(entry.path);
+      }
+    } else {
+      showToast('toast-browse', `Opening ${entry.name}...`, 'info');
+      ipc.openPath(entry.path);
+    }
   }
 }
 
@@ -566,6 +584,11 @@ function setupCompress(): void {
         setFileList('compress-files-list', merged);
       }
     });
+  });
+
+  document.getElementById('btn-clear-compress-list')?.addEventListener('click', () => {
+    setFileList('compress-files-list', []);
+    playSound('click');
   });
 
   const speedEl = document.getElementById('compression-speed') as HTMLInputElement;
@@ -965,7 +988,7 @@ function setupSettings(): void {
     const minimizeTrayEl = document.getElementById('setting-minimize-tray') as HTMLInputElement;
     const themeEl = document.getElementById('setting-theme') as HTMLSelectElement;
     const animationsEl = document.getElementById('setting-animations') as HTMLInputElement;
-
+    const showHistoryEl = document.getElementById('setting-show-history') as HTMLInputElement;
 
     const deleteSourcesEl = document.getElementById('setting-delete-sources') as HTMLInputElement;
     const overwriteBehaviorEl = document.getElementById('setting-overwrite-behavior') as HTMLSelectElement;
@@ -978,6 +1001,7 @@ function setupSettings(): void {
       theme: (themeEl?.value as 'light' | 'dark' | 'system') || 'system',
       themeFlavor: (document.querySelector('.flavor-swatch.active')?.getAttribute('data-flavor') as any) || 'midnight',
       animationsEnabled: animationsEl?.checked ?? true,
+      showHistoryTab: showHistoryEl?.checked ?? true,
       browseViewMode: (document.getElementById('setting-browse-view') as HTMLSelectElement)?.value as any || 'explorer',
 
       deleteSourcesAfterProcess: deleteSourcesEl?.checked ?? false,
@@ -997,6 +1021,22 @@ function setupSettings(): void {
     await saveSettings();
   });
   document.getElementById('setting-animations')?.addEventListener('change', saveSettings);
+  document.getElementById('setting-show-history')?.addEventListener('change', () => {
+    const showHistoryEl = document.getElementById('setting-show-history') as HTMLInputElement;
+    const isVisible = showHistoryEl?.checked ?? true;
+    
+    saveSettings().then(() => {
+      ipc.getSettings().then(s => {
+        applySettingsToForm(s);
+        
+        // If we just hid the history tab and we're currently ON it, switch to compress
+        const activePanel = document.querySelector('.panel.active');
+        if (!isVisible && activePanel?.id === 'panel-history') {
+          showPanel('panel-compress');
+        }
+      });
+    });
+  });
   document.getElementById('setting-browse-view')?.addEventListener('change', saveSettings);
   document.getElementById('setting-layout')?.addEventListener('change', async () => {
     const layoutEl = document.getElementById('setting-layout') as HTMLSelectElement;

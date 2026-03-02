@@ -352,13 +352,7 @@ function registerIpcHandlers(): void {
   // Shell - open path in file manager (file: reveal in folder; dir: open folder)
   ipcMain.handle(IPC_CHANNELS.OPEN_PATH, async (_, targetPath: string) => {
     try {
-      const fs = require('fs');
-      const stat = fs.statSync(targetPath);
-      if (stat.isFile()) {
-        shell.showItemInFolder(targetPath);
-      } else {
-        shell.openPath(targetPath);
-      }
+      await shell.openPath(targetPath);
       return { success: true };
     } catch {
       return { success: false };

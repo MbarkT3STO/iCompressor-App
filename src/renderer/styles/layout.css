@@ -3975,8 +3975,116 @@ body {
 }
 
 /* Sidebar Forced Width Control */
+
 @media (max-width: 850px) {
   .app.layout-sidebar .header {
     width: 80px !important;
   }
+}
+
+/* Double-click feedback animation */
+.double-click-pulse {
+  animation: item-pulse 0.4s ease-out;
+}
+
+@keyframes item-pulse {
+  0% {
+    background: var(--color-accent-soft);
+    transform: scale(1);
+  }
+
+  50% {
+    background: var(--color-accent-soft);
+    transform: scale(0.98);
+  }
+
+  100% {
+    background: transparent;
+    transform: scale(1);
+  }
+}
+
+/* Extract Recents Styles */
+.extract-recents-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recent-item-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  width: 100%;
+}
+
+.recent-item-btn:hover {
+  background: var(--color-bg-hover);
+  border-color: var(--color-accent-soft);
+  color: var(--color-text);
+  transform: translateX(4px);
+}
+
+.recent-item-btn .recent-icon {
+  width: 24px;
+  height: 24px;
+  fill: var(--color-accent-soft);
+  flex-shrink: 0;
+}
+
+.recent-item-btn .recent-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.recent-item-btn .recent-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recent-item-btn .recent-path {
+  font-size: 0.75rem;
+  opacity: 0.6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* History Item Actions */
+.btn-show-folder {
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.history-item:hover .btn-show-folder {
+  opacity: 1;
+}
+
+/* Utilities */
+.btn-danger-soft {
+  color: #ff4b4b !important;
+  background: rgba(255, 75, 75, 0.1) !important;
+  border-color: rgba(255, 75, 75, 0.2) !important;
+}
+
+.btn-danger-soft:hover {
+  background: rgba(255, 75, 75, 0.2) !important;
+  border-color: #ff4b4b !important;
+}
+
+.hidden {
+  display: none !important;
 }
