@@ -26,7 +26,8 @@
         </button>
       </div>
     </div>
-    <header class="header" role="banner">
+    <div class="app-body">
+      <header class="header" role="banner">
       <div class="header-inner">
         <div class="header-brand">
           <div class="logo-wrapper">
@@ -560,6 +561,21 @@
                   </select>
                 </div>
               </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z"/></svg>
+                  </div>
+                  <label for="setting-layout">UI Layout Style</label>
+                </div>
+                <div class="setting-control">
+                  <select id="setting-layout" class="setting-select">
+                    <option value="header">Modern Header (Default)</option>
+                    <option value="sidebar">Sidebar Layout</option>
+                  </select>
+                </div>
+              </div>
             </div>
             
           </div>
@@ -706,7 +722,9 @@
         </div>
       </div>
 
+      </div>
     </main>
+    </div>
   </div>
 
   <script src="scripts/app.js"></script>

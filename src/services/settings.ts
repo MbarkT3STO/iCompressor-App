@@ -17,6 +17,10 @@ export interface AppSettings {
 
   deleteSourcesAfterProcess: boolean;
   overwriteBehavior: 'overwrite' | 'skip' | 'prompt';
+  themeFlavor?: 'midnight' | 'strawberry' | 'matcha' | 'ocean';
+  browseViewMode: 'explorer' | 'tree';
+  layout: 'header' | 'sidebar';
+  sidebarCollapsed: boolean;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -29,6 +33,10 @@ const DEFAULT_SETTINGS: AppSettings = {
 
   deleteSourcesAfterProcess: false,
   overwriteBehavior: 'prompt',
+  themeFlavor: 'midnight',
+  browseViewMode: 'explorer',
+  layout: 'header',
+  sidebarCollapsed: true,
 };
 
 function getSettingsPath(): string {

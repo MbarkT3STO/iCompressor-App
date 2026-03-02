@@ -223,6 +223,9 @@ export function applySettingsToForm(settings: AppSettings): void {
   const browseViewEl = document.getElementById('setting-browse-view') as HTMLSelectElement;
   if (browseViewEl) browseViewEl.value = settings.browseViewMode || 'explorer';
 
+  const layoutEl = document.getElementById('setting-layout') as HTMLSelectElement;
+  if (layoutEl) layoutEl.value = settings.layout || 'header';
+
   // Flavor
   const flavor = settings.themeFlavor || 'midnight';
   document.querySelectorAll('.flavor-swatch').forEach(sw => {
@@ -230,6 +233,7 @@ export function applySettingsToForm(settings: AppSettings): void {
   });
   applyTheme(settings.theme || 'system');
   applyFlavor(flavor);
+  applyLayout(settings.layout || 'header');
 }
 
 // Theme
@@ -248,6 +252,23 @@ export function applyFlavor(flavor: string): void {
     root.removeAttribute('data-flavor');
   } else {
     root.setAttribute('data-flavor', flavor);
+  }
+}
+
+export function applyLayout(layout: 'header' | 'sidebar'): void {
+  const appEl = document.getElementById('app');
+  const appBodyEl = document.querySelector('.app-body');
+  
+  if (!appEl) return;
+  
+  if (layout === 'sidebar') {
+    appEl.classList.add('layout-sidebar');
+    appBodyEl?.classList.add('sidebar-active');
+    appBodyEl?.classList.add('sidebar-collapsed');
+  } else {
+    appEl.classList.remove('layout-sidebar');
+    appBodyEl?.classList.remove('sidebar-active');
+    appBodyEl?.classList.remove('sidebar-collapsed');
   }
 }
 

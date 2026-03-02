@@ -16,6 +16,8 @@ export interface AppSettings {
   deleteSourcesAfterProcess: boolean;
   overwriteBehavior: 'overwrite' | 'skip' | 'prompt';
   browseViewMode: 'explorer' | 'tree';
+  layout: 'header' | 'sidebar';
+  sidebarCollapsed: boolean;
 }
 
 export interface FileEntry {

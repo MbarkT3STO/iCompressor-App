@@ -16,6 +16,7 @@ import {
 
   applyTheme,
   applyFlavor,
+  applyLayout,
   playSound,
   renderBreadcrumbs,
   renderBrowseList,
@@ -906,6 +907,7 @@ function setupSettings(): void {
 
       deleteSourcesAfterProcess: deleteSourcesEl?.checked ?? false,
       overwriteBehavior: (overwriteBehaviorEl?.value as 'overwrite' | 'skip' | 'prompt') || 'prompt',
+      layout: (document.getElementById('setting-layout') as HTMLSelectElement)?.value as any || 'header',
     });
     updateBrowseUI(); // Refresh browser tab if open
   };
@@ -921,6 +923,13 @@ function setupSettings(): void {
   });
   document.getElementById('setting-animations')?.addEventListener('change', saveSettings);
   document.getElementById('setting-browse-view')?.addEventListener('change', saveSettings);
+  document.getElementById('setting-layout')?.addEventListener('change', async () => {
+    const layoutEl = document.getElementById('setting-layout') as HTMLSelectElement;
+    const layout = (layoutEl?.value as 'header' | 'sidebar') || 'header';
+    applyLayout(layout);
+    await saveSettings();
+    playSound('switch');
+  });
   
   // Flavor swatches
   document.querySelectorAll('.flavor-swatch').forEach(sw => {
