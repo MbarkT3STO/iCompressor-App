@@ -240,7 +240,7 @@ export function applySettingsToForm(settings: AppSettings): void {
   if (themeEl) themeEl.value = settings.theme || 'system';
   if (animationsEl) animationsEl.checked = settings.animationsEnabled ?? true;
   if (showHistoryEl) showHistoryEl.checked = settings.showHistoryTab ?? true;
-  if (autoResizeWindowEl) autoResizeWindowEl.checked = settings.autoResizeWindow ?? false;
+  if (autoResizeWindowEl) autoResizeWindowEl.checked = settings.autoResizeWindow ?? true;
 
   const showRecentsEl = document.getElementById('setting-show-recents') as HTMLInputElement;
   if (showRecentsEl) showRecentsEl.checked = settings.showBrowseRecents ?? true;

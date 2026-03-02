@@ -42,7 +42,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   sidebarCollapsed: true,
   showHistoryTab: false,
   showBrowseRecents: true,
-  autoResizeWindow: false,
+  autoResizeWindow: true,
 };
 
 function getSettingsPath(): string {
