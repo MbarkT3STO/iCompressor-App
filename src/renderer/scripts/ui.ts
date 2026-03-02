@@ -274,6 +274,22 @@ export function applyLayout(layout: 'header' | 'sidebar'): void {
 
 
 // File Browser
+export function setBrowseLoading(loading: boolean): void {
+  const overlay = document.querySelector('.browse-loading-overlay');
+  if (overlay) {
+    overlay.classList.toggle('active', loading);
+  } else if (loading) {
+    // Create it if it doesn't exist
+    const browseCard = document.querySelector('.browse-card');
+    if (browseCard) {
+      const div = document.createElement('div');
+      div.className = 'browse-loading-overlay active';
+      div.innerHTML = '<div class="spinner"></div><p>Reading directory...</p>';
+      browseCard.appendChild(div);
+    }
+  }
+}
+
 export function renderBreadcrumbs(containerId: string, pathPieces: { name: string; fullPath: string }[], onNav: (path: string) => void): void {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -331,7 +347,15 @@ export function renderBrowseList(
   container.innerHTML = '';
 
   if (entries.length === 0) {
-    container.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--color-text-muted);">Empty folder</div>';
+    container.innerHTML = `
+      <div class="browse-empty-state">
+        <svg class="browse-empty-icon" viewBox="0 0 24 24">
+          <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-4H6v-2h12v2z"/>
+        </svg>
+        <h3 class="browse-empty-title">Empty Folder</h3>
+        <p class="browse-empty-text">This folder doesn't contain any files yet. Drag and drop files here to start.</p>
+      </div>
+    `;
     return;
   }
 
@@ -380,7 +404,15 @@ export function renderBrowseTree(
   tree.className = 'browse-tree';
 
   if (entries.length === 0) {
-    container.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--color-text-muted);">Empty folder</div>';
+    container.innerHTML = `
+      <div class="browse-empty-state">
+        <svg class="browse-empty-icon" viewBox="0 0 24 24">
+          <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-4H6v-2h12v2z"/>
+        </svg>
+        <h3 class="browse-empty-title">Empty Folder</h3>
+        <p class="browse-empty-text">This folder doesn't contain any files yet. Drag and drop files here to start.</p>
+      </div>
+    `;
     return;
   }
 

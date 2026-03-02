@@ -38,7 +38,8 @@ import {
   showFolderSizeModal,
   hideFolderSizeModal,
   renderHistory,
-  showFilePreview
+  showFilePreview,
+  setBrowseLoading
 } from './ui';
 import type { AppSettings, FileEntry, HistoryEntry } from '../types';
 
@@ -167,7 +168,9 @@ async function loadDirectory(dirPath: string, addToHistory: boolean = true) {
     browseHistoryForward = []; // Clear forward stack on new navigation
   }
 
+  setBrowseLoading(true);
   const result = await ipc.readDir(dirPath);
+  setBrowseLoading(false);
   if (!result.success || !result.entries) {
     showToast('toast-compress', result.error || 'Failed to read directory', 'error'); // fallback toast
     return;
@@ -451,14 +454,40 @@ function setupBrowse() {
     updateBrowseUI();
   });
 
-  const sortSelect = document.getElementById('browse-sort-select') as HTMLSelectElement;
-  if (sortSelect) {
-    sortSelect.value = browseSortMode;
-    sortSelect.addEventListener('change', () => {
-      browseSortMode = sortSelect.value;
-      updateBrowseUI();
+  const sortBtn = document.getElementById('btn-browse-sort');
+  const sortContainer = document.getElementById('browse-sort-container');
+  const sortMenu = document.getElementById('browse-sort-menu');
+  const sortLabel = document.getElementById('current-sort-label');
+
+  sortBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    sortContainer?.classList.toggle('open');
+    playSound('click');
+  });
+
+  sortMenu?.querySelectorAll('li').forEach(li => {
+    li.addEventListener('click', () => {
+      const value = li.getAttribute('data-value');
+      if (value) {
+        browseSortMode = value;
+        if (sortLabel) sortLabel.textContent = li.textContent;
+        
+        // Update active class
+        sortMenu.querySelectorAll('li').forEach(item => item.classList.remove('active'));
+        li.classList.add('active');
+        
+        sortContainer?.classList.remove('open');
+        updateBrowseUI();
+      }
     });
-  }
+  });
+
+  // Close dropdown on outside click
+  document.addEventListener('click', (e) => {
+    if (sortContainer?.classList.contains('open') && !sortContainer.contains(e.target as Node)) {
+      sortContainer.classList.remove('open');
+    }
+  });
 
   document.getElementById('btn-toggle-recents')?.addEventListener('click', (e) => {
     // Only toggle if not clicking the clear button

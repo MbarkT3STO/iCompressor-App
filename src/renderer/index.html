@@ -287,15 +287,24 @@
               </div>
 
               <div class="toolbar-right">
-                <div class="browse-sort-container">
-                  <select id="browse-sort-select" class="setting-select">
-                    <option value="name-asc">Name (A-Z)</option>
-                    <option value="name-desc">Name (Z-A)</option>
-                    <option value="size-desc">Size (Large-Small)</option>
-                    <option value="size-asc">Size (Small-Large)</option>
-                    <option value="date-desc">Date (Newest)</option>
-                    <option value="date-asc">Date (Oldest)</option>
-                  </select>
+                <div class="browse-sort-container" id="browse-sort-container">
+                  <button type="button" class="btn-sort" id="btn-browse-sort" title="Sort Options">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                      <path d="M3 18h6v-2H3v2zM3 6v2h18V6H3zm0 7h12v-2H3v2z"/>
+                    </svg>
+                    <span id="current-sort-label">Name (A-Z)</span>
+                    <svg class="chevron-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                      <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                    </svg>
+                  </button>
+                  <ul class="dropdown-menu" id="browse-sort-menu">
+                    <li data-value="name-asc" class="active">Name (A-Z)</li>
+                    <li data-value="name-desc">Name (Z-A)</li>
+                    <li data-value="size-desc">Size (Large-Small)</li>
+                    <li data-value="size-asc">Size (Small-Large)</li>
+                    <li data-value="date-desc">Date (Newest)</li>
+                    <li data-value="date-asc">Date (Oldest)</li>
+                  </ul>
                 </div>
                 <div class="browse-actions">
                   <button type="button" class="btn-text" id="btn-browse-refresh" title="Refresh Window">
