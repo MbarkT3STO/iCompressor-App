@@ -41,7 +41,8 @@ import {
   hideFolderSizeModal,
   renderHistory,
   showFilePreview,
-  setBrowseLoading
+  setBrowseLoading,
+  updateCompressDest
 } from './ui';
 import type { AppSettings, FileEntry, HistoryEntry } from '../types';
 
@@ -640,7 +641,6 @@ function setupCompress(): void {
     const dir = await ipc.selectFolder();
     if (dir) {
       customOutputDir = dir;
-      const { updateCompressDest } = require('./ui');
       updateCompressDest(dir);
     }
   });
@@ -728,11 +728,16 @@ function setupCompress(): void {
     
     const password = pwdToggle?.checked ? pwdInput?.value : undefined;
     const settings = await ipc.getSettings();
-    const outputDir = customOutputDir || settings.outputDirectory || dirname(sources[0]);
-    const defaultPath = outputDir ? `${outputDir}/${defaultName}` : defaultName;
-
-    const outputPath = await ipc.selectOutput(defaultPath, format);
-    if (!outputPath) return;
+    const outputDir = customOutputDir || settings.outputDirectory; // No fallback here
+    
+    let outputPath: string | null = null;
+    if (outputDir) {
+      outputPath = `${outputDir}/${defaultName}`;
+    } else {
+      // If no directory is set anywhere, prompt the user
+      outputPath = await ipc.selectOutput(defaultName, format);
+      if (!outputPath) return; // User canceled the save dialog
+    }
 
     const compressionLevel = levelEl ? Number(levelEl.value) : 6;
 
@@ -1041,8 +1046,13 @@ function setupExtract(): void {
   // (loadArchiveIntoViewer was moved up)
   
   document.getElementById('btn-extract-from-viewer')?.addEventListener('click', async () => {
-    const outputDir = await ipc.selectFolder();
-    if (!outputDir) return;
+    const settings = await ipc.getSettings();
+    let outputDir = settings.outputDirectory;
+    
+    if (!outputDir) {
+      outputDir = await ipc.selectFolder();
+      if (!outputDir) return;
+    }
     
     currentExtractOutput = outputDir;
     
@@ -1074,6 +1084,7 @@ async function loadSettings(): Promise<void> {
   const settings = await ipc.getSettings();
   applySettingsToForm(settings);
   applyTheme(settings.theme ?? 'system');
+  updateCompressDest();
 }
 
 function setupSettings(): void {
@@ -1087,6 +1098,15 @@ function setupSettings(): void {
     const dir = await ipc.selectFolder();
     if (dir) {
       (document.getElementById('setting-output-dir') as HTMLInputElement).value = dir;
+      saveSettings();
+    }
+  });
+
+  document.getElementById('btn-clear-output-dir')?.addEventListener('click', () => {
+    const input = document.getElementById('setting-output-dir') as HTMLInputElement;
+    if (input) {
+      input.value = '';
+      saveSettings();
     }
   });
 
@@ -1120,6 +1140,7 @@ function setupSettings(): void {
       layout: (document.getElementById('setting-layout') as HTMLSelectElement)?.value as any || 'header',
     });
     updateBrowseUI(); // Refresh browser tab if open
+    updateCompressDest(); // Update Compress tab destination label
   };
 
   levelEl?.addEventListener('change', saveSettings);
