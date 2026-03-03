@@ -17,13 +17,15 @@ export interface AppSettings {
 
   deleteSourcesAfterProcess: boolean;
   overwriteBehavior: 'overwrite' | 'skip' | 'prompt';
-  themeFlavor?: 'midnight' | 'strawberry' | 'matcha' | 'ocean';
+  themeFlavor?: 'midnight' | 'strawberry' | 'matcha' | 'ocean' | 'moonlight' | 'twilight' | 'sunset';
   browseViewMode: 'explorer' | 'tree';
   layout: 'header' | 'sidebar';
   sidebarCollapsed: boolean;
   showHistoryTab: boolean;
   showBrowseRecents: boolean;
   autoResizeWindow: boolean;
+  lastUsedFormat: string;
+  soundEnabled: boolean;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -43,6 +45,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   showHistoryTab: false,
   showBrowseRecents: false,
   autoResizeWindow: true,
+  lastUsedFormat: 'zip',
+  soundEnabled: true,
 };
 
 function getSettingsPath(): string {

@@ -21,6 +21,8 @@ export interface AppSettings {
   showHistoryTab: boolean;
   showBrowseRecents: boolean;
   autoResizeWindow: boolean;
+  lastUsedFormat: string;
+  soundEnabled: boolean;
 }
 
 export interface FileEntry {

@@ -214,11 +214,18 @@
                     <div class="input-focus-glow"></div>
                   </div>
                   
+                  <div class="preset-chips" id="preset-chips">
+                    <button type="button" class="chip preset-chip" data-preset="fastest" aria-label="Fastest compression">Fastest</button>
+                    <button type="button" class="chip preset-chip" data-preset="balanced" aria-label="Balanced compression">Balanced</button>
+                    <button type="button" class="chip preset-chip active" data-preset="maximum" aria-label="Maximum compression">Maximum</button>
+                    <button type="button" class="chip preset-chip" data-preset="ultra" aria-label="Ultra compression">Ultra</button>
+                  </div>
+
                   <div class="format-chips" id="format-chips">
-                    <button type="button" class="chip active" data-value="zip">ZIP</button>
-                    <button type="button" class="chip" data-value="7z">7Z</button>
-                    <button type="button" class="chip" data-value="tar">TAR</button>
-                    <button type="button" class="chip" data-value="targz">TGZ</button>
+                    <button type="button" class="chip active" data-value="zip" aria-label="ZIP format">ZIP</button>
+                    <button type="button" class="chip" data-value="7z" aria-label="7Z format">7Z</button>
+                    <button type="button" class="chip" data-value="tar" aria-label="TAR format">TAR</button>
+                    <button type="button" class="chip" data-value="targz" aria-label="TAR.GZ format">TGZ</button>
                   </div>
 
                   <details class="advanced-settings-v2">
@@ -249,6 +256,26 @@
                       </div>
                       <div class="setting-item split password-input-container">
                         <input type="password" id="archive-password-v2" class="input-modern hidden" placeholder="Password...">
+                      </div>
+                      <div class="setting-item split">
+                        <div class="toggle-group">
+                          <label>Split Volumes</label>
+                          <label class="toggle-switch-v2">
+                            <input type="checkbox" id="split-volume-toggle">
+                            <span class="toggle-slider-v2"></span>
+                          </label>
+                        </div>
+                      </div>
+                      <div class="setting-item split split-volume-options hidden" id="split-volume-options">
+                        <select id="split-volume-size" class="input-modern select-modern" aria-label="Split volume size">
+                          <option value="">Custom size...</option>
+                          <option value="100m">100 MB</option>
+                          <option value="250m">250 MB</option>
+                          <option value="700m">700 MB (CD)</option>
+                          <option value="1g">1 GB</option>
+                          <option value="2g">2 GB</option>
+                          <option value="4480m">4.37 GB (DVD)</option>
+                        </select>
                       </div>
                     </div>
                   </details>
@@ -400,6 +427,16 @@
                   <button type="button" class="btn-text" id="btn-browse-refresh" title="Refresh Window">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
                       <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                    </svg>
+                  </button>
+                  <button type="button" class="btn-text" id="btn-browse-new-folder" title="New Folder">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                      <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-1 11h-2v2h-2v-2h-2v-2h2v-2h2v2h2v2z"/>
+                    </svg>
+                  </button>
+                  <button type="button" class="btn-text" id="btn-browse-hidden" title="Show/Hide Hidden Files">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                      <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
                     </svg>
                   </button>
                   <button type="button" class="btn-primary" id="btn-browse-compress" title="Compress Selected Files" disabled>
@@ -904,7 +941,11 @@
               </div>
             </div>
             <div class="viewer-header-actions">
-              <button type="button" class="btn-icon-close" id="btn-close-viewer" title="Close Viewer">
+              <div class="viewer-search-wrapper" id="viewer-search-wrapper">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                <input type="text" id="viewer-search-input" class="viewer-search-input" placeholder="Search files..." aria-label="Search files in archive">
+              </div>
+              <button type="button" class="btn-icon-close" id="btn-close-viewer" title="Close Viewer" aria-label="Close archive viewer">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
               </button>
             </div>
@@ -912,32 +953,37 @@
           
           <div class="archive-viewer-body-v2">
             <!-- Loading State -->
-            <div id="archive-viewer-loading" class="archive-viewer-state hidden">
-              <div class="spinner"></div>
-              <p>Reading archive index...</p>
+            <div id="archive-viewer-loading" class="archive-viewer-state hidden" aria-live="polite">
+              <div class="viewer-loader"></div>
+              <div>
+                <div class="viewer-state-title">Reading Index</div>
+                <div class="viewer-state-desc">Peeking inside your archive...</div>
+              </div>
             </div>
             
             <!-- Error State -->
-            <div id="archive-viewer-error" class="archive-viewer-state hidden">
-              <div class="viewer-error-icon">
-                <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-                </svg>
+            <div id="archive-viewer-error" class="archive-viewer-state hidden" role="alert">
+              <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" class="viewer-error-icon">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+              </svg>
+              <div>
+                <div class="viewer-state-title">Something went wrong</div>
+                <div class="viewer-state-desc" id="archive-viewer-error-msg">Encrypted or unsupported archive</div>
               </div>
-              <p id="archive-viewer-error-msg">Encrypted or unsupported archive</p>
             </div>
 
             <!-- Empty State -->
             <div id="archive-viewer-empty" class="archive-viewer-state hidden">
-              <div class="empty-state-content">
-                <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" opacity="0.3">
-                  <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H5v-2h14v2zm0-4H5v-2h14v2z"/>
-                </svg>
-                <p>This folder is empty</p>
-                <button type="button" class="btn-secondary" onclick="document.getElementById('btn-close-viewer').click()">
-                  Go Back
-                </button>
+              <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" opacity="0.3">
+                <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H5v-2h14v2zm0-4H5v-2h14v2z"/>
+              </svg>
+              <div>
+                <div class="viewer-state-title">Empty Folder</div>
+                <div class="viewer-state-desc">There's nothing to see here.</div>
               </div>
+              <button type="button" class="btn-secondary" onclick="document.getElementById('btn-close-viewer').click()">
+                Go Back
+              </button>
             </div>
 
             <!-- Data Table -->
@@ -945,6 +991,7 @@
               <table class="archive-table-v2">
                 <thead>
                   <tr>
+                    <th class="col-check"><input type="checkbox" id="viewer-select-all" aria-label="Select all files" title="Select all"></th>
                     <th class="col-name">File Name</th>
                     <th class="col-size">Actual Size</th>
                     <th class="col-packed">Packed</th>
@@ -959,16 +1006,102 @@
           </div>
           
           <div class="archive-viewer-footer-v2">
-            <div class="archive-meta-info">
-              <span id="archive-viewer-stats" class="archive-stats-badge">0 items found</span>
-            </div>
-            <div class="viewer-footer-btns">
-              <button type="button" class="btn-prime-large" id="btn-extract-from-viewer">
-                <div class="btn-shine"></div>
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                <span>Extract All Files</span>
+            <!-- Action Toolbar -->
+            <div class="viewer-action-toolbar">
+              <button type="button" class="viewer-action-btn" id="btn-extract-here" title="Extract to same directory as archive" aria-label="Extract here">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                <span>Extract Here</span>
+              </button>
+              <button type="button" class="viewer-action-btn" id="btn-extract-subfolder" title="Extract to a subfolder named after the archive" aria-label="Extract to subfolder">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+                <span>To Subfolder</span>
+              </button>
+              <button type="button" class="viewer-action-btn hidden" id="btn-extract-selected" title="Extract only selected files" aria-label="Extract selected files" disabled>
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                <span>Extract Selected</span>
+              </button>
+              <div class="viewer-toolbar-sep"></div>
+              <div class="viewer-convert-dropdown" id="viewer-convert-dropdown">
+                <button type="button" class="viewer-action-btn" id="btn-convert-archive" title="Convert this archive to another format" aria-label="Convert archive format">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12.5 8c-2.65 0-5.05 1-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+                  <span>Convert</span>
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" class="chevron-icon"><path d="M7 10l5 5 5-5z"/></svg>
+                </button>
+                <ul class="dropdown-menu convert-menu" id="convert-format-menu">
+                  <li class="dropdown-header">FORMAT</li>
+                  <li data-value="zip">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H5v-2h14v2zm0-4H5v-2h14v2z"/></svg>
+                    <span>ZIP</span>
+                  </li>
+                  <li data-value="7z">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H5v-2h14v2zm0-4H5v-2h14v2z"/></svg>
+                    <span>7Z</span>
+                  </li>
+                  <li data-value="tar">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H5v-2h14v2zm0-4H5v-2h14v2z"/></svg>
+                    <span>TAR</span>
+                  </li>
+                  <li data-value="targz">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12.5 8c-2.65 0-5.05 1-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+                    <span>TAR.GZ</span>
+                  </li>
+                </ul>
+              </div>
+              <button type="button" class="viewer-action-btn" id="btn-verify-integrity" title="Compute SHA256 hash of this archive" aria-label="Verify archive integrity">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+                <span>Verify</span>
               </button>
             </div>
+            <!-- Bottom row: stats + extract all -->
+            <div class="viewer-footer-bottom">
+              <div class="archive-meta-info">
+                <span id="archive-stats-badge" class="archive-stats-badge">0 items found</span>
+              </div>
+              <button type="button" class="btn-prime-large" id="btn-extract-from-viewer" aria-label="Extract all files">
+                <div class="btn-shine"></div>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                <span>Extract All</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      </div>
+
+      <!-- Compression Stats Modal -->
+      <div id="compression-stats-modal" class="progress-modal hidden">
+        <div class="progress-modal-backdrop" id="stats-modal-backdrop"></div>
+        <div class="progress-modal-content stats-modal-content">
+          <div class="progress-modal-header">
+            <h3 class="progress-modal-title">Compression Complete</h3>
+          </div>
+          <div class="stats-modal-body">
+            <div class="stats-result-icon">
+              <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+            </div>
+            <div class="stats-grid">
+              <div class="stats-item">
+                <span class="stats-label">Original Size</span>
+                <span class="stats-value" id="stats-original-size">—</span>
+              </div>
+              <div class="stats-item">
+                <span class="stats-label">Compressed Size</span>
+                <span class="stats-value" id="stats-compressed-size">—</span>
+              </div>
+              <div class="stats-item">
+                <span class="stats-label">Ratio</span>
+                <span class="stats-value stats-ratio" id="stats-ratio">—</span>
+              </div>
+              <div class="stats-item stats-item-full">
+                <span class="stats-label">SHA-256 Checksum</span>
+                <span class="stats-value stats-hash" id="stats-checksum">—</span>
+              </div>
+            </div>
+          </div>
+          <div class="progress-modal-footer">
+            <button type="button" class="btn-text" id="btn-copy-checksum" aria-label="Copy checksum to clipboard">Copy Hash</button>
+            <button type="button" class="btn-primary" id="btn-close-stats" aria-label="Close stats">Done</button>
           </div>
         </div>
       </div>
@@ -993,7 +1126,29 @@
         </div>
       </div>
 
+        </div>
       </div>
+      
+      <!-- Action Modal (Confirm/Prompt) -->
+      <div id="action-modal" class="progress-modal hidden">
+        <div class="progress-modal-backdrop" id="action-modal-backdrop"></div>
+        <div class="progress-modal-content action-modal-content">
+          <div class="progress-modal-header">
+            <h3 class="progress-modal-title" id="action-modal-title">Confirm Action</h3>
+          </div>
+          <div class="action-modal-body">
+            <p id="action-modal-message" class="action-modal-message">Are you sure you want to proceed?</p>
+            <div id="action-modal-input-container" class="input-group hidden">
+              <input type="text" id="action-modal-input" class="input-path" placeholder="Type here...">
+            </div>
+          </div>
+          <div class="progress-modal-footer action-modal-footer">
+            <button type="button" class="btn-text" id="btn-action-cancel">Cancel</button>
+            <button type="button" class="btn-primary" id="btn-action-confirm">Confirm</button>
+          </div>
+        </div>
+      </div>
+
     </main>
     </div>
   </div>

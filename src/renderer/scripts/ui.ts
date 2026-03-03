@@ -331,6 +331,7 @@ export function renderHistory(entries: import('../types').HistoryEntry[], onShow
           <span>${dateStr}</span>
         </div>
         ${isError ? `<div class="history-item-error">${entry.errorMessage || 'Unknown error'}</div>` : ''}
+        ${entry.sizeReduction ? `<span class="history-size-badge" title="Compression ratio"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>${entry.sizeReduction}</span>` : ''}
       </div>
       ${!isError ? `
       <button class="btn-icon btn-show-folder" title="Show in Folder">
@@ -551,24 +552,34 @@ function getFileIcon(name: string, isDirectory: boolean): string {
   if (isDirectory) return folderIcon;
   const ext = name.split('.').pop()?.toLowerCase() || '';
   
-  // Archive types
-  if (['zip', '7z', 'rar', 'tar', 'gz', 'tgz'].includes(ext)) {
+  // Archive types (Green/Teal)
+  if (['zip', '7z', 'rar', 'tar', 'gz', 'tgz', 'iso', 'bz2', 'xz'].includes(ext)) {
     return `<svg class="file-icon archive-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H5v-2h14v2zm0-4H5v-2h14v2z"/></svg>`;
   }
   
-  // Image types
-  if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(ext)) {
+  // Image types (Blue/Cyan)
+  if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico', 'tif'].includes(ext)) {
     return `<svg class="file-icon image-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>`;
   }
   
-  // Document types
-  if (['pdf', 'doc', 'docx', 'txt', 'rtf'].includes(ext)) {
+  // Document types (Orange/Red)
+  if (['pdf', 'doc', 'docx', 'txt', 'rtf', 'xls', 'xlsx', 'ppt', 'pptx', 'csv'].includes(ext)) {
     return `<svg class="file-icon doc-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
   }
   
-  // Code types
-  if (['js', 'ts', 'html', 'css', 'json', 'py', 'go', 'rs'].includes(ext)) {
-    return `<svg class="file-icon code-icon" viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>`;
+  // Code types (Purple/Indigo)
+  if (['js', 'ts', 'html', 'css', 'json', 'py', 'go', 'rs', 'cpp', 'c', 'h', 'java', 'php', 'rb', 'sh', 'md'].includes(ext)) {
+    return `<svg class="file-icon code-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>`;
+  }
+
+  // Audio types (Pink)
+  if (['mp3', 'wav', 'ogg', 'm4a', 'flac'].includes(ext)) {
+    return `<svg class="file-icon audio-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>`;
+  }
+
+  // Video types (Violet)
+  if (['mp4', 'mkv', 'avi', 'mov', 'wmv'].includes(ext)) {
+    return `<svg class="file-icon video-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"/></svg>`;
   }
 
   return fileIcon;
@@ -815,14 +826,17 @@ export function renderArchiveViewerPath(archiveName: string, pathParts: string[]
   
   const root = document.createElement('span');
   root.className = 'breadcrumb-item';
-  root.textContent = 'Root';
+  root.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="opacity:0.6;"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg> <span>Root</span>`;
+  root.style.display = 'inline-flex';
+  root.style.alignItems = 'center';
+  root.style.gap = '4px';
   root.onclick = () => onNav(-1);
   container.appendChild(root);
 
   pathParts.forEach((part, idx) => {
     const sep = document.createElement('span');
     sep.className = 'breadcrumb-sep';
-    sep.textContent = ' / ';
+    sep.innerHTML = `<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" opacity="0.4"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>`;
     container.appendChild(sep);
 
     const span = document.createElement('span');
@@ -837,14 +851,17 @@ export function renderArchiveViewerTable(
   files: any[], 
   onFolderClick: (folderName: string) => void,
   onDragStart?: (file: any) => void,
-  onFileClick?: (file: any) => void
+  onFileClick?: (file: any) => void,
+  onCheckChange?: (file: any, checked: boolean) => void
 ): void {
   const tbody = document.getElementById('archive-viewer-tbody');
-  const stats = document.getElementById('archive-viewer-stats');
+  const stats = document.getElementById('archive-stats-badge'); // Specifically the badge
+  const statsContainer = document.getElementById('archive-viewer-stats'); // The wrapper
   if (!tbody) return;
 
   tbody.innerHTML = '';
   if (stats) stats.textContent = `${files.length} items found`;
+  else if (statsContainer) statsContainer.textContent = `${files.length} items found`;
 
   files.forEach((file, i) => {
     const tr = document.createElement('tr');
@@ -857,6 +874,7 @@ export function renderArchiveViewerTable(
     const dateStr = file.modified ? file.modified.substring(0, 16) : '--';
     
     tr.innerHTML = `
+      <td class="col-check"><input type="checkbox" class="viewer-row-check" data-file-name="${file.name}" data-is-dir="${file.isDirectory}" aria-label="Select ${file.name}"></td>
       <td class="col-name" title="${file.name}">
         <div style="display: flex; align-items: center; gap: 10px;">
           <div class="file-icon-box" style="width: 28px; height: 28px; background: rgba(255,255,255,0.05);">
@@ -883,6 +901,12 @@ export function renderArchiveViewerTable(
           onDragStart(file);
         });
       }
+    }
+
+    // Check handler
+    const checkbox = tr.querySelector('.viewer-row-check') as HTMLInputElement;
+    if (checkbox && onCheckChange) {
+      checkbox.addEventListener('change', () => onCheckChange(file, checkbox.checked));
     }
 
     tbody.appendChild(tr);
@@ -1077,6 +1101,89 @@ export function hideFolderSizeModal(): void {
   if (modal) {
     modal.classList.add('hidden');
   }
+}
+
+// Action Modal (Confirm/Prompt)
+export interface ActionModalOptions {
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  mode: 'confirm' | 'prompt';
+  defaultValue?: string;
+  placeholder?: string;
+}
+
+export function showActionModal(options: ActionModalOptions): Promise<string | boolean | null> {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('action-modal');
+    const titleEl = document.getElementById('action-modal-title');
+    const messageEl = document.getElementById('action-modal-message');
+    const inputContainer = document.getElementById('action-modal-input-container');
+    const inputEl = document.getElementById('action-modal-input') as HTMLInputElement;
+    const confirmBtn = document.getElementById('btn-action-confirm');
+    const cancelBtn = document.getElementById('btn-action-cancel');
+    const backdrop = document.getElementById('action-modal-backdrop');
+
+    if (!modal || !titleEl || !messageEl || !inputContainer || !inputEl || !confirmBtn || !cancelBtn || !backdrop) {
+      resolve(null);
+      return;
+    }
+
+    titleEl.textContent = options.title;
+    messageEl.textContent = options.message;
+    confirmBtn.textContent = options.confirmText || 'Confirm';
+    cancelBtn.textContent = options.cancelText || 'Cancel';
+
+    if (options.mode === 'prompt') {
+      inputContainer.classList.remove('hidden');
+      inputEl.value = options.defaultValue || '';
+      inputEl.placeholder = options.placeholder || '';
+      setTimeout(() => inputEl.focus(), 50);
+    } else {
+      inputContainer.classList.add('hidden');
+    }
+
+    modal.classList.remove('hidden');
+
+    const cleanup = () => {
+      modal.classList.add('hidden');
+      // Remove listeners by cloning (or just use once: true if simple)
+      const newConfirm = confirmBtn.cloneNode(true);
+      const newCancel = cancelBtn.cloneNode(true);
+      const newBackdrop = backdrop.cloneNode(true);
+      confirmBtn.parentNode?.replaceChild(newConfirm, confirmBtn);
+      cancelBtn.parentNode?.replaceChild(newCancel, cancelBtn);
+      backdrop.parentNode?.replaceChild(newBackdrop, backdrop);
+    };
+
+    confirmBtn.addEventListener('click', () => {
+      const result = options.mode === 'prompt' ? inputEl.value : true;
+      cleanup();
+      resolve(result);
+    }, { once: true });
+
+    cancelBtn.addEventListener('click', () => {
+      cleanup();
+      resolve(options.mode === 'prompt' ? null : false);
+    }, { once: true });
+
+    backdrop.addEventListener('click', () => {
+      cleanup();
+      resolve(options.mode === 'prompt' ? null : false);
+    }, { once: true });
+
+    // Handle Enter key for prompt
+    if (options.mode === 'prompt') {
+      inputEl.onkeydown = (e) => {
+        if (e.key === 'Enter') {
+          confirmBtn.click();
+        } else if (e.key === 'Escape') {
+          cancelBtn.click();
+        }
+      };
+    }
+  });
 }
 
 // File Preview

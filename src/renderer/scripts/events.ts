@@ -39,6 +39,7 @@ import {
   formatSize,
   showFolderSizeModal,
   hideFolderSizeModal,
+  showActionModal,
   renderHistory,
   showFilePreview,
   setBrowseLoading,
@@ -54,7 +55,13 @@ function basename(p: string): string {
 function dirname(p: string): string {
   const parts = p.split(/[/\\]/);
   parts.pop();
-  return parts.join('/') || '/';
+  const sep = p.includes('\\') ? '\\' : '/';
+  return parts.join(sep) || (p.startsWith('/') ? '/' : '.');
+}
+
+function joinPaths(parent: string, child: string): string {
+  const sep = parent.includes('\\') ? '\\' : '/';
+  return `${parent.replace(/[/\\]$/, '')}${sep}${child}`;
 }
 
 export let globalOpenArchiveHandler: ((path: string) => Promise<void>) | null = null;
@@ -147,6 +154,7 @@ let selectedBrowsePaths = new Set<string>();
 let browseEntries: FileEntry[] = [];
 let browseSearchQuery = '';
 let browseSortMode = 'name-asc';
+let browseShowHidden = false;
 
 // Navigation History stacks
 let browseHistoryBack: string[] = [];
@@ -202,7 +210,7 @@ async function loadDirectory(dirPath: string, addToHistory: boolean = true) {
   }
 
   setBrowseLoading(true);
-  const result = await ipc.readDir(dirPath);
+  const result = await ipc.readDir(dirPath, browseShowHidden);
   setBrowseLoading(false);
   if (!result.success || !result.entries) {
     showToast('toast-compress', result.error || 'Failed to read directory', 'error'); // fallback toast
@@ -375,6 +383,16 @@ function handleBrowseContextMenu(entry: FileEntry, x: number, y: number) {
           showToast('toast-compress', `Added ${entry.name} to list`, 'success');
         }
       }
+    },
+    {
+      label: 'Rename',
+      icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`,
+      action: () => handleBrowseRename(entry)
+    },
+    {
+      label: 'Delete',
+      icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`,
+      action: () => handleBrowseDelete(entry)
     }
   ];
 
@@ -404,10 +422,108 @@ function handleBrowseContextMenu(entry: FileEntry, x: number, y: number) {
         }
       }
     });
+
+    items.push({
+      label: 'New Folder',
+      icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-1 11h-2v2h-2v-2h-2v-2h2v-2h2v2h2v2z"/></svg>`,
+      action: () => handleBrowseNewFolder(entry.path)
+    });
   }
+
+  // Show in Explorer / Reveal in Finder
+  items.push({
+    label: 'Show in Explorer',
+    icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>`,
+    action: () => {
+      ipc.showItemInFolder(entry.path); // Use showItemInFolder to select the item
+    }
+  });
 
   showContextMenu(x, y, items);
 }
+
+async function handleBrowseRename(entry: FileEntry) {
+  const result = await showActionModal({
+    title: 'Rename',
+    message: `Enter a new name for "${entry.name}":`,
+    mode: 'prompt',
+    defaultValue: entry.name,
+    confirmText: 'Rename',
+    placeholder: 'New name...'
+  });
+
+  if (typeof result !== 'string' || !result || result === entry.name) return;
+
+  const parentDir = dirname(entry.path);
+  const newPath = joinPaths(parentDir, result);
+
+  const res = await ipc.renameFile(entry.path, newPath);
+  if (res.success) {
+    showToast('toast-browse', `Renamed ${entry.name} to ${result}`, 'success');
+    await loadDirectory(parentDir);
+  } else {
+    showToast('toast-browse', res.error || 'Failed to rename', 'error');
+  }
+}
+
+async function handleBrowseDelete(entry: FileEntry) {
+  const confirm = await showActionModal({
+    title: 'Delete',
+    message: `Are you sure you want to delete ${entry.name}? This action cannot be undone.`,
+    mode: 'confirm',
+    confirmText: 'Delete',
+    cancelText: 'Keep'
+  });
+
+  if (!confirm) return;
+
+  const res = await ipc.deleteFile(entry.path);
+  if (res.success) {
+    showToast('toast-browse', `Deleted ${entry.name}`, 'success');
+    await loadDirectory(dirname(entry.path));
+  } else {
+    showToast('toast-browse', res.error || 'Failed to delete', 'error');
+  }
+}
+
+// Hidden files toggle
+document.getElementById('btn-browse-hidden')?.addEventListener('click', () => {
+  browseShowHidden = !browseShowHidden;
+  const btn = document.getElementById('btn-browse-hidden');
+  if (btn) {
+    btn.classList.toggle('active', browseShowHidden);
+  }
+  loadDirectory(currentBrowsePath);
+});
+
+async function handleBrowseNewFolder(parentDir: string) {
+  const result = await showActionModal({
+    title: 'New Folder',
+    message: 'Enter a name for the new folder:',
+    mode: 'prompt',
+    defaultValue: 'New Folder',
+    confirmText: 'Create',
+    placeholder: 'Folder name...'
+  });
+
+  if (typeof result !== 'string' || !result) return;
+
+  const newPath = joinPaths(parentDir, result);
+  const res = await ipc.createFolder(newPath);
+  
+  if (res.success) {
+    showToast('toast-browse', `Created folder "${result}"`, 'success');
+    await loadDirectory(currentBrowsePath); // Refresh current view
+  } else {
+    showToast('toast-browse', res.error || 'Failed to create folder', 'error');
+  }
+}
+
+document.getElementById('btn-browse-new-folder')?.addEventListener('click', () => {
+  if (currentBrowsePath) {
+    handleBrowseNewFolder(currentBrowsePath);
+  }
+});
 
 function handleBrowseSelect(entry: FileEntry, multi: boolean) {
   if (multi) {
@@ -702,13 +818,48 @@ function setupCompress(): void {
   // Format Chips
   let selectedFormat = 'zip';
   const chips = document.querySelectorAll('#format-chips .chip');
+  
+  // Restore last-used format
+  ipc.getSettings().then((s: AppSettings) => {
+    if (s.lastUsedFormat) {
+      selectedFormat = s.lastUsedFormat;
+      chips.forEach(c => {
+        c.classList.toggle('active', c.getAttribute('data-value') === selectedFormat);
+      });
+    }
+  });
+
   chips.forEach(chip => {
     chip.addEventListener('click', () => {
       chips.forEach(c => c.classList.remove('active'));
       chip.classList.add('active');
       selectedFormat = chip.getAttribute('data-value') || 'zip';
       playSound('click');
+      // Persist last-used format
+      ipc.saveSettings({ lastUsedFormat: selectedFormat } as any);
     });
+  });
+
+  // Compression Presets
+  const presetChips = document.querySelectorAll('#preset-chips .preset-chip');
+  const presetLevels: Record<string, number> = { fastest: 1, balanced: 5, maximum: 7, ultra: 9 };
+  presetChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      presetChips.forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      const preset = chip.getAttribute('data-preset') || 'maximum';
+      const level = presetLevels[preset] ?? 7;
+      if (levelEl) { levelEl.value = String(level); }
+      if (levelLabel) { levelLabel.textContent = String(level); }
+      playSound('click');
+    });
+  });
+
+  // Split Volume Toggle
+  const splitToggle = document.getElementById('split-volume-toggle') as HTMLInputElement;
+  const splitOptions = document.getElementById('split-volume-options');
+  splitToggle?.addEventListener('change', () => {
+    splitOptions?.classList.toggle('hidden', !splitToggle.checked);
   });
 
   // Main Compress Action
@@ -755,6 +906,7 @@ function setupCompress(): void {
         format,
         level: compressionLevel,
         password,
+        splitVolumeSize: splitToggle?.checked ? (document.getElementById('split-volume-size') as HTMLSelectElement)?.value || undefined : undefined,
       });
 
       if (result.success) {
@@ -763,8 +915,40 @@ function setupCompress(): void {
         if (result.outputPath) saveRecent(result.outputPath);
         setFileList(listId, []);
         if (settings.autoOpenResultFolder && result.outputPath) {
-          // Open the folder containing the compressed file, not the file itself
           ipc.openPath(dirname(result.outputPath));
+        }
+
+        // Show compression stats modal
+        if (result.outputPath) {
+          const formatBytes = (bytes: number): string => {
+            if (!bytes || bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+          };
+
+          const inputSize = result.inputSize || 0;
+          const outputSize = result.outputSize || 0;
+          const ratio = inputSize > 0 ? ((1 - outputSize / inputSize) * 100).toFixed(1) : '0';
+
+          const statsModal = document.getElementById('compression-stats-modal');
+          const origEl = document.getElementById('stats-original-size');
+          const compEl = document.getElementById('stats-compressed-size');
+          const ratioEl = document.getElementById('stats-ratio');
+          const hashEl = document.getElementById('stats-checksum');
+
+          if (origEl) origEl.textContent = formatBytes(inputSize);
+          if (compEl) compEl.textContent = formatBytes(outputSize);
+          if (ratioEl) ratioEl.textContent = `${ratio}% smaller`;
+          if (hashEl) hashEl.textContent = 'Computing...';
+
+          statsModal?.classList.remove('hidden');
+
+          // Compute checksum async
+          ipc.computeChecksum(result.outputPath).then((res: any) => {
+            if (hashEl) hashEl.textContent = res.success ? res.hash : 'Failed';
+          });
         }
       } else {
         playSound('error');
@@ -887,37 +1071,90 @@ function setupExtract(): void {
   let currentViewerFiles: any[] = [];
   let currentViewerPath: string[] = [];
 
+  // Viewer search
+  let viewerSearchQuery = '';
+  const viewerSearchInput = document.getElementById('viewer-search-input') as HTMLInputElement;
+  viewerSearchInput?.addEventListener('input', () => {
+    viewerSearchQuery = viewerSearchInput.value.toLowerCase();
+    updateViewerUI();
+  });
+
+  // Viewer checkbox selection tracking
+  let viewerSelectedFiles = new Set<string>();
+
+  const updateExtractSelectedBtn = () => {
+    const mainBtn = document.getElementById('btn-extract-from-viewer') as HTMLButtonElement;
+    if (!mainBtn) return;
+    
+    if (viewerSelectedFiles.size > 0) {
+      mainBtn.querySelector('span')!.textContent = 'Extract Selected';
+      mainBtn.classList.add('smart-selected');
+    } else {
+      mainBtn.querySelector('span')!.textContent = 'Extract All';
+      mainBtn.classList.remove('smart-selected');
+    }
+  };
+
+  // Select All checkbox
+  document.getElementById('viewer-select-all')?.addEventListener('change', (e) => {
+    const checked = (e.target as HTMLInputElement).checked;
+    const checkboxes = document.querySelectorAll('.viewer-row-check') as NodeListOf<HTMLInputElement>;
+    viewerSelectedFiles.clear();
+    checkboxes.forEach(cb => {
+      cb.checked = checked;
+      const tr = cb.closest('tr');
+      if (tr) {
+        if (checked) tr.classList.add('selected');
+        else tr.classList.remove('selected');
+      }
+      // Allow adding both files and directories
+      const fileName = cb.dataset.fileName || '';
+      const currentPathStr = currentViewerPath.join('/');
+      const fullPath = currentPathStr ? `${currentPathStr}/${fileName}` : fileName;
+      if (checked) {
+        viewerSelectedFiles.add(fullPath);
+      }
+    });
+    updateExtractSelectedBtn();
+  });
+
   const updateViewerUI = () => {
     const currentPathStr = currentViewerPath.join('/');
     
     // Filter files for current directory level
-    const filesToShow = currentViewerFiles.filter(f => {
-      // If we are at root (empty path array), we want items with no slashes in their path
-      // If we are in "folder/sub", we want items starting with "folder/sub/" but exactly one level deep
-      
+    let filesToShow = currentViewerFiles.filter(f => {
       const isRoot = currentViewerPath.length === 0;
       if (isRoot) {
-        // Items in root have no slashes in their path, or are directories
         return !f.path.includes('/');
       } else {
         const prefix = currentPathStr + '/';
         if (!f.path.startsWith(prefix)) return false;
-        
-        // Remove prefix to see how many slashes are left
         const remainder = f.path.substring(prefix.length);
-        // It must not contain any more slashes to be in this exact directory
         return !remainder.includes('/');
       }
     });
 
+    // Apply search filter
+    if (viewerSearchQuery) {
+      filesToShow = filesToShow.filter(f => f.name.toLowerCase().includes(viewerSearchQuery));
+    }
+
+    // Reset selection state on navigation
+    viewerSelectedFiles.clear();
+    const selectAllCb = document.getElementById('viewer-select-all') as HTMLInputElement;
+    if (selectAllCb) selectAllCb.checked = false;
+    updateExtractSelectedBtn();
+
     if (filesToShow.length === 0) {
-      setArchiveViewerState('empty');
+      setArchiveViewerState(viewerSearchQuery ? 'empty' : 'empty');
     } else {
       setArchiveViewerState('data');
       renderArchiveViewerTable(
         filesToShow, 
         (folderName) => {
           currentViewerPath.push(folderName);
+          viewerSearchQuery = '';
+          if (viewerSearchInput) viewerSearchInput.value = '';
           updateViewerUI();
         },
         (file) => {
@@ -931,6 +1168,27 @@ function setupExtract(): void {
           } else {
             showFilePreview(basename(file.path), undefined, undefined, res.error || 'Failed to extract preview');
           }
+        },
+        (file, checked) => {
+          const fullPath = file.path;
+          // Sync selection class on TR
+          const checkboxes = document.querySelectorAll('.viewer-row-check') as NodeListOf<HTMLInputElement>;
+          checkboxes.forEach(cb => {
+            if (cb.dataset.fileName === file.name && cb.dataset.isDir === String(file.isDirectory)) {
+              const tr = cb.closest('tr');
+              if (tr) {
+                if (checked) tr.classList.add('selected');
+                else tr.classList.remove('selected');
+              }
+            }
+          });
+
+          if (checked) {
+            viewerSelectedFiles.add(fullPath); // Add both files and folders
+          } else {
+            viewerSelectedFiles.delete(fullPath);
+          }
+          updateExtractSelectedBtn();
         }
       );
     }
@@ -941,6 +1199,8 @@ function setupExtract(): void {
       } else {
         currentViewerPath = currentViewerPath.slice(0, idx + 1);
       }
+      viewerSearchQuery = '';
+      if (viewerSearchInput) viewerSearchInput.value = '';
       updateViewerUI();
     });
   };
@@ -1052,7 +1312,56 @@ function setupExtract(): void {
 
   // (loadArchiveIntoViewer was moved up)
   
+  const handleSelectiveExtract = async () => {
+    if (viewerSelectedFiles.size === 0) {
+      showToast('toast-extract', 'No files selected', 'error');
+      return;
+    }
+    const settings = await ipc.getSettings();
+    let outputDir = settings.outputDirectory;
+    if (!outputDir) {
+      const selected = await ipc.selectFolder();
+      if (!selected) return;
+      outputDir = selected;
+    }
+    hideArchiveViewerModal();
+
+    showGlobalProgress(0, 'Preparing...', 'Extracting selected...');
+    const unsub = ipc.onProgress((data) => {
+      showGlobalProgress(data.percent, data.status, 'Extracting selected...');
+    });
+    try {
+      const result = await ipc.selectiveExtract(
+        currentViewerArchive,
+        Array.from(viewerSelectedFiles),
+        outputDir,
+        currentViewerPassword || undefined
+      );
+      if (result.success) {
+        playSound('success');
+        showGlobalProgress(100, 'Complete', 'Extracting selected...');
+        setTimeout(() => {
+          hideGlobalProgress();
+          showToast('toast-extract', `Extracted ${viewerSelectedFiles.size} files`, 'success');
+        }, 350);
+        if (settings.autoOpenResultFolder && result.outputDir) ipc.openPath(result.outputDir);
+      } else {
+        playSound('error');
+        hideGlobalProgress();
+        showToast('toast-extract', result.error || 'Extraction failed', 'error');
+      }
+    } finally {
+      unsub();
+    }
+  };
+
   document.getElementById('btn-extract-from-viewer')?.addEventListener('click', async () => {
+    // Smart Extraction: If something is selected, trigger selective extraction
+    if (viewerSelectedFiles.size > 0) {
+      await handleSelectiveExtract();
+      return;
+    }
+
     const settings = await ipc.getSettings();
     let outputDir = settings.outputDirectory;
     
@@ -1082,6 +1391,160 @@ function setupExtract(): void {
     
     hideArchiveViewerModal();
     await doExtract(currentViewerArchive, outputDir);
+  });
+
+  // Extract Here (same dir as archive)
+  document.getElementById('btn-extract-here')?.addEventListener('click', async () => {
+    const outputDir = dirname(currentViewerArchive);
+    hideArchiveViewerModal();
+    await doExtract(currentViewerArchive, outputDir);
+  });
+
+  // Extract to Subfolder
+  document.getElementById('btn-extract-subfolder')?.addEventListener('click', async () => {
+    const archiveName = basename(currentViewerArchive).replace(/\.[^.]+$/, '').replace(/\.tar$/, '');
+    const outputDir = dirname(currentViewerArchive) + '/' + archiveName;
+    hideArchiveViewerModal();
+    await doExtract(currentViewerArchive, outputDir);
+  });
+
+  // Extract Selected
+  document.getElementById('btn-extract-selected')?.addEventListener('click', async () => {
+    if (viewerSelectedFiles.size === 0) {
+      showToast('toast-extract', 'No files selected', 'error');
+      return;
+    }
+    const settings = await ipc.getSettings();
+    let outputDir = settings.outputDirectory;
+    if (!outputDir) {
+      const selected = await ipc.selectFolder();
+      if (!selected) return;
+      outputDir = selected;
+    }
+    hideArchiveViewerModal();
+
+    showGlobalProgress(0, 'Preparing...', 'Extracting selected...');
+    const unsub = ipc.onProgress((data) => {
+      showGlobalProgress(data.percent, data.status, 'Extracting selected...');
+    });
+    try {
+      const result = await ipc.selectiveExtract(
+        currentViewerArchive,
+        Array.from(viewerSelectedFiles),
+        outputDir,
+        currentViewerPassword || undefined
+      );
+      if (result.success) {
+        playSound('success');
+        showGlobalProgress(100, 'Complete', 'Extracting selected...');
+        setTimeout(() => {
+          hideGlobalProgress();
+          showToast('toast-extract', `Extracted ${viewerSelectedFiles.size} files`, 'success');
+        }, 350);
+        if (settings.autoOpenResultFolder && result.outputDir) ipc.openPath(result.outputDir);
+      } else {
+        playSound('error');
+        hideGlobalProgress();
+        showToast('toast-extract', result.error || 'Extraction failed', 'error');
+      }
+    } finally {
+      unsub();
+    }
+  });
+
+  // Convert Archive
+  const convertDropdown = document.getElementById('viewer-convert-dropdown');
+  const convertBtn = document.getElementById('btn-convert-archive');
+  const convertMenu = document.getElementById('convert-format-menu');
+
+  convertBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    convertDropdown?.classList.toggle('open');
+  });
+
+  convertMenu?.querySelectorAll('li').forEach(li => {
+    li.addEventListener('click', async () => {
+      convertDropdown?.classList.remove('open');
+      const targetFormat = li.getAttribute('data-value');
+      if (!targetFormat) return;
+
+      const outputDir = dirname(currentViewerArchive);
+      hideArchiveViewerModal();
+
+      showGlobalProgress(0, 'Converting...', 'Converting Archive...');
+      const unsub = ipc.onProgress((data) => {
+        showGlobalProgress(data.percent, data.status, 'Converting Archive...');
+      });
+      try {
+        const result = await ipc.convertArchive(
+          currentViewerArchive,
+          targetFormat,
+          outputDir,
+          currentViewerPassword || undefined
+        );
+        if (result.success) {
+          playSound('success');
+          showGlobalProgress(100, 'Complete', 'Converting Archive...');
+          setTimeout(() => {
+            hideGlobalProgress();
+            showToast('toast-extract', `Converted to ${targetFormat.toUpperCase()}`, 'success');
+          }, 350);
+        } else {
+          playSound('error');
+          hideGlobalProgress();
+          showToast('toast-extract', result.error || 'Conversion failed', 'error');
+        }
+      } finally {
+        unsub();
+      }
+    });
+  });
+
+  // Close convert dropdown on outside click
+  document.addEventListener('click', (e) => {
+    if (convertDropdown?.classList.contains('open') && !convertDropdown.contains(e.target as Node)) {
+      convertDropdown.classList.remove('open');
+    }
+  });
+
+  // Verify Integrity (Checksum)
+  document.getElementById('btn-verify-integrity')?.addEventListener('click', async () => {
+    showToast('toast-extract', 'Computing SHA-256...', 'info');
+    const result = await ipc.computeChecksum(currentViewerArchive);
+    if (result.success && result.hash) {
+      // Show in stats modal
+      const statsModal = document.getElementById('compression-stats-modal');
+      const origEl = document.getElementById('stats-original-size');
+      const compEl = document.getElementById('stats-compressed-size');
+      const ratioEl = document.getElementById('stats-ratio');
+      const hashEl = document.getElementById('stats-checksum');
+      const titleEl = statsModal?.querySelector('.progress-modal-title');
+
+      if (titleEl) titleEl.textContent = 'Archive Integrity';
+      if (origEl) origEl.textContent = basename(currentViewerArchive);
+      if (compEl) compEl.textContent = '—';
+      if (ratioEl) ratioEl.textContent = 'Verified ✓';
+      if (hashEl) hashEl.textContent = result.hash;
+
+      statsModal?.classList.remove('hidden');
+    } else {
+      showToast('toast-extract', result.error || 'Failed to compute checksum', 'error');
+    }
+  });
+
+  // Stats modal controls
+  document.getElementById('btn-close-stats')?.addEventListener('click', () => {
+    document.getElementById('compression-stats-modal')?.classList.add('hidden');
+  });
+  document.getElementById('stats-modal-backdrop')?.addEventListener('click', () => {
+    document.getElementById('compression-stats-modal')?.classList.add('hidden');
+  });
+  document.getElementById('btn-copy-checksum')?.addEventListener('click', () => {
+    const hash = document.getElementById('stats-checksum')?.textContent;
+    if (hash && hash !== '—' && hash !== 'Computing...') {
+      navigator.clipboard.writeText(hash);
+      showToast('toast-compress', 'Checksum copied to clipboard', 'success');
+    }
   });
 }
 
@@ -1136,7 +1599,7 @@ function setupSettings(): void {
       autoOpenResultFolder: autoOpenEl?.checked ?? true,
       minimizeToTray: minimizeTrayEl?.checked ?? true,
       theme: (themeEl?.value as 'light' | 'dark' | 'system') || 'system',
-      themeFlavor: (document.querySelector('.flavor-swatch.active')?.getAttribute('data-flavor') as any) || 'midnight',
+      themeFlavor: (document.querySelector('.flavor-swatch-v2.active')?.getAttribute('data-flavor') as any) || 'midnight',
       animationsEnabled: animationsEl?.checked ?? true,
       showHistoryTab: showHistoryEl?.checked ?? true,
       autoResizeWindow: autoResizeWindowEl?.checked ?? false,

@@ -166,9 +166,17 @@ function registerIpcHandlers(): void {
   const history = new HistoryService();
 
 
-  // Send progress to renderer
+  // Send progress to renderer + taskbar
   const sendProgress = (data: { percent: number; status: string }) => {
     mainWindow?.webContents.send(PROGRESS_CHANNEL, data);
+    // Taskbar/Dock progress bar
+    if (mainWindow) {
+      if (data.percent >= 100) {
+        mainWindow.setProgressBar(-1); // Remove
+      } else {
+        mainWindow.setProgressBar(data.percent / 100);
+      }
+    }
   };
 
   compressor.onProgress(sendProgress);
@@ -238,24 +246,85 @@ function registerIpcHandlers(): void {
         format: string;
         level: number;
         password?: string;
+        splitVolumeSize?: string;
       }
     ) => {
       try {
+        const appSettings = settings.get();
+
+        // Overwrite behavior check
+        if (fs.existsSync(payload.outputPath)) {
+          if (appSettings.overwriteBehavior === 'skip') {
+            return { success: false, error: 'Output file already exists (overwrite disabled)' };
+          } else if (appSettings.overwriteBehavior === 'prompt') {
+            const response = await dialog.showMessageBox(mainWindow!, {
+              type: 'question',
+              buttons: ['Overwrite', 'Cancel'],
+              defaultId: 1,
+              title: 'File Exists',
+              message: `"${path.basename(payload.outputPath)}" already exists. Overwrite?`
+            });
+            if (response.response === 1) return { success: false, error: 'Operation cancelled' };
+          }
+        }
+
+        // Calculate input size for sizeReduction tracking
+        const getSize = (p: string): number => {
+          try {
+            const st = fs.statSync(p);
+            if (st.isDirectory()) {
+              return fs.readdirSync(p).reduce((sum: number, f: string) => sum + getSize(path.join(p, f)), 0);
+            }
+            return st.size;
+          } catch { return 0; }
+        };
+        const inputSize = payload.sources.reduce((s: number, src: string) => s + getSize(src), 0);
+
         const result = await compressor.compress(payload);
 
         if (result.success && result.outputPath) {
+          // Calculate output size for sizeReduction
+          let outputSize = 0;
+          try { outputSize = fs.statSync(result.outputPath).size; } catch {}
+
+          const formatBytes = (bytes: number): string => {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+          };
+
           history.addEntry({
             id: Date.now().toString(),
             timestamp: Date.now(),
             action: 'compress',
             source: payload.sources.map(s => require('path').basename(s)).join(', '),
             output: require('path').basename(result.outputPath),
-            status: 'success'
+            status: 'success',
+            sizeReduction: `${formatBytes(inputSize)} → ${formatBytes(outputSize)}`
           });
+
+          // Delete sources if setting enabled
+          if (appSettings.deleteSourcesAfterProcess) {
+            for (const src of payload.sources) {
+              try {
+                const st = fs.statSync(src);
+                if (st.isDirectory()) {
+                  fs.rmSync(src, { recursive: true, force: true });
+                } else {
+                  fs.unlinkSync(src);
+                }
+              } catch {}
+            }
+          }
         }
 
-        return result;
+        // Reset taskbar progress
+        mainWindow?.setProgressBar(-1);
+        return { ...result, inputSize, outputSize: result.outputPath ? (function() { try { return fs.statSync(result.outputPath!).size; } catch { return 0; } })() : 0 };
       } catch (err) {
+        mainWindow?.setProgressBar(-1);
         history.addEntry({
           id: Date.now().toString(),
           timestamp: Date.now(),
@@ -291,10 +360,19 @@ function registerIpcHandlers(): void {
             output: result.outputDir,
             status: 'success'
           });
+
+          // Delete source archive if setting enabled
+          const appSettings = settings.get();
+          if (appSettings.deleteSourcesAfterProcess) {
+            try { fs.unlinkSync(payload.archivePath); } catch {}
+          }
         }
 
+        // Reset taskbar progress
+        mainWindow?.setProgressBar(-1);
         return result;
       } catch (err) {
+        mainWindow?.setProgressBar(-1);
         history.addEntry({
           id: Date.now().toString(),
           timestamp: Date.now(),
@@ -391,6 +469,46 @@ function registerIpcHandlers(): void {
     }
   );
 
+  // Checksum
+  ipcMain.handle(
+    IPC_CHANNELS.COMPUTE_CHECKSUM,
+    async (_, filePath: string) => {
+      try {
+        return await compressor.computeChecksum(filePath);
+      } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+      }
+    }
+  );
+
+  // Convert Archive
+  ipcMain.handle(
+    IPC_CHANNELS.CONVERT_ARCHIVE,
+    async (_, payload: { inputPath: string; outputFormat: string; outputDir: string; password?: string }) => {
+      try {
+        return await compressor.convertArchive(payload.inputPath, payload.outputFormat, payload.outputDir, payload.password);
+      } catch (err) {
+        mainWindow?.setProgressBar(-1);
+        return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+      }
+    }
+  );
+
+  // Selective Extract
+  ipcMain.handle(
+    IPC_CHANNELS.SELECTIVE_EXTRACT,
+    async (_, payload: { archivePath: string; internalPaths: string[]; outputDir: string; password?: string }) => {
+      try {
+        const result = await compressor.selectiveExtract(payload.archivePath, payload.internalPaths, payload.outputDir, payload.password);
+        mainWindow?.setProgressBar(-1);
+        return result;
+      } catch (err) {
+        mainWindow?.setProgressBar(-1);
+        return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+      }
+    }
+  );
+
   // Settings
   ipcMain.handle(IPC_CHANNELS.GET_SETTINGS, () => settings.get());
   ipcMain.handle(IPC_CHANNELS.SAVE_SETTINGS, (_, s) => settings.saveSettings(s));
@@ -414,6 +532,16 @@ function registerIpcHandlers(): void {
     }
   });
 
+  // Shell - show item in folder (reveal file/folder and select it)
+  ipcMain.handle(IPC_CHANNELS.SHOW_ITEM_IN_FOLDER, async (_, targetPath: string) => {
+    try {
+      shell.showItemInFolder(targetPath);
+      return { success: true };
+    } catch {
+      return { success: false };
+    }
+  });
+
   ipcMain.handle(IPC_CHANNELS.OPEN_EXTERNAL, async (_, url: string) => {
     try {
       await shell.openExternal(url);
@@ -428,11 +556,11 @@ function registerIpcHandlers(): void {
     return app.getPath('home');
   });
 
-  ipcMain.handle(IPC_CHANNELS.READ_DIR, async (_, dirPath: string) => {
+  ipcMain.handle(IPC_CHANNELS.READ_DIR, async (_, dirPath: string, showHidden: boolean = false) => {
     const fs = require('fs');
     try {
       const dirents = fs.readdirSync(dirPath, { withFileTypes: true });
-      const entries = dirents.map((dirent: any) => {
+      let entries = dirents.map((dirent: any) => {
         const fullPath = path.join(dirPath, dirent.name);
         let size = 0;
         let modifiedAt = 0;
@@ -451,6 +579,12 @@ function registerIpcHandlers(): void {
           modifiedAt,
         };
       });
+
+      // Filter hidden files if not requested
+      if (!showHidden) {
+        entries = entries.filter((e: any) => !e.name.startsWith('.'));
+      }
+
       // Sort: folders first, then alphabetical
       entries.sort((a: any, b: any) => {
         if (a.isDirectory && !b.isDirectory) return -1;
@@ -458,6 +592,50 @@ function registerIpcHandlers(): void {
         return a.name.localeCompare(b.name);
       });
       return { success: true, entries };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.FS_DELETE, async (_, targetPath: string) => {
+    const fs = require('fs');
+    try {
+      if (fs.existsSync(targetPath)) {
+        const stats = fs.statSync(targetPath);
+        if (stats.isDirectory()) {
+          fs.rmSync(targetPath, { recursive: true, force: true });
+        } else {
+          fs.unlinkSync(targetPath);
+        }
+        return { success: true };
+      }
+      return { success: false, error: 'File does not exist' };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.FS_RENAME, async (_, oldPath: string, newPath: string) => {
+    const fs = require('fs');
+    try {
+      if (fs.existsSync(oldPath)) {
+        fs.renameSync(oldPath, newPath);
+        return { success: true };
+      }
+      return { success: false, error: 'Source file does not exist' };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.FS_MKDIR, async (_, dirPath: string) => {
+    const fs = require('fs');
+    try {
+      if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+        return { success: true };
+      }
+      return { success: false, error: 'Folder already exists' };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
     }

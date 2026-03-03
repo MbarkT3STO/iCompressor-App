@@ -548,6 +548,131 @@ export class CompressorService extends EventEmitter {
     });
   }
 
+  async computeChecksum(filePath: string): Promise<{ success: boolean; hash?: string; error?: string }> {
+    try {
+      const crypto = require('crypto');
+      const hash = crypto.createHash('sha256');
+      const stream = fs.createReadStream(filePath);
+      return new Promise((resolve) => {
+        stream.on('data', (chunk: any) => hash.update(chunk));
+        stream.on('end', () => resolve({ success: true, hash: hash.digest('hex') }));
+        stream.on('error', (err: Error) => resolve({ success: false, error: err.message }));
+      });
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    }
+  }
+
+  async selectiveExtract(
+    archivePath: string,
+    internalPaths: string[],
+    outputDir: string,
+    password?: string
+  ): Promise<ExtractResult> {
+    return this.withSplitWorkaround(archivePath, async (actualPath) => {
+      return new Promise((resolve) => {
+        const pathTo7z = sevenBin.path7za;
+        const options: any = {
+          $bin: pathTo7z,
+          $progress: true,
+          $cherryPick: internalPaths,
+        };
+        if (password) options.password = password;
+
+        const stream = Seven.extractFull(actualPath, outputDir, options);
+
+        let targetPercent = 1;
+        let currentPercent = 0;
+        this.progress(1, 'Extracting selected files... 1%');
+
+        const ticker = setInterval(() => {
+          if (currentPercent < targetPercent) {
+            currentPercent = Math.min(targetPercent, currentPercent + Math.max(0.5, (targetPercent - currentPercent) * 0.3));
+            const displayPct = Math.round(currentPercent);
+            this.progress(displayPct, `Extracting... ${displayPct}%`);
+          }
+        }, 80);
+
+        stream.on('progress', (p: { percent?: number }) => {
+          const pct = p.percent ?? 0;
+          if (pct > targetPercent) targetPercent = Math.min(99, pct);
+        });
+
+        stream.on('end', () => {
+          clearInterval(ticker);
+          this.progress(100, 'Complete');
+          resolve({ success: true, outputDir });
+        });
+
+        stream.on('error', (err: any) => {
+          clearInterval(ticker);
+          this.progress(0, '');
+          resolve({ success: false, error: err.stderr ? String(err.stderr) : String(err.message) });
+        });
+      });
+    });
+  }
+
+  async convertArchive(
+    inputPath: string,
+    outputFormat: string,
+    outputDir: string,
+    password?: string
+  ): Promise<CompressResult> {
+    const os = require('os');
+    const crypto = require('crypto');
+    const tempDir = path.join(os.tmpdir(), `icompressor_convert_${crypto.randomBytes(4).toString('hex')}`);
+    fs.mkdirSync(tempDir, { recursive: true });
+
+    try {
+      // Step 1: Extract to temp
+      this.progress(5, 'Extracting source archive...');
+      const extractResult = await this.extract({ archivePath: inputPath, outputDir: tempDir, password });
+      if (!extractResult.success) {
+        return { success: false, error: extractResult.error || 'Failed to extract source archive' };
+      }
+
+      // Step 2: Gather all extracted files
+      const getAllFiles = (dir: string): string[] => {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        const files: string[] = [];
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry.name);
+          if (entry.isDirectory()) {
+            files.push(fullPath);
+          } else {
+            files.push(fullPath);
+          }
+        }
+        return files;
+      };
+
+      const sources = getAllFiles(tempDir);
+      if (sources.length === 0) {
+        return { success: false, error: 'No files found after extraction' };
+      }
+
+      // Step 3: Recompress to new format
+      const baseName = path.basename(inputPath, path.extname(inputPath)).replace(/\.tar$/, '');
+      const ext = outputFormat === 'targz' ? 'tar.gz' : outputFormat;
+      const outputPath = path.join(outputDir, `${baseName}.${ext}`);
+
+      this.progress(50, 'Converting to new format...');
+      const compressResult = await this.compress({
+        sources,
+        outputPath,
+        format: outputFormat,
+        level: 6,
+        password,
+      });
+
+      return compressResult;
+    } finally {
+      // Cleanup temp
+      try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch {}
+    }
+  }
+
   static isExtractable(filePath: string): boolean {
     const fmt = getFormatFromPath(filePath);
     return ['zip', '7z', 'rar', 'tar', 'targz'].includes(fmt);

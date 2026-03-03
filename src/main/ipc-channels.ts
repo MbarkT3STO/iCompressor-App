@@ -13,6 +13,9 @@ export const IPC_CHANNELS = {
   TEST: 'compressor:test',
   LIST_ARCHIVE: 'compressor:list',
   EXTRACT_PREVIEW_FILE: 'compressor:preview',
+  COMPUTE_CHECKSUM: 'compressor:checksum',
+  CONVERT_ARCHIVE: 'compressor:convert',
+  SELECTIVE_EXTRACT: 'compressor:selective-extract',
 
   GET_SETTINGS: 'settings:get',
   SAVE_SETTINGS: 'settings:save',
@@ -22,7 +25,11 @@ export const IPC_CHANNELS = {
 
   GET_VERSION: 'app:version',
   OPEN_PATH: 'shell:open-path',
+  SHOW_ITEM_IN_FOLDER: 'shell:show-item-in-folder',
   READ_DIR: 'fs:read-dir',
+  FS_DELETE: 'fs:delete',
+  FS_RENAME: 'fs:rename',
+  FS_MKDIR: 'fs:mkdir',
   GET_HOME_DIR: 'fs:get-home-dir',
   GET_FOLDER_SIZE: 'fs:get-folder-size',
   OPEN_EXTERNAL: 'shell:open-external',

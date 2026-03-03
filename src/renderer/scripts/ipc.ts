@@ -25,7 +25,7 @@ export const ipc: {
     level: number;
     password?: string;
     splitVolumeSize?: string;
-  }) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
+  }) => Promise<{ success: boolean; outputPath?: string; error?: string; inputSize?: number; outputSize?: number }>;
   extract: (payload: {
     archivePath: string;
     outputDir: string;
@@ -39,9 +39,13 @@ export const ipc: {
 
   getVersion: () => Promise<string>;
   openPath: (path: string) => Promise<{ success: boolean }>;
+  showItemInFolder: (path: string) => Promise<{ success: boolean }>;
   onProgress: (callback: (data: { percent: number; status: string }) => void) => () => void;
   getHomeDir: () => Promise<string>;
-  readDir: (path: string) => Promise<{ success: boolean; entries?: FileEntry[]; error?: string }>;
+  readDir: (path: string, showHidden?: boolean) => Promise<{ success: boolean; entries?: FileEntry[]; error?: string }>;
+  deleteFile: (path: string) => Promise<{ success: boolean; error?: string }>;
+  renameFile: (oldPath: string, newPath: string) => Promise<{ success: boolean; error?: string }>;
+  createFolder: (path: string) => Promise<{ success: boolean; error?: string }>;
   getFolderSize: (path: string) => Promise<{ success: boolean; size?: number; error?: string }>;
   openExternal: (url: string) => Promise<{ success: boolean }>;
   minimizeWindow: () => void;
@@ -54,6 +58,9 @@ export const ipc: {
   clearHistory: () => Promise<void>;
   extractPreviewFile: (archivePath: string, internalPath: string, password?: string) => Promise<{ success: boolean; data?: string; type?: 'text' | 'image' | 'unsupported'; error?: string }>;
   setTrayEnabled: (enabled: boolean) => void;
+  computeChecksum: (filePath: string) => Promise<{ success: boolean; hash?: string; error?: string }>;
+  convertArchive: (inputPath: string, outputFormat: string, outputDir: string, password?: string) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
+  selectiveExtract: (archivePath: string, internalPaths: string[], outputDir: string, password?: string) => Promise<{ success: boolean; outputDir?: string; error?: string }>;
 } = {
   selectFiles: () => api.selectFiles(),
   selectFolder: () => api.selectFolder(),
@@ -80,10 +87,14 @@ export const ipc: {
 
   getVersion: () => api.getVersion(),
   openPath: (path: string) => api.openPath(path),
+  showItemInFolder: (path: string) => api.showItemInFolder(path),
   onProgress: (callback: (data: { percent: number; status: string }) => void) =>
     api.onProgress(callback),
   getHomeDir: () => api.getHomeDir(),
-  readDir: (path: string) => api.readDir(path),
+  readDir: (path: string, showHidden?: boolean) => api.readDir(path, showHidden),
+  deleteFile: (path: string) => api.deleteFile(path),
+  renameFile: (oldPath: string, newPath: string) => api.renameFile(oldPath, newPath),
+  createFolder: (path: string) => api.createFolder(path),
   getFolderSize: (path: string) => api.getFolderSize(path),
   openExternal: (url: string) => api.openExternal(url),
   minimizeWindow: () => api.minimizeWindow(),
@@ -98,4 +109,9 @@ export const ipc: {
   extractPreviewFile: (archivePath: string, internalPath: string, password?: string) => 
     api.extractPreviewFile(archivePath, internalPath, password),
   setTrayEnabled: (enabled: boolean) => api.setTrayEnabled(enabled),
+  computeChecksum: (filePath: string) => api.computeChecksum(filePath),
+  convertArchive: (inputPath: string, outputFormat: string, outputDir: string, password?: string) =>
+    api.convertArchive(inputPath, outputFormat, outputDir, password),
+  selectiveExtract: (archivePath: string, internalPaths: string[], outputDir: string, password?: string) =>
+    api.selectiveExtract(archivePath, internalPaths, outputDir, password),
 };
