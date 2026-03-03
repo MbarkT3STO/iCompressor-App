@@ -214,14 +214,7 @@
                     <div class="input-focus-glow"></div>
                   </div>
                   
-                  <div class="preset-chips" id="preset-chips">
-                    <button type="button" class="chip preset-chip" data-preset="fastest" aria-label="Fastest compression">Fastest</button>
-                    <button type="button" class="chip preset-chip" data-preset="balanced" aria-label="Balanced compression">Balanced</button>
-                    <button type="button" class="chip preset-chip active" data-preset="maximum" aria-label="Maximum compression">Maximum</button>
-                    <button type="button" class="chip preset-chip" data-preset="ultra" aria-label="Ultra compression">Ultra</button>
-                  </div>
-
-                  <div class="format-chips" id="format-chips">
+                  <!-- Preset chips moved inside advanced options -->                  <div class="format-chips" id="format-chips">
                     <button type="button" class="chip active" data-value="zip" aria-label="ZIP format">ZIP</button>
                     <button type="button" class="chip" data-value="7z" aria-label="7Z format">7Z</button>
                     <button type="button" class="chip" data-value="tar" aria-label="TAR format">TAR</button>
@@ -234,6 +227,15 @@
                       <svg viewBox="0 0 24 24" width="18" height="18" class="summary-chevron"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>
                     </summary>
                     <div class="advanced-body-v2">
+                      <div class="setting-item preset-setting-v2">
+                        <label>Quick Presets</label>
+                        <div class="preset-chips-advanced" id="preset-chips">
+                          <button type="button" class="chip preset-chip" data-preset="fastest" aria-label="Fastest compression">Fast</button>
+                          <button type="button" class="chip preset-chip" data-preset="balanced" aria-label="Balanced compression">Bal</button>
+                          <button type="button" class="chip preset-chip active" data-preset="maximum" aria-label="Maximum compression">Max</button>
+                          <button type="button" class="chip preset-chip" data-preset="ultra" aria-label="Ultra compression">Ultra</button>
+                        </div>
+                      </div>
                       <div class="setting-item">
                         <label>Compression Level</label>
                         <div class="slider-wrapper">
