@@ -249,7 +249,13 @@ export function showGlobalProgress(percent: number, status: string, title?: stri
 
 export function hideGlobalProgress(): void {
   const modal = document.getElementById('global-progress-modal');
-  if (modal) modal.classList.add('hidden');
+  if (modal) {
+    modal.classList.add('hiding');
+    setTimeout(() => {
+      modal.classList.add('hidden');
+      modal.classList.remove('hiding');
+    }, 300);
+  }
 }
 
 // Toast
@@ -259,9 +265,14 @@ export function showToast(containerId: string, message: string, type: 'success' 
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
   toast.textContent = message;
+  
+  // Custom toast duration property for CSS animation
+  toast.style.setProperty('--toast-duration', `${duration}ms`);
+  
   container.appendChild(toast);
   setTimeout(() => {
-    toast.remove();
+    toast.classList.add('hiding');
+    setTimeout(() => toast.remove(), 400); // Wait for hiding animation
   }, duration);
 }
 
@@ -765,7 +776,13 @@ export function showArchiveViewerModal(): void {
 
 export function hideArchiveViewerModal(): void {
   const modal = document.getElementById('archive-viewer-modal');
-  if (modal) modal.classList.add('hidden');
+  if (modal) {
+    modal.classList.add('hiding');
+    setTimeout(() => {
+      modal.classList.add('hidden');
+      modal.classList.remove('hiding');
+    }, 300);
+  }
 }
 
 export function setArchiveViewerState(state: 'loading' | 'error' | 'empty' | 'data', errorMessage?: string): void {

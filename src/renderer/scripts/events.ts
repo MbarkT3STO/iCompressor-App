@@ -809,9 +809,15 @@ function setupExtract(): void {
   };
 
   const hidePasswordModal = () => {
-    if (passwordModal) passwordModal.classList.add('hidden');
-    if (passwordInput) passwordInput.value = '';
-    if (passwordError) passwordError.classList.add('hidden');
+    if (passwordModal) {
+      passwordModal.classList.add('hiding');
+      setTimeout(() => {
+        passwordModal.classList.add('hidden');
+        passwordModal.classList.remove('hiding');
+        if (passwordInput) passwordInput.value = '';
+        if (passwordError) passwordError.classList.add('hidden');
+      }, 300);
+    }
   };
 
   document.getElementById('btn-cancel-password')?.addEventListener('click', hidePasswordModal);
@@ -1050,8 +1056,9 @@ function setupExtract(): void {
     let outputDir = settings.outputDirectory;
     
     if (!outputDir) {
-      outputDir = await ipc.selectFolder();
-      if (!outputDir) return;
+      const selected = await ipc.selectFolder();
+      if (!selected) return;
+      outputDir = selected;
     }
     
     currentExtractOutput = outputDir;
