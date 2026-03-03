@@ -763,7 +763,8 @@ function setupCompress(): void {
         if (result.outputPath) saveRecent(result.outputPath);
         setFileList(listId, []);
         if (settings.autoOpenResultFolder && result.outputPath) {
-          ipc.openPath(result.outputPath);
+          // Open the folder containing the compressed file, not the file itself
+          ipc.openPath(dirname(result.outputPath));
         }
       } else {
         playSound('error');

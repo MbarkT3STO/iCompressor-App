@@ -171,37 +171,43 @@
 
           <!-- State 2: Populated Layout (Hidden by default) -->
           <div id="compress-populated-view" class="compress-populated hidden">
-            <div class="compress-main-card card">
-              <div class="card-header">
-                <div class="files-header-left">
-                  <h2 class="panel-title">Selected Items</h2>
-                  <div id="compress-stats-v2" class="files-stats-v2">
-                    <span class="stats-count">0 items</span>
-                    <span class="stats-sep">•</span>
-                    <span class="stats-size">0 B</span>
+            <!-- Left Side: Main Files Area -->
+            <div class="compress-main">
+              <div class="compress-main-card card">
+                <div class="card-header">
+                  <div class="files-header-left">
+                    <h2 class="panel-title">Selected Items</h2>
+                    <div id="compress-stats-v2" class="files-stats-v2">
+                      <span class="stats-count">0 items</span>
+                      <span class="stats-sep">•</span>
+                      <span class="stats-size">0 B</span>
+                    </div>
+                  </div>
+                  <div class="header-btns">
+                    <button type="button" class="btn-icon-text" id="btn-add-files-v2" title="Add more files to the list">
+                      <svg viewBox="0 0 24 24" width="16" height="16"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" fill="currentColor"/></svg>
+                      <span>Files</span>
+                    </button>
+                    <button type="button" class="btn-icon-text" id="btn-add-folder-v2" title="Add another folder to the list">
+                      <svg viewBox="0 0 24 24" width="16" height="16"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" fill="currentColor"/></svg>
+                      <span>Folder</span>
+                    </button>
+                    <button type="button" class="btn-icon-text btn-danger-soft" id="btn-clear-all-v2" title="Remove all items from the list">
+                      <svg viewBox="0 0 24 24" width="16" height="16"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/></svg>
+                      <span>Clear</span>
+                    </button>
                   </div>
                 </div>
-                <div class="header-btns">
-                  <button type="button" class="btn-icon-text" id="btn-add-files-v2" title="Add more files to the list">
-                    <svg viewBox="0 0 24 24" width="16" height="16"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" fill="currentColor"/></svg>
-                    <span>Files</span>
-                  </button>
-                  <button type="button" class="btn-icon-text" id="btn-add-folder-v2" title="Add another folder to the list">
-                    <svg viewBox="0 0 24 24" width="16" height="16"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" fill="currentColor"/></svg>
-                    <span>Folder</span>
-                  </button>
-                  <button type="button" class="btn-icon-text btn-danger-soft" id="btn-clear-all-v2" title="Remove all items from the list">
-                    <svg viewBox="0 0 24 24" width="16" height="16"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/></svg>
-                    <span>Clear</span>
-                  </button>
+
+                <div class="files-scroll-area">
+                  <ul class="files-list-v2" id="compress-files-list"></ul>
                 </div>
               </div>
+            </div>
 
-              <div class="files-scroll-area">
-                <ul class="files-list-v2" id="compress-files-list"></ul>
-              </div>
-
-              <div class="card-footer-v2">
+            <!-- Right Side: Sidebar Settings & Actions -->
+            <div class="compress-sidebar">
+              <div class="compress-settings-card card">
                 <div class="settings-pod">
                   <div class="input-glow-group">
                     <input type="text" id="archive-name-v2" class="input-modern" placeholder="Archive name (optional)">
@@ -218,7 +224,7 @@
                   <details class="advanced-settings-v2">
                     <summary class="advanced-summary-v2">
                       <span>Advanced Settings</span>
-                      <svg viewBox="0 0 24 24" width="18" height="18"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>
+                      <svg viewBox="0 0 24 24" width="18" height="18" class="summary-chevron"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>
                     </summary>
                     <div class="advanced-body-v2">
                       <div class="setting-item">
@@ -240,6 +246,8 @@
                             <span class="toggle-slider-v2"></span>
                           </label>
                         </div>
+                      </div>
+                      <div class="setting-item split password-input-container">
                         <input type="password" id="archive-password-v2" class="input-modern hidden" placeholder="Password...">
                       </div>
                     </div>
@@ -247,11 +255,13 @@
                 </div>
 
                 <div class="destination-info-v2">
-                  <span class="dest-label">Output Destination:</span>
+                  <div class="dest-header">
+                    <span class="dest-label">Output Destination</span>
+                    <button type="button" class="btn-dest-change" id="btn-change-dest-compress" title="Change destination folder">
+                      Change
+                    </button>
+                  </div>
                   <span id="compress-dest-path" class="dest-path">Default Output</span>
-                  <button type="button" class="btn-dest-change" id="btn-change-dest-compress" title="Change destination folder">
-                    Change
-                  </button>
                 </div>
 
                 <div class="compress-action-bar">
@@ -296,12 +306,17 @@
                 </div>
                 
                 <!-- Recent Archives Integration -->
-                <div id="extract-recents-v2" class="extract-recents-mini hidden">
-                  <h3 class="recent-title-mini">Quick Access</h3>
-                  <div id="extract-recents-list-v2" class="recents-list-mini">
-                    <!-- Populated by JS -->
+                <details id="extract-recents-v2" class="extract-recents-mini hidden">
+                  <summary class="recent-summary-mini">
+                    <h3 class="recent-title-mini">Quick Access</h3>
+                    <svg viewBox="0 0 24 24" width="18" height="18" class="summary-chevron"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>
+                  </summary>
+                  <div class="extract-recents-body">
+                    <div id="extract-recents-list-v2" class="recents-list-mini">
+                      <!-- Populated by JS -->
+                    </div>
                   </div>
-                </div>
+                </details>
               </div>
             </div>
 
