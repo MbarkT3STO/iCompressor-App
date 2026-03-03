@@ -41,6 +41,25 @@ body {
   transition: background var(--transition-normal), color var(--transition-normal);
 }
 
+/* Global Selection Color */
+::selection {
+  background-color: var(--color-accent);
+  color: #ffffff;
+}
+
+::-moz-selection {
+  background-color: var(--color-accent);
+  color: #ffffff;
+}
+
+/* Global Focus States */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--color-accent-soft);
+  border-radius: 2px;
+}
+
 /* Custom Titlebar (macOS) */
 .custom-titlebar {
   display: flex;
@@ -190,6 +209,75 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  animation: app-entry 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes app-entry {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Animated Tooltips (Glassmorphism) */
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]::before,
+[data-tooltip]::after {
+  position: absolute;
+  visibility: hidden;
+  opacity: 0;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  z-index: 10000;
+}
+
+/* Tooltip text bubble */
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(5px);
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: var(--color-bg-elevated);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text);
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Tooltip caret */
+[data-tooltip]::before {
+  content: '';
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 4px;
+  border: 5px solid transparent;
+  border-bottom-color: var(--color-border);
+}
+
+[data-tooltip]:hover::before,
+[data-tooltip]:hover::after {
+  visibility: visible;
+  opacity: 1;
+}
+
+[data-tooltip]:hover::after {
+  transform: translateX(-50%) translateY(0);
 }
 
 /* Header */
@@ -1014,8 +1102,15 @@ body {
 }
 
 @keyframes border-glow {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
+
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
 }
 
 .card-drop-hero:hover {
@@ -1033,8 +1128,15 @@ body {
 }
 
 @keyframes pulse-drag {
-  0%, 100% { transform: scale(1.05); }
-  50% { transform: scale(1.08); }
+
+  0%,
+  100% {
+    transform: scale(1.05);
+  }
+
+  50% {
+    transform: scale(1.08);
+  }
 }
 
 .card-drop-hero:hover::before {
@@ -1429,8 +1531,15 @@ body {
 }
 
 @keyframes format-chips-glow {
-  0%, 100% { opacity: 0.2; }
-  50% { opacity: 0.4; }
+
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
 }
 
 .chip {
@@ -1825,6 +1934,7 @@ input:checked+.toggle-slider-v2:before {
     opacity: 0;
     transform: translateY(30px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -1902,8 +2012,15 @@ input:checked+.toggle-slider-v2:before {
 }
 
 @keyframes recents-border-glow {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.6; }
+
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
 }
 
 .recent-title-mini {
