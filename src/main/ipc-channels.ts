@@ -13,6 +13,7 @@ export const IPC_CHANNELS = {
   TEST: 'compressor:test',
   LIST_ARCHIVE: 'compressor:list',
   EXTRACT_PREVIEW_FILE: 'compressor:preview',
+  EXTRACT_TEMP_FILE: 'compressor:extract-temp',
   COMPUTE_CHECKSUM: 'compressor:checksum',
   CONVERT_ARCHIVE: 'compressor:convert',
   SELECTIVE_EXTRACT: 'compressor:selective-extract',

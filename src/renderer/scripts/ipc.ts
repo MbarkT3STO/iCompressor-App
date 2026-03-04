@@ -57,6 +57,7 @@ export const ipc: {
   getHistory: () => Promise<import('../types').HistoryEntry[]>;
   clearHistory: () => Promise<void>;
   extractPreviewFile: (archivePath: string, internalPath: string, password?: string) => Promise<{ success: boolean; data?: string; type?: 'text' | 'image' | 'unsupported'; error?: string }>;
+  extractTempFile: (archivePath: string, internalPath: string, password?: string) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
   setTrayEnabled: (enabled: boolean) => void;
   computeChecksum: (filePath: string) => Promise<{ success: boolean; hash?: string; error?: string }>;
   convertArchive: (inputPath: string, outputFormat: string, outputDir: string, password?: string) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
@@ -108,6 +109,8 @@ export const ipc: {
   clearHistory: () => api.clearHistory(),
   extractPreviewFile: (archivePath: string, internalPath: string, password?: string) => 
     api.extractPreviewFile(archivePath, internalPath, password),
+  extractTempFile: (archivePath: string, internalPath: string, password?: string) => 
+    api.extractTempFile(archivePath, internalPath, password),
   setTrayEnabled: (enabled: boolean) => api.setTrayEnabled(enabled),
   computeChecksum: (filePath: string) => api.computeChecksum(filePath),
   convertArchive: (inputPath: string, outputFormat: string, outputDir: string, password?: string) =>

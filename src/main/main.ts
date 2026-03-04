@@ -456,6 +456,27 @@ function registerIpcHandlers(): void {
   );
 
   ipcMain.handle(
+    IPC_CHANNELS.EXTRACT_TEMP_FILE,
+    async (_, payload: { archivePath: string; internalPath: string; password?: string }) => {
+      try {
+        const os = require('os');
+        const crypto = require('crypto');
+        const tempDir = path.join(os.tmpdir(), `icompressor_temp_${crypto.randomBytes(4).toString('hex')}`);
+        fs.mkdirSync(tempDir, { recursive: true });
+        
+        const result = await compressor.extractSingleFile(payload.archivePath, payload.internalPath, tempDir, payload.password);
+        if (!result.success || !result.outputPath) {
+          return { success: false, error: result.error || 'Failed to extract temp file' };
+        }
+        
+        return { success: true, outputPath: result.outputPath };
+      } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+      }
+    }
+  );
+
+  ipcMain.handle(
     IPC_CHANNELS.TEST,
     async (_, payload: { archivePath: string; password?: string }) => {
       try {

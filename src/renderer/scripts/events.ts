@@ -1118,9 +1118,29 @@ function setupExtract(): void {
     updateExtractSelectedBtn();
   });
 
+  interface ViewerState {
+    archivePath: string;
+    files: any[];
+    path: string[];
+    searchQuery: string;
+    password?: string;
+    selectedFiles: Set<string>;
+  }
+  const viewerStateStack: ViewerState[] = [];
+
   const updateViewerUI = () => {
     const currentPathStr = currentViewerPath.join('/');
     
+    // Toggle Back button visibility based on stack depth
+    const backBtn = document.getElementById('btn-viewer-back');
+    if (backBtn) {
+      if (viewerStateStack.length > 0) {
+        backBtn.classList.remove('hidden');
+      } else {
+        backBtn.classList.add('hidden');
+      }
+    }
+
     // Filter files for current directory level
     let filesToShow = currentViewerFiles.filter(f => {
       const isRoot = currentViewerPath.length === 0;
@@ -1161,12 +1181,40 @@ function setupExtract(): void {
           ipc.startNativeDrag(currentViewerArchive, file.path, currentViewerPassword);
         },
         async (file) => {
-          showFilePreview(basename(file.path));
-          const res = await ipc.extractPreviewFile(currentViewerArchive, file.path, currentViewerPassword);
-          if (res.success) {
-            showFilePreview(basename(file.path), res.data, res.type, res.error);
+          const ext = file.name.split('.').pop()?.toLowerCase();
+          const archiveExts = ['zip', '7z', 'rar', 'tar', 'gz', 'tgz', 'iso', 'bz2', 'xz'];
+          
+          if (ext && archiveExts.includes(ext)) {
+            // Found a nested archive! Handle it
+            showGlobalProgress(0, 'Extracting nested archive...', 'Please wait');
+            const res = await ipc.extractTempFile(currentViewerArchive, file.path, currentViewerPassword);
+            hideGlobalProgress();
+            
+            if (res.success && res.outputPath) {
+              // Push the current state
+              viewerStateStack.push({
+                archivePath: currentViewerArchive,
+                files: currentViewerFiles,
+                path: [...currentViewerPath],
+                searchQuery: viewerSearchQuery,
+                password: currentViewerPassword,
+                selectedFiles: new Set(viewerSelectedFiles)
+              });
+              
+              // Load the new archive
+              await loadArchiveIntoViewer(res.outputPath);
+            } else {
+              showToast('toast-extract', res.error || 'Failed to open nested archive', 'error');
+            }
           } else {
-            showFilePreview(basename(file.path), undefined, undefined, res.error || 'Failed to extract preview');
+            // Normal file preview
+            showFilePreview(basename(file.path));
+            const res = await ipc.extractPreviewFile(currentViewerArchive, file.path, currentViewerPassword);
+            if (res.success) {
+              showFilePreview(basename(file.path), res.data, res.type, res.error);
+            } else {
+              showFilePreview(basename(file.path), undefined, undefined, res.error || 'Failed to extract preview');
+            }
           }
         },
         (file, checked) => {
@@ -1205,7 +1253,30 @@ function setupExtract(): void {
     });
   };
 
-  document.getElementById('btn-close-viewer')?.addEventListener('click', hideArchiveViewerModal);
+  document.getElementById('btn-viewer-back')?.addEventListener('click', () => {
+    if (viewerStateStack.length > 0) {
+      const parentState = viewerStateStack.pop();
+      if (parentState) {
+        currentViewerArchive = parentState.archivePath;
+        currentViewerFiles = parentState.files;
+        currentViewerPath = parentState.path;
+        viewerSearchQuery = parentState.searchQuery;
+        currentViewerPassword = parentState.password || '';
+        if (viewerSearchInput) viewerSearchInput.value = parentState.searchQuery;
+        
+        viewerSelectedFiles.clear();
+        parentState.selectedFiles.forEach(f => viewerSelectedFiles.add(f));
+        
+        updateViewerUI();
+      }
+    }
+  });
+
+  document.getElementById('btn-close-viewer')?.addEventListener('click', () => {
+    hideArchiveViewerModal();
+    // Clear stack on full close so next open is clean
+    viewerStateStack.length = 0;
+  });
 
   // Add ESC key support for closing archive viewer
   document.addEventListener('keydown', (e) => {
@@ -1213,6 +1284,7 @@ function setupExtract(): void {
       const modal = document.getElementById('archive-viewer-modal');
       if (modal && !modal.classList.contains('hidden')) {
         hideArchiveViewerModal();
+        viewerStateStack.length = 0;
       }
     }
   });
@@ -1224,6 +1296,7 @@ function setupExtract(): void {
       const backdrop = modal.querySelector('.progress-modal-backdrop');
       if (backdrop && e.target === backdrop) {
         hideArchiveViewerModal();
+        viewerStateStack.length = 0;
       }
     }
   });

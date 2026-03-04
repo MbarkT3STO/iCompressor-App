@@ -6373,6 +6373,31 @@ input:checked+.toggle-slider-v2:before {
   }
 }
 
+/* --- Viewer Back Button --- */
+.btn-icon-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  padding: 6px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-right: 10px;
+}
+
+.btn-icon-back:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text);
+  transform: translateY(-1px);
+}
+
+.btn-icon-back:active {
+  transform: translateY(0);
+}
+
 /* --- Archive Viewer Search --- */
 .viewer-search-wrapper {
   display: flex;

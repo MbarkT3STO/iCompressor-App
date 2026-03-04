@@ -18,6 +18,7 @@ const IPC_CHANNELS = {
   GET_SETTINGS: 'settings:get',
   SAVE_SETTINGS: 'settings:save',
   EXTRACT_PREVIEW_FILE: 'compressor:preview',
+  EXTRACT_TEMP_FILE: 'compressor:extract-temp',
   COMPUTE_CHECKSUM: 'compressor:checksum',
   CONVERT_ARCHIVE: 'compressor:convert',
   SELECTIVE_EXTRACT: 'compressor:selective-extract',
@@ -82,6 +83,7 @@ export interface ICompressorAPI {
   getHistory: () => Promise<any[]>;
   clearHistory: () => Promise<void>;
   extractPreviewFile: (archivePath: string, internalPath: string, password?: string) => Promise<{ success: boolean; data?: string; type?: 'text' | 'image' | 'unsupported'; error?: string }>;
+  extractTempFile: (archivePath: string, internalPath: string, password?: string) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
   readDir: (path: string, showHidden?: boolean) => Promise<{ success: boolean; entries?: FileEntry[]; error?: string }>;
   deleteFile: (path: string) => Promise<{ success: boolean; error?: string }>;
   renameFile: (oldPath: string, newPath: string) => Promise<{ success: boolean; error?: string }>;
@@ -177,6 +179,8 @@ const api: ICompressorAPI = {
   clearHistory: () => ipcRenderer.invoke(IPC_CHANNELS.CLEAR_HISTORY),
   extractPreviewFile: (archivePath: string, internalPath: string, password?: string) => 
     ipcRenderer.invoke(IPC_CHANNELS.EXTRACT_PREVIEW_FILE, { archivePath, internalPath, password }),
+  extractTempFile: (archivePath: string, internalPath: string, password?: string) => 
+    ipcRenderer.invoke(IPC_CHANNELS.EXTRACT_TEMP_FILE, { archivePath, internalPath, password }),
   computeChecksum: (filePath: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.COMPUTE_CHECKSUM, filePath),
   convertArchive: (inputPath: string, outputFormat: string, outputDir: string, password?: string) =>
