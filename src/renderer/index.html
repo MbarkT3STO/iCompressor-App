@@ -1008,62 +1008,30 @@
           </div>
           
           <div class="archive-viewer-footer-v2">
-            <!-- Action Toolbar -->
-            <div class="viewer-action-toolbar">
-              <button type="button" class="viewer-action-btn" id="btn-extract-here" title="Extract to same directory as archive" aria-label="Extract here">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                <span>Extract Here</span>
-              </button>
-              <button type="button" class="viewer-action-btn" id="btn-extract-subfolder" title="Extract to a subfolder named after the archive" aria-label="Extract to subfolder">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
-                <span>To Subfolder</span>
-              </button>
-              <button type="button" class="viewer-action-btn hidden" id="btn-extract-selected" title="Extract only selected files" aria-label="Extract selected files" disabled>
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                <span>Extract Selected</span>
-              </button>
-              <div class="viewer-toolbar-sep"></div>
-              <div class="viewer-convert-dropdown" id="viewer-convert-dropdown">
-                <button type="button" class="viewer-action-btn" id="btn-convert-archive" title="Convert this archive to another format" aria-label="Convert archive format">
-                  <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12.5 8c-2.65 0-5.05 1-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
-                  <span>Convert</span>
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" class="chevron-icon"><path d="M7 10l5 5 5-5z"/></svg>
-                </button>
-                <ul class="dropdown-menu convert-menu" id="convert-format-menu">
-                  <li class="dropdown-header">FORMAT</li>
-                  <li data-value="zip">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H5v-2h14v2zm0-4H5v-2h14v2z"/></svg>
-                    <span>ZIP</span>
-                  </li>
-                  <li data-value="7z">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H5v-2h14v2zm0-4H5v-2h14v2z"/></svg>
-                    <span>7Z</span>
-                  </li>
-                  <li data-value="tar">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H5v-2h14v2zm0-4H5v-2h14v2z"/></svg>
-                    <span>TAR</span>
-                  </li>
-                  <li data-value="targz">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12.5 8c-2.65 0-5.05 1-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
-                    <span>TAR.GZ</span>
-                  </li>
-                </ul>
-              </div>
-              <button type="button" class="viewer-action-btn" id="btn-verify-integrity" title="Compute SHA256 hash of this archive" aria-label="Verify archive integrity">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
-                <span>Verify</span>
-              </button>
-            </div>
-            <!-- Bottom row: stats + extract all -->
-            <div class="viewer-footer-bottom">
+            <div class="viewer-footer-unified">
               <div class="archive-meta-info">
                 <span id="archive-stats-badge" class="archive-stats-badge">0 items found</span>
               </div>
-              <button type="button" class="btn-prime-large" id="btn-extract-from-viewer" aria-label="Extract all files">
-                <div class="btn-shine"></div>
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                <span>Extract All</span>
-              </button>
+              
+              <div class="viewer-footer-actions">
+                <button type="button" class="viewer-action-btn" id="btn-extract-here" title="Extract to same directory as archive" aria-label="Extract here">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                  <span>Extract Here</span>
+                </button>
+                <button type="button" class="viewer-action-btn" id="btn-extract-subfolder" title="Extract to a subfolder named after the archive" aria-label="Extract to subfolder">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+                  <span>To Subfolder</span>
+                </button>
+                <button type="button" class="viewer-action-btn" id="btn-verify-integrity" title="Compute SHA256 hash of this archive" aria-label="Verify archive integrity">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+                  <span>Verify</span>
+                </button>
+                <button type="button" class="btn-prime-large" id="btn-extract-from-viewer" aria-label="Extract all files">
+                  <div class="btn-shine"></div>
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                  <span>Extract All</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
