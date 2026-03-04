@@ -1666,6 +1666,36 @@ body {
   gap: 8px;
 }
 
+.sfx-badge {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--color-accent);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  z-index: 5;
+  box-shadow: 0 0 10px var(--color-accent-soft);
+  pointer-events: none;
+  animation: sfx-pulse 2s infinite alternate ease-in-out;
+}
+
+@keyframes sfx-pulse {
+  from {
+    opacity: 0.8;
+    transform: translateY(-50%) scale(1);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.05);
+  }
+}
+
 .input-glow-group .input-modern {
   flex: 1;
   border-top-right-radius: 0;

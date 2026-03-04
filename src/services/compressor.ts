@@ -88,6 +88,7 @@ export interface CompressPayload {
   sfx?: boolean;
   threads?: number;
   ramLimit?: number;
+  encryptHeader?: boolean;
 }
 
 export interface CompressResult {
@@ -146,7 +147,7 @@ export class CompressorService extends EventEmitter {
 
     // Use node-7z for 7z, password-protected zips, and any split volumes or SFX requests
     if (format === '7z' || (format === 'zip' && payload.password) || payload.splitVolumeSize || payload.sfx) {
-      return this.compress7z(sources, outputPath, level, payload.password, payload.splitVolumeSize, payload.sfx, payload.threads, payload.ramLimit);
+      return this.compress7z(sources, outputPath, level, payload.password, payload.splitVolumeSize, payload.sfx, payload.threads, payload.ramLimit, payload.encryptHeader);
     }
 
     const archiverFormat = format as 'zip' | 'tar' | 'targz';
@@ -261,7 +262,8 @@ export class CompressorService extends EventEmitter {
     splitVolumeSize?: string,
     sfx?: boolean,
     threads?: number,
-    ramLimit?: number
+    ramLimit?: number,
+    encryptHeader?: boolean
   ): Promise<CompressResult> {
     const sizes = await Promise.all(sources.map(src => getDirSize(src)));
     const totalBytes = Math.max(1, sizes.reduce((s, size) => s + size, 0));
@@ -328,15 +330,25 @@ export class CompressorService extends EventEmitter {
         rawFlags.push('-t7z');
         rawFlags.push('-m0=lzma2', '-ms=on');
         
-        // Dictionary size optimization
-        if (clampedLevel >= 9) rawFlags.push('-md=64m');
-        else if (clampedLevel >= 7) rawFlags.push('-md=32m');
-        else if (clampedLevel >= 5) rawFlags.push('-md=16m');
-        else rawFlags.push('-md=4m');
+        // Dynamic Dictionary size based on RAM Limit (Roughly 10x Dict size in RAM)
+        const ramGB = ramLimit || 4;
+        let dictSize = '16m'; // Default
+        if (ramGB >= 16) dictSize = '128m';
+        else if (ramGB >= 8) dictSize = '64m';
+        else if (ramGB >= 4) dictSize = '32m';
+        else if (ramGB >= 2) dictSize = '16m';
+        else dictSize = '4m';
+
+        rawFlags.push(`-md=${dictSize}`);
 
         // BCJ filter for executables if no password
         if (!password) {
           rawFlags.push('-mf=BCJ');
+        }
+
+        // Header encryption
+        if (password && encryptHeader) {
+          rawFlags.push('-mhe=on');
         }
       } else {
         // For zip files, force UTF-8 for filenames

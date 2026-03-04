@@ -211,6 +211,7 @@
                 <div class="settings-pod">
                   <div class="input-glow-group">
                     <input type="text" id="archive-name-v2" class="input-modern" placeholder="Archive name (optional)">
+                    <div id="sfx-badge" class="sfx-badge hidden">SFX</div>
                     <div class="input-focus-glow"></div>
                   </div>
                   
@@ -258,6 +259,15 @@
                       </div>
                       <div class="setting-item split password-input-container">
                         <input type="password" id="archive-password-v2" class="input-modern hidden" placeholder="Password...">
+                      </div>
+                      <div id="encrypt-header-container" class="setting-item split hidden">
+                        <div class="toggle-group">
+                          <label>Encrypt File Names</label>
+                          <label class="toggle-switch-v2">
+                            <input type="checkbox" id="encrypt-header-toggle">
+                            <span class="toggle-slider-v2"></span>
+                          </label>
+                        </div>
                       </div>
                       <div class="setting-item split">
                         <div class="toggle-group">

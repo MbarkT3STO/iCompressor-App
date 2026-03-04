@@ -1001,6 +1001,17 @@ function setupCompress(): void {
       });
       selectedFormat = '7z';
       
+      // Show SFX Badge
+      const sfxBadge = document.getElementById('sfx-badge');
+      if (sfxBadge) sfxBadge.classList.remove('hidden');
+
+      // Header encryption logic
+      const encryptHeaderContainer = document.getElementById('encrypt-header-container');
+      const pwdToggle = document.getElementById('archive-password-toggle-v2') as HTMLInputElement;
+      if (encryptHeaderContainer && pwdToggle) {
+        encryptHeaderContainer.classList.toggle('hidden', !pwdToggle.checked);
+      }
+      
       // Update extension to .exe if name exists
       if (nameInput && nameInput.value) {
         const base = nameInput.value.replace(/\.(zip|7z|tar|gz|tgz|exe)$/i, '');
@@ -1013,6 +1024,30 @@ function setupCompress(): void {
         const ext = selectedFormat === 'targz' ? 'tar.gz' : selectedFormat;
         nameInput.value = `${base}.${ext}`;
       }
+      
+      // Hide SFX Badge
+      const sfxBadge = document.getElementById('sfx-badge');
+      if (sfxBadge) sfxBadge.classList.add('hidden');
+
+      // Hide header encryption unless format is 7z
+      const encryptHeaderContainer = document.getElementById('encrypt-header-container');
+      if (encryptHeaderContainer) {
+        encryptHeaderContainer.classList.toggle('hidden', selectedFormat !== '7z');
+      }
+    }
+  });
+
+  pwdToggle?.addEventListener('change', () => {
+    if (pwdInput) {
+      pwdInput.classList.toggle('hidden', !pwdToggle.checked);
+      if (pwdToggle.checked) pwdInput.focus();
+      else pwdInput.value = '';
+    }
+    // Toggle header encryption visibility
+    const encryptHeaderContainer = document.getElementById('encrypt-header-container');
+    const isSFX = sfxToggle?.checked || false;
+    if (encryptHeaderContainer) {
+      encryptHeaderContainer.classList.toggle('hidden', !pwdToggle.checked || (selectedFormat !== '7z' && !isSFX));
     }
   });
 
@@ -1039,6 +1074,21 @@ function setupCompress(): void {
       chip.classList.add('active');
       selectedFormat = chip.getAttribute('data-value') || 'zip';
       playSound('click');
+      
+      // Turn off SFX if switching away from 7z
+      if (selectedFormat !== '7z' && sfxToggle?.checked) {
+        sfxToggle.checked = false;
+        sfxToggle.dispatchEvent(new Event('change'));
+      }
+      
+      // Toggle header encryption visibility
+      const encryptHeaderContainer = document.getElementById('encrypt-header-container');
+      const pwdToggle = document.getElementById('archive-password-toggle-v2') as HTMLInputElement;
+      if (encryptHeaderContainer) {
+        const isSFX = sfxToggle?.checked || false;
+        encryptHeaderContainer.classList.toggle('hidden', !pwdToggle?.checked || (selectedFormat !== '7z' && !isSFX));
+      }
+
       // Persist last-used format
       ipc.saveSettings({ lastUsedFormat: selectedFormat } as any);
     });
@@ -1117,6 +1167,7 @@ function setupCompress(): void {
         sfx: isSFX,
         threads: threadEl ? Number(threadEl.value) : undefined,
         ramLimit: settings.ramLimit || 4,
+        encryptHeader: (document.getElementById('encrypt-header-toggle') as HTMLInputElement)?.checked || false,
       });
 
       if (isOperationCancelled) return;
