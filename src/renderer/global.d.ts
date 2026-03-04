@@ -44,8 +44,11 @@ interface ICompressorAPI {
   getVersion: () => Promise<string>;
   openPath: (path: string) => Promise<{ success: boolean }>;
   getFolderSize: (path: string) => Promise<{ success: boolean; size?: number; error?: string }>;
-  onProgress: (callback: (data: { percent: number; status: string }) => void) => () => void;
+  onProgress: (callback: (data: { percent: number; status: string; speed?: string; eta?: string }) => void) => () => void;
   startNativeDrag: (archivePath: string, internalPath: string, password?: string) => void;
+  pauseOperations: () => void;
+  resumeOperations: () => void;
+  cancelOperations: () => void;
 }
 
 declare global {

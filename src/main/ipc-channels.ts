@@ -17,6 +17,9 @@ export const IPC_CHANNELS = {
   COMPUTE_CHECKSUM: 'compressor:checksum',
   CONVERT_ARCHIVE: 'compressor:convert',
   SELECTIVE_EXTRACT: 'compressor:selective-extract',
+  PAUSE_OPERATIONS: 'compressor:pause',
+  RESUME_OPERATIONS: 'compressor:resume',
+  CANCEL_OPERATIONS: 'compressor:cancel',
 
   GET_SETTINGS: 'settings:get',
   SAVE_SETTINGS: 'settings:save',
@@ -41,6 +44,8 @@ export const IPC_CHANNELS = {
   OPEN_WITH: 'app:open-with',
   START_NATIVE_DRAG: 'app:start-native-drag',
   SET_TRAY_ENABLED: 'tray:set-enabled',
+  APP_GET_ACCENT_COLOR: 'app:get-accent-color',
+  APP_QUICK_LOOK: 'app:quick-look',
 } as const;
 
 export const PROGRESS_CHANNEL = 'compressor:progress';

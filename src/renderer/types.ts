@@ -23,6 +23,9 @@ export interface AppSettings {
   autoResizeWindow: boolean;
   lastUsedFormat: string;
   soundEnabled: boolean;
+  threadCount: number;
+  ramLimit: number;
+  dynamicTheme: boolean;
 }
 
 export interface FileEntry {

@@ -23,7 +23,36 @@ export interface ArchiveFileEntry extends FileEntry {
   modified?: string; // e.g. "2023-10-25 14:30:00"
 }
 
-export type ProgressCallback = (data: { percent: number; status: string }) => void;
+export type ProgressCallback = (data: { percent: number; status: string; speed?: string; eta?: string }) => void;
+
+function formatBytes(bytes: number): string {
+  if (!bytes || bytes === 0) return '-- B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function formatTime(ms: number): string {
+  if (ms < 0 || !isFinite(ms)) return '--';
+  const totalSecs = Math.max(1, Math.floor(ms / 1000));
+  const seconds = totalSecs % 60;
+  const minutes = Math.floor(totalSecs / 60) % 60;
+  const hours = Math.floor(totalSecs / 3600);
+  if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+  if (minutes > 0) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
+}
+
+function getDirSize(p: string): number {
+  try {
+    const st = fs.statSync(p);
+    if (st.isDirectory()) {
+      return fs.readdirSync(p).reduce((sum, f) => sum + getDirSize(path.join(p, f)), 0);
+    }
+    return st.size;
+  } catch { return 0; }
+}
 
 const SUPPORTED_EXTRACT = ['.zip', '.7z', '.rar', '.tar', '.tar.gz', '.tgz'];
 const SUPPORTED_COMPRESS = ['.zip', '.7z', '.tar', '.tar.gz'];
@@ -79,14 +108,23 @@ export interface ExtractResult {
 
 export class CompressorService extends EventEmitter {
   private onProgressHandler: ProgressCallback | null = null;
+  private activeArchivers: Set<any> = new Set();
+  private activeSevens: Set<any> = new Set();
+  
+  private isCancelledFlag = false;
+  private isPausedFlag = false;
 
   onProgress(cb: ProgressCallback): void {
     this.onProgressHandler = cb;
   }
 
-  private progress(percent: number, status: string): void {
+  private progress(percent: number, status: string, speed?: string, eta?: string): void {
+    if (this.isPausedFlag) {
+      console.log(`[PAUSE-LEAK] Progress called while paused! ${percent}%`);
+      return; 
+    }
     if (this.onProgressHandler) {
-      this.onProgressHandler({ percent, status });
+      this.onProgressHandler({ percent, status, speed, eta });
     }
   }
 
@@ -118,22 +156,18 @@ export class CompressorService extends EventEmitter {
     format: 'zip' | 'tar' | 'targz',
     level: number
   ): Promise<CompressResult> {
+    const archiveFormat = format === 'targz' ? 'tar' : format;
+    const gzip = format === 'targz';
+
+    // ── Total Bytes Calculation ─────────────────────────────────────────────
+    const sizes = await Promise.all(sources.map(src => getDirSize(src)));
+    const totalBytes = Math.max(1, sizes.reduce((s, size) => s + size, 0));
+    const startTime = Date.now();
+
+    this.isCancelledFlag = false;
+    this.isPausedFlag = false;
+
     return new Promise((resolve) => {
-      const archiveFormat = format === 'targz' ? 'tar' : format;
-      const gzip = format === 'targz';
-
-      // ── Total Bytes Calculation ─────────────────────────────────────────────
-      const getSize = (p: string): number => {
-        try {
-          const st = fs.statSync(p);
-          if (st.isDirectory()) {
-            return fs.readdirSync(p).reduce((sum, f) => sum + getSize(path.join(p, f)), 0);
-          }
-          return st.size;
-        } catch { return 0; }
-      };
-      const totalBytes = Math.max(1, sources.reduce((s, src) => s + getSize(src), 0));
-
       const output = fs.createWriteStream(outputPath);
       const archive = archiver(
         archiveFormat,
@@ -141,6 +175,7 @@ export class CompressorService extends EventEmitter {
           ? { gzip: { level: Math.min(9, Math.max(0, level)) } }
           : { zlib: { level: Math.min(9, Math.max(0, level)) } }
       );
+      this.activeArchivers.add(archive);
 
       let lastPercent = 0;
       let isResolved = false;
@@ -148,6 +183,10 @@ export class CompressorService extends EventEmitter {
       const finish = (success: boolean, error?: string) => {
         if (isResolved) return;
         isResolved = true;
+        if (this.isCancelledFlag) {
+          resolve({ success: false, error: 'Cancelled' });
+          return;
+        }
         if (success) {
           this.progress(100, 'Complete');
           resolve({ success: true, outputPath });
@@ -158,6 +197,7 @@ export class CompressorService extends EventEmitter {
       };
 
       archive.on('progress', (data: any) => {
+        if (this.isPausedFlag) return;
         const processed = data.fs?.processedBytes || 0;
         // Cap at 99 so we only hit 100 on 'close'
         const rawPct = Math.min(99, Math.round((processed / totalBytes) * 100));
@@ -165,13 +205,34 @@ export class CompressorService extends EventEmitter {
         // Only broadcast if it actually changed to reduce IPC noise
         if (rawPct > lastPercent) {
           lastPercent = rawPct;
-          this.progress(rawPct, `Compressing... ${rawPct}%`);
+          
+          const elapsed = Date.now() - startTime;
+          const bytesPerSec = elapsed > 0 ? (processed / (elapsed / 1000)) : 0;
+          const speed = formatBytes(bytesPerSec) + '/s';
+          
+          let etaStr = '--';
+          if (processed > 0) {
+            const tempTotalTime = (elapsed / processed) * totalBytes;
+            const remaining = tempTotalTime - elapsed;
+            if (remaining > 0) etaStr = formatTime(remaining);
+          }
+          
+          this.progress(rawPct, `Compressing... ${rawPct}%`, speed, etaStr);
         }
       });
 
-      output.on('close', () => finish(true));
-      archive.on('error', (err: Error) => finish(false, err.message));
-      output.on('error', (err: Error) => finish(false, err.message));
+      output.on('close', () => {
+        this.activeArchivers.delete(archive);
+        finish(true);
+      });
+      archive.on('error', (err: Error) => {
+        this.activeArchivers.delete(archive);
+        finish(false, err.message);
+      });
+      output.on('error', (err: Error) => {
+        this.activeArchivers.delete(archive);
+        finish(false, err.message);
+      });
 
       archive.pipe(output);
 
@@ -190,6 +251,13 @@ export class CompressorService extends EventEmitter {
   }
 
   private async compress7z(sources: string[], outputPath: string, level: number, password?: string, splitVolumeSize?: string): Promise<CompressResult> {
+    const sizes = await Promise.all(sources.map(src => getDirSize(src)));
+    const totalBytes = Math.max(1, sizes.reduce((s, size) => s + size, 0));
+    const startTime = Date.now();
+
+    this.isCancelledFlag = false;
+    this.isPausedFlag = false;
+
     return new Promise((resolve) => {
       const pathTo7z = sevenBin.path7za;
       const args = sources.map((s) => path.resolve(s));
@@ -237,6 +305,7 @@ export class CompressorService extends EventEmitter {
       }
 
       const stream = Seven.add(outputPath, args, compressOptions);
+      this.activeSevens.add(stream);
       let isResolved = false;
 
       const finish = (success: boolean, error?: string) => {
@@ -275,12 +344,26 @@ export class CompressorService extends EventEmitter {
       };
 
       stream.on('progress', (p: any) => {
+        if (this.isPausedFlag) return;
         const pct = Math.min(99, p.percent || 0);
-        this.progress(pct, `Compressing... ${pct}%`);
+        const elapsed = Date.now() - startTime;
+        let speed = '--', etaStr = '--';
+        if (pct > 0) {
+           const processed = (pct / 100) * totalBytes;
+           const bytesPerSec = elapsed > 0 ? (processed / (elapsed / 1000)) : 0;
+           speed = formatBytes(bytesPerSec) + '/s';
+           const remaining = (elapsed / pct) * (100 - pct);
+           etaStr = formatTime(remaining);
+        }
+        this.progress(pct, `Compressing... ${pct}%`, speed, etaStr);
       });
 
-      stream.on('end', () => finish(true));
+      stream.on('end', () => {
+        this.activeSevens.delete(stream);
+        finish(true);
+      });
       stream.on('error', (err: any) => {
+        this.activeSevens.delete(stream);
         finish(false, err.message || err.stderr || 'Compression failed');
       });
     });
@@ -303,6 +386,9 @@ export class CompressorService extends EventEmitter {
 
       const pathTo7z = sevenBin.path7za;
 
+      this.isCancelledFlag = false;
+      this.isPausedFlag = false;
+      
       return new Promise((resolve) => {
         const extractOptions: any = {
           $bin: pathTo7z,
@@ -314,17 +400,31 @@ export class CompressorService extends EventEmitter {
         }
 
         const stream = Seven.extractFull(actualPath, outputDir, extractOptions);
+        this.activeSevens.add(stream);
 
         // Smooth progress ticker: interpolates between node-7z's coarse ~10% jumps
         let targetPercent = 1;
         let currentPercent = 0;
         this.progress(1, 'Extracting... 1%');
+        const totalBytes = fs.statSync(actualPath).size;
+        const startTime = Date.now();
 
         const ticker = setInterval(() => {
+          if (this.isCancelledFlag || this.isPausedFlag) return;
           if (currentPercent < targetPercent) {
             currentPercent = Math.min(targetPercent, currentPercent + Math.max(0.5, (targetPercent - currentPercent) * 0.3));
             const displayPct = Math.round(currentPercent);
-            this.progress(displayPct, `Extracting... ${displayPct}%`);
+            
+            const elapsed = Date.now() - startTime;
+            let speed = '--', etaStr = '--';
+            if (displayPct > 0) {
+              const processed = (displayPct / 100) * totalBytes;
+              const bytesPerSec = elapsed > 0 ? (processed / (elapsed / 1000)) : 0;
+              speed = formatBytes(bytesPerSec) + '/s';
+              const remaining = (elapsed / displayPct) * (100 - displayPct);
+              etaStr = formatTime(remaining);
+            }
+            this.progress(displayPct, `Extracting... ${displayPct}%`, speed, etaStr);
           }
         }, 80);
 
@@ -334,13 +434,23 @@ export class CompressorService extends EventEmitter {
         });
 
         stream.on('end', () => {
+          this.activeSevens.delete(stream);
           clearInterval(ticker);
+          if (this.isCancelledFlag) {
+            resolve({ success: false, error: 'Cancelled' });
+            return;
+          }
           this.progress(100, 'Complete');
           resolve({ success: true, outputDir });
         });
 
         stream.on('error', (err: any) => {
+          this.activeSevens.delete(stream);
           clearInterval(ticker);
+          if (this.isCancelledFlag) {
+            resolve({ success: false, error: 'Cancelled' });
+            return;
+          }
           this.progress(0, '');
           const detailedError = err.stderr ? String(err.stderr) : String(err.message);
           resolve({ success: false, error: detailedError });
@@ -516,7 +626,9 @@ export class CompressorService extends EventEmitter {
     password?: string
   ): Promise<CompressResult> {
     return this.withSplitWorkaround(archivePath, async (actualPath) => {
-      return new Promise((resolve) => {
+        this.isCancelledFlag = false;
+        this.isPausedFlag = false;
+        return new Promise((resolve) => {
         const pathTo7z = sevenBin.path7za;
         const options: any = {
           $bin: pathTo7z,
@@ -530,11 +642,16 @@ export class CompressorService extends EventEmitter {
         // 'extract' in node-7z uses 'e' internally, dropping directory paths, 
         // which is ideal for single-file drag and drop to temp
         const stream = Seven.extract(actualPath, outputDir, options);
+        this.activeSevens.add(stream);
 
         let isResolved = false;
         const finish = (success: boolean, error?: string) => {
           if (isResolved) return;
           isResolved = true;
+          if (this.isCancelledFlag) {
+            resolve({ success: false, error: 'Cancelled' });
+            return;
+          }
           if (success) {
             resolve({ success: true, outputPath: path.join(outputDir, path.basename(internalPath)) });
           } else {
@@ -542,8 +659,14 @@ export class CompressorService extends EventEmitter {
           }
         };
 
-        stream.on('end', () => finish(true));
-        stream.on('error', (err: any) => finish(false, err.message));
+        stream.on('end', () => {
+          this.activeSevens.delete(stream);
+          finish(true);
+        });
+        stream.on('error', (err: any) => {
+          this.activeSevens.delete(stream);
+          finish(false, err.message);
+        });
       });
     });
   }
@@ -584,12 +707,25 @@ export class CompressorService extends EventEmitter {
         let targetPercent = 1;
         let currentPercent = 0;
         this.progress(1, 'Extracting selected files... 1%');
+        const totalBytes = fs.statSync(actualPath).size;
+        const startTime = Date.now();
 
         const ticker = setInterval(() => {
+          if (this.isCancelledFlag || this.isPausedFlag) return;
           if (currentPercent < targetPercent) {
             currentPercent = Math.min(targetPercent, currentPercent + Math.max(0.5, (targetPercent - currentPercent) * 0.3));
             const displayPct = Math.round(currentPercent);
-            this.progress(displayPct, `Extracting... ${displayPct}%`);
+            
+            const elapsed = Date.now() - startTime;
+            let speed = '--', etaStr = '--';
+            if (displayPct > 0) {
+              const processed = (displayPct / 100) * totalBytes;
+              const bytesPerSec = elapsed > 0 ? (processed / (elapsed / 1000)) : 0;
+              speed = formatBytes(bytesPerSec) + '/s';
+              const remaining = (elapsed / displayPct) * (100 - displayPct);
+              etaStr = formatTime(remaining);
+            }
+            this.progress(displayPct, `Extracting... ${displayPct}%`, speed, etaStr);
           }
         }, 80);
 
@@ -599,6 +735,7 @@ export class CompressorService extends EventEmitter {
         });
 
         stream.on('end', () => {
+          this.activeSevens.delete(stream);
           clearInterval(ticker);
           this.progress(100, 'Complete');
           resolve({ success: true, outputDir });
@@ -673,6 +810,43 @@ export class CompressorService extends EventEmitter {
     }
   }
 
+  pauseOperations(): void {
+    this.isPausedFlag = true;
+    this.activeArchivers.forEach(archive => {
+      if (typeof archive.pause === 'function') archive.pause();
+    });
+    this.suspendWindowsProcess('7za');
+  }
+
+  resumeOperations(): void {
+    this.isPausedFlag = false;
+    this.activeArchivers.forEach(archive => {
+      if (typeof archive.resume === 'function') archive.resume();
+    });
+    this.resumeWindowsProcess('7za');
+  }
+
+  cancelOperations(): void {
+    this.activeArchivers.forEach(archive => {
+      if (typeof archive.abort === 'function') archive.abort();
+    });
+    this.activeArchivers.clear();
+
+    if (this.activeSevens.size > 0) {
+      try {
+        const { execSync } = require('child_process');
+        if (process.platform === 'win32') {
+          execSync('taskkill /IM 7za.exe /F', { stdio: 'ignore' });
+        } else {
+          execSync('killall -9 7za', { stdio: 'ignore' });
+        }
+      } catch (e) {
+        // May throw if process already exited
+      }
+      this.activeSevens.clear();
+    }
+  }
+
   static isExtractable(filePath: string): boolean {
     const fmt = getFormatFromPath(filePath);
     return ['zip', '7z', 'rar', 'tar', 'targz'].includes(fmt);
@@ -680,5 +854,59 @@ export class CompressorService extends EventEmitter {
 
   static isCompressible(): boolean {
     return true;
+  }
+
+  private executePowershell(script: string) {
+    if (process.platform !== 'win32') return;
+    try {
+      const { execSync } = require('child_process');
+      const os = require('os');
+      const tempFile = path.join(os.tmpdir(), `ps_${Date.now()}_${Math.random().toString(36).substring(7)}.ps1`);
+      fs.writeFileSync(tempFile, script, 'utf8');
+      execSync(`powershell -NoProfile -ExecutionPolicy Bypass -File "${tempFile}"`, { stdio: 'ignore' });
+      fs.unlinkSync(tempFile);
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  private suspendWindowsProcess(processName: string) {
+    this.executePowershell(`
+$code = @"
+using System;
+using System.Runtime.InteropServices;
+public class ProcessControl {
+    [DllImport("ntdll.dll")]
+    public static extern int NtSuspendProcess(IntPtr processHandle);
+}
+"@
+Add-Type -TypeDefinition $code -ErrorAction SilentlyContinue
+$ps = Get-Process ${processName} -ErrorAction SilentlyContinue
+if ($ps) {
+    foreach ($p in $ps) {
+        [ProcessControl]::NtSuspendProcess($p.Handle)
+    }
+}
+    `);
+  }
+
+  private resumeWindowsProcess(processName: string) {
+    this.executePowershell(`
+$code = @"
+using System;
+using System.Runtime.InteropServices;
+public class ProcessControl {
+    [DllImport("ntdll.dll")]
+    public static extern int NtResumeProcess(IntPtr processHandle);
+}
+"@
+Add-Type -TypeDefinition $code -ErrorAction SilentlyContinue
+$ps = Get-Process ${processName} -ErrorAction SilentlyContinue
+if ($ps) {
+    foreach ($p in $ps) {
+        [ProcessControl]::NtResumeProcess($p.Handle)
+    }
+}
+    `);
   }
 }

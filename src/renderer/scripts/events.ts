@@ -50,6 +50,9 @@ import {
 import type { AppSettings, FileEntry, HistoryEntry } from '../types';
 
 // Path utilities (renderer-safe - we receive paths as strings from main)
+
+let isOperationCancelled = false;
+
 function basename(p: string): string {
   return p.split(/[/\\]/).pop() || p;
 }
@@ -1061,9 +1064,10 @@ function setupCompress(): void {
     showGlobalProgress(0, 'Preparing...', 'Compressing...');
 
     let unsub: (() => void) | null = null;
+    isOperationCancelled = false;
     try {
       unsub = ipc.onProgress((data) => {
-        showGlobalProgress(data.percent, data.status, 'Compressing...');
+        showGlobalProgress(data.percent, data.status, 'Compressing...', data.speed, data.eta);
       });
 
       const result = await ipc.compress({
@@ -1074,6 +1078,8 @@ function setupCompress(): void {
         password,
         splitVolumeSize: splitToggle?.checked ? (document.getElementById('split-volume-size') as HTMLSelectElement)?.value || undefined : undefined,
       });
+
+      if (isOperationCancelled) return;
 
       if (result.success) {
         playSound('success');
@@ -1118,7 +1124,9 @@ function setupCompress(): void {
         }
       } else {
         playSound('error');
-        showToast('toast-compress', result.error || 'Compression failed', 'error');
+        if (result.error !== 'Cancelled') {
+          showToast('toast-compress', result.error || 'Compression failed', 'error');
+        }
       }
     } catch (err: any) {
       showToast('toast-compress', err.message || 'An unexpected error occurred', 'error');
@@ -1147,8 +1155,13 @@ function setupExtract(): void {
   const passwordInput = document.getElementById('extract-password-input') as HTMLInputElement;
   const passwordError = document.getElementById('password-error-message');
 
+  let passwordModalTimeout: ReturnType<typeof setTimeout> | null = null;
+
   const showPasswordModal = (showError = false) => {
-    if (passwordModal) passwordModal.classList.remove('hidden');
+    if (passwordModalTimeout) clearTimeout(passwordModalTimeout);
+    if (passwordModal) {
+      passwordModal.classList.remove('hidden', 'hiding');
+    }
     if (passwordInput) {
       passwordInput.value = '';
       passwordInput.focus();
@@ -1162,7 +1175,8 @@ function setupExtract(): void {
   const hidePasswordModal = () => {
     if (passwordModal) {
       passwordModal.classList.add('hiding');
-      setTimeout(() => {
+      if (passwordModalTimeout) clearTimeout(passwordModalTimeout);
+      passwordModalTimeout = setTimeout(() => {
         passwordModal.classList.add('hidden');
         passwordModal.classList.remove('hiding');
         if (passwordInput) passwordInput.value = '';
@@ -1174,7 +1188,7 @@ function setupExtract(): void {
   document.getElementById('btn-cancel-password')?.addEventListener('click', hidePasswordModal);
 
   const doExtract = async (archivePath: string, outputDir: string, password?: string) => {
-    
+    isOperationCancelled = false;
     let hasShownProgress = false;
     let operationDone = false;
     
@@ -1182,12 +1196,13 @@ function setupExtract(): void {
       if (operationDone) return; // Discard stale ticker events after completion
       if (!hasShownProgress) {
         hasShownProgress = true;
+        hideArchiveViewerModal();
         if (password) {
           // Password is correct — swap modal for progress
           hidePasswordModal();
         }
       }
-      showGlobalProgress(data.percent, data.status, 'Extracting...');
+      showGlobalProgress(data.percent, data.status, 'Extracting...', data.speed, data.eta);
     });
 
     const result = await ipc.extract({ archivePath, outputDir, password });
@@ -1195,10 +1210,13 @@ function setupExtract(): void {
     operationDone = true;
     unsub();
 
+    if (isOperationCancelled) return;
+
     if (result.success) {
       playSound('success');
       // Show 100% briefly so the bar finishes cleanly, then hide
       showGlobalProgress(100, 'Complete', 'Extracting...');
+      hideArchiveViewerModal();
       if (archivePath) saveRecent(archivePath);
       setTimeout(() => {
         hideGlobalProgress();
@@ -1211,6 +1229,8 @@ function setupExtract(): void {
         ipc.openPath(result.outputDir);
       }
     } else {
+      if (result.error === 'Cancelled') return;
+      
       const err = result.error || '';
       const errLower = err.toLowerCase();
       // node-7z password errors often contain these keywords
@@ -1227,7 +1247,9 @@ function setupExtract(): void {
         playSound('error');
         hideGlobalProgress();
         hidePasswordModal();
-        showToast('toast-extract', result.error || 'Extraction failed', 'error');
+        if (result.error !== 'Cancelled') {
+          showToast('toast-extract', result.error || 'Extraction failed', 'error');
+        }
       }
     }
   };
@@ -1563,11 +1585,10 @@ function setupExtract(): void {
       if (!selected) return;
       outputDir = selected;
     }
-    hideArchiveViewerModal();
 
     showGlobalProgress(0, 'Preparing...', 'Extracting selected...');
     const unsub = ipc.onProgress((data) => {
-      showGlobalProgress(data.percent, data.status, 'Extracting selected...');
+      showGlobalProgress(data.percent, data.status, 'Extracting selected...', data.speed, data.eta);
     });
     try {
       const result = await ipc.selectiveExtract(
@@ -1579,6 +1600,7 @@ function setupExtract(): void {
       if (result.success) {
         playSound('success');
         showGlobalProgress(100, 'Complete', 'Extracting selected...');
+        hideArchiveViewerModal();
         setTimeout(() => {
           hideGlobalProgress();
           showToast('toast-extract', `Extracted ${viewerSelectedFiles.size} files`, 'success');
@@ -1587,7 +1609,9 @@ function setupExtract(): void {
       } else {
         playSound('error');
         hideGlobalProgress();
-        showToast('toast-extract', result.error || 'Extraction failed', 'error');
+        if (result.error !== 'Cancelled') {
+          showToast('toast-extract', result.error || 'Extraction failed', 'error');
+        }
       }
     } finally {
       unsub();
@@ -1622,20 +1646,17 @@ function setupExtract(): void {
         errLower.includes('data error') ||
         (testResult.error || '').includes('Wrong password')
       ) {
-        hideArchiveViewerModal();
         showPasswordModal(false);
         return; 
       }
     }
     
-    hideArchiveViewerModal();
     await doExtract(currentViewerArchive, outputDir);
   });
 
   // Extract Here (same dir as archive)
   document.getElementById('btn-extract-here')?.addEventListener('click', async () => {
     const outputDir = dirname(currentViewerArchive);
-    hideArchiveViewerModal();
     await doExtract(currentViewerArchive, outputDir);
   });
 
@@ -1643,7 +1664,6 @@ function setupExtract(): void {
   document.getElementById('btn-extract-subfolder')?.addEventListener('click', async () => {
     const archiveName = basename(currentViewerArchive).replace(/\.[^.]+$/, '').replace(/\.tar$/, '');
     const outputDir = dirname(currentViewerArchive) + '/' + archiveName;
-    hideArchiveViewerModal();
     await doExtract(currentViewerArchive, outputDir);
   });
 
@@ -1943,11 +1963,28 @@ export function init(): void {
   loadSettings();
 
   document.getElementById('btn-cancel-progress')?.addEventListener('click', () => {
+    isOperationCancelled = true;
+    ipc.cancelOperations();
     hideGlobalProgress();
-    // Use active panel's toast container
     const activePanel = document.querySelector('.panel.active');
     const toastId = activePanel?.id === 'panel-extract' ? 'toast-extract' : 'toast-compress';
-    showToast(toastId, 'Modal dismissed (Process continues in background)', 'success');
+    showToast(toastId, 'Operation Cancelled', 'error');
+  });
+
+  document.getElementById('btn-pause-progress')?.addEventListener('click', () => {
+    ipc.pauseOperations();
+    document.getElementById('btn-pause-progress')?.classList.add('hidden');
+    document.getElementById('btn-resume-progress')?.classList.remove('hidden');
+    const statusEl = document.getElementById('global-progress-status');
+    if (statusEl) statusEl.textContent = 'Paused';
+  });
+
+  document.getElementById('btn-resume-progress')?.addEventListener('click', () => {
+    ipc.resumeOperations();
+    document.getElementById('btn-resume-progress')?.classList.add('hidden');
+    document.getElementById('btn-pause-progress')?.classList.remove('hidden');
+    const statusEl = document.getElementById('global-progress-status');
+    if (statusEl) statusEl.textContent = 'Resuming...';
   });
 
   // ─── Handle open-file from macOS Services / double-click ─────────────────────

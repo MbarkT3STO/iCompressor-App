@@ -37,8 +37,8 @@
           </div>
           <span class="logo-text">iCompressor</span>
         </div>
-        <nav class="nav" role="navigation">
-          <button class="nav-item" data-panel="compress" aria-selected="false" data-tooltip="Compress Files">
+        <nav class="nav" role="tablist" aria-label="Main Navigation">
+          <button class="nav-item" data-panel="compress" aria-selected="false" data-tooltip="Compress Files" role="tab" aria-label="Compress Files">
             <div class="nav-icon-wrapper">
               <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M14.5 11l-3 6v-4H9l3-6v4h2.5z"/>
@@ -47,7 +47,7 @@
             </div>
             <span class="nav-label">Compress</span>
           </button>
-          <button class="nav-item" data-panel="extract" aria-selected="false" data-tooltip="Extract Archives">
+          <button class="nav-item" data-panel="extract" aria-selected="false" data-tooltip="Extract Archives" role="tab" aria-label="Extract Archives">
             <div class="nav-icon-wrapper">
               <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
@@ -55,7 +55,7 @@
             </div>
             <span class="nav-label">Extract</span>
           </button>
-          <button class="nav-item" data-panel="browse" aria-selected="false" data-tooltip="File Browser">
+          <button class="nav-item" data-panel="browse" aria-selected="false" data-tooltip="File Browser" role="tab" aria-label="File Browser">
             <div class="nav-icon-wrapper">
               <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/>
@@ -63,7 +63,7 @@
             </div>
             <span class="nav-label">Browse</span>
           </button>
-          <button class="nav-item hidden" data-panel="history" aria-selected="false" data-tooltip="History & Activity">
+          <button class="nav-item hidden" data-panel="history" aria-selected="false" data-tooltip="History & Activity" role="tab" aria-label="History">
             <div class="nav-icon-wrapper">
               <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
@@ -72,14 +72,14 @@
             <span class="nav-label">History</span>
           </button>
           <div class="nav-separator"></div>
-          <button class="nav-item" data-panel="settings" aria-selected="false" data-tooltip="Settings">
+          <button class="nav-item" data-panel="settings" aria-selected="false" data-tooltip="Settings" role="tab" aria-label="Settings">
             <div class="nav-icon-wrapper">
               <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
               </svg>
             </div>
           </button>
-          <button class="nav-item" data-panel="about" aria-selected="false" data-tooltip="About">
+          <button class="nav-item" data-panel="about" aria-selected="false" data-tooltip="About" role="tab" aria-label="About">
             <div class="nav-icon-wrapper">
               <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
@@ -400,21 +400,21 @@
                   </button>
                 </div>
                 <div class="browse-search-container">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                  <input type="text" id="browse-search-input" placeholder="Search files...">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                  <input type="text" id="browse-search-input" placeholder="Search files..." aria-label="Search files">
                 </div>
               </div>
 
               <div class="toolbar-right">
-                <div class="browse-view-toggle" id="browse-view-toggle">
-                  <button type="button" class="view-toggle-btn active" data-view="explorer" title="List View">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+                <div class="browse-view-toggle" id="browse-view-toggle" role="group" aria-label="View toggle">
+                  <button type="button" class="view-toggle-btn active" data-view="explorer" title="List View" aria-label="List View">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
                   </button>
-                  <button type="button" class="view-toggle-btn" data-view="tiles" title="Tiles View">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z"/></svg>
+                  <button type="button" class="view-toggle-btn" data-view="tiles" title="Tiles View" aria-label="Tiles View">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z"/></svg>
                   </button>
-                  <button type="button" class="view-toggle-btn" data-view="tree" title="Tree View">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M22 11V3h-7v3H9V3H2v8h7V8h2v10h4v3h7v-8h-7v3h-2V8h2v3h7zM7 9H4V5h3v4zm10 6h3v4h-3v-4zm0-10h3v4h-3V5z"/></svg>
+                  <button type="button" class="view-toggle-btn" data-view="tree" title="Tree View" aria-label="Tree View">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M22 11V3h-7v3H9V3H2v8h7V8h2v10h4v3h7v-8h-7v3h-2V8h2v3h7zM7 9H4V5h3v4zm10 6h3v4h-3v-4zm0-10h3v4h-3V5z"/></svg>
                   </button>
                 </div>
                 <div class="browse-sort-container" id="browse-sort-container">
@@ -472,10 +472,10 @@
               <div class="col-date">Date Modified</div>
               <div class="col-size">Size</div>
             </div>
-            <div class="browse-list" id="browse-list">
+            <div class="browse-list" id="browse-list" role="listbox" aria-label="Files list">
               <!-- File items will be populated by JS -->
             </div>
-            <div class="browse-status-bar" id="browse-status-bar">
+            <div class="browse-status-bar" id="browse-status-bar" role="status" aria-live="polite">
               <span class="status-item-count" id="browse-item-count">0 items</span>
               <span class="status-sep">•</span>
               <span class="status-selected" id="browse-selected-count"></span>
@@ -889,9 +889,16 @@
               <div class="progress-modern-fill" id="global-progress-fill"></div>
             </div>
           </div>
-          <p class="progress-status" id="global-progress-status">Preparing...</p>
-          <div class="progress-modal-footer">
-            <button type="button" class="btn-text" id="btn-cancel-progress">Cancel</button>
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 12px; margin-bottom: 20px;">
+            <p class="progress-status" id="global-progress-status" style="margin: 0; text-align: left;">Preparing...</p>
+            <div class="progress-analytics hidden" id="global-progress-analytics" style="margin: 0;"></div>
+          </div>
+          <div class="progress-modal-footer" style="display: flex; justify-content: space-between; width: 100%;">
+            <div class="progress-footer-left">
+              <button type="button" class="btn-text" id="btn-pause-progress">Pause</button>
+              <button type="button" class="btn-text hidden" id="btn-resume-progress">Resume</button>
+            </div>
+            <button type="button" class="btn-text btn-danger-soft" id="btn-cancel-progress">Cancel</button>
           </div>
         </div>
         </div>

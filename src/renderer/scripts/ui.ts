@@ -236,15 +236,37 @@ export function getSingleFile(listId: string): string | null {
 }
 
 // Progress
-export function showGlobalProgress(percent: number, status: string, title?: string): void {
+export function showGlobalProgress(percent: number, status: string, title?: string, speed?: string, eta?: string): void {
   const modal = document.getElementById('global-progress-modal');
   const fill = document.getElementById('global-progress-fill');
   const statusEl = document.getElementById('global-progress-status');
   const titleEl = document.getElementById('progress-modal-title');
+  const analyticsEl = document.getElementById('global-progress-analytics');
+  
   if (title && titleEl) titleEl.textContent = title;
   if (modal) modal.classList.remove('hidden');
   if (fill) fill.style.width = `${percent}%`;
   if (statusEl) statusEl.textContent = status;
+  
+  if (analyticsEl) {
+    if (speed && eta) {
+      analyticsEl.textContent = `${speed} • ETA: ${eta}`;
+      analyticsEl.classList.remove('hidden');
+    } else {
+      analyticsEl.classList.add('hidden');
+    }
+  }
+
+  const pauseBtn = document.getElementById('btn-pause-progress');
+  const resumeBtn = document.getElementById('btn-resume-progress');
+  if (pauseBtn && resumeBtn) {
+    if (percent >= 100 || status.includes('Preparing') || status.includes('Complete') || status.includes('Failed')) {
+      pauseBtn.classList.add('hidden');
+      resumeBtn.classList.add('hidden');
+    } else if (pauseBtn.classList.contains('hidden') && resumeBtn.classList.contains('hidden')) {
+      pauseBtn.classList.remove('hidden');
+    }
+  }
 }
 
 export function hideGlobalProgress(): void {
@@ -620,6 +642,9 @@ export function renderBrowseList(
     el.className = `file-item animate-in ${entry.isDirectory ? 'folder' : 'file'}`;
     el.style.animationDelay = `${i * 0.03}s`;
     el.setAttribute('data-path', entry.path);
+    el.setAttribute('role', 'option');
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('aria-label', `${entry.name}, ${entry.isDirectory ? 'Folder' : formatSize(entry.size)}`);
     if (isSelected(entry.path)) el.classList.add('selected');
 
     el.innerHTML = `
@@ -683,6 +708,9 @@ export function renderBrowseTiles(
     tile.className = `tile-item animate-in ${entry.isDirectory ? 'folder' : 'file'}`;
     tile.style.animationDelay = `${i * 0.02}s`;
     tile.setAttribute('data-path', entry.path);
+    tile.setAttribute('role', 'option');
+    tile.setAttribute('tabindex', '0');
+    tile.setAttribute('aria-label', `${entry.name}, ${entry.isDirectory ? 'Folder' : formatSize(entry.size)}`);
     if (isSelected(entry.path)) tile.classList.add('selected');
 
     tile.innerHTML = `

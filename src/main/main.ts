@@ -210,6 +210,11 @@ function registerIpcHandlers(): void {
     return result.canceled ? null : result.filePaths[0];
   });
 
+  // Action listeners
+  ipcMain.on(IPC_CHANNELS.PAUSE_OPERATIONS, () => compressor.pauseOperations());
+  ipcMain.on(IPC_CHANNELS.RESUME_OPERATIONS, () => compressor.resumeOperations());
+  ipcMain.on(IPC_CHANNELS.CANCEL_OPERATIONS, () => compressor.cancelOperations());
+
   ipcMain.handle(IPC_CHANNELS.SELECT_OUTPUT, async (_, defaultPath?: string, format?: string) => {
     const allFilters = [
       { name: 'ZIP Archive', extensions: ['zip'] },
@@ -692,37 +697,44 @@ function registerIpcHandlers(): void {
   });
 
   ipcMain.handle(IPC_CHANNELS.GET_FOLDER_SIZE, async (_, dirPath: string) => {
-    const fs = require('fs');
+    const fsp = require('fs/promises');
     try {
-      let totalSize = 0;
-      const getDirSize = (dir: string) => {
-        const files = fs.readdirSync(dir, { withFileTypes: true });
-        for (const file of files) {
-          const fullPath = path.join(dir, file.name);
-          try {
-            if (file.isDirectory()) {
-              getDirSize(fullPath);
-            } else {
-              totalSize += fs.statSync(fullPath).size;
+      const getDirSize = async (dir: string): Promise<number> => {
+        let size = 0;
+        try {
+          const files = await fsp.readdir(dir, { withFileTypes: true });
+          const promises = files.map(async (file: any) => {
+            const fullPath = path.join(dir, file.name);
+            try {
+              if (file.isDirectory()) {
+                size += await getDirSize(fullPath);
+              } else {
+                const stat = await fsp.stat(fullPath);
+                size += stat.size;
+              }
+            } catch {
+              // Ignore stat/read errors
             }
-          } catch {
-            // Ignore stat/read errors (permissions, locks, etc.)
-          }
+          });
+          await Promise.all(promises);
+        } catch {
+          // Ignore read errors
         }
+        return size;
       };
       
       try {
-        const mainStat = fs.statSync(dirPath);
+        const fsSync = require('fs');
+        const mainStat = fsSync.statSync(dirPath);
         if (mainStat.isDirectory()) {
-          getDirSize(dirPath);
+          const totalSize = await getDirSize(dirPath);
+          return { success: true, size: totalSize };
         } else {
-          totalSize = mainStat.size;
+          return { success: true, size: mainStat.size };
         }
       } catch (err: any) {
         return { success: false, error: err.message };
       }
-      
-      return { success: true, size: totalSize };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
     }

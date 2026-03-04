@@ -40,7 +40,7 @@ export const ipc: {
   getVersion: () => Promise<string>;
   openPath: (path: string) => Promise<{ success: boolean }>;
   showItemInFolder: (path: string) => Promise<{ success: boolean }>;
-  onProgress: (callback: (data: { percent: number; status: string }) => void) => () => void;
+  onProgress: (callback: (data: { percent: number; status: string; speed?: string; eta?: string }) => void) => () => void;
   getHomeDir: () => Promise<string>;
   readDir: (path: string, showHidden?: boolean) => Promise<{ success: boolean; entries?: FileEntry[]; error?: string }>;
   deleteFile: (path: string) => Promise<{ success: boolean; error?: string }>;
@@ -63,6 +63,9 @@ export const ipc: {
   computeChecksum: (filePath: string) => Promise<{ success: boolean; hash?: string; error?: string }>;
   convertArchive: (inputPath: string, outputFormat: string, outputDir: string, password?: string) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
   selectiveExtract: (archivePath: string, internalPaths: string[], outputDir: string, password?: string) => Promise<{ success: boolean; outputDir?: string; error?: string }>;
+  pauseOperations: () => void;
+  resumeOperations: () => void;
+  cancelOperations: () => void;
 } = {
   selectFiles: () => api.selectFiles(),
   selectFolder: () => api.selectFolder(),
@@ -90,7 +93,7 @@ export const ipc: {
   getVersion: () => api.getVersion(),
   openPath: (path: string) => api.openPath(path),
   showItemInFolder: (path: string) => api.showItemInFolder(path),
-  onProgress: (callback: (data: { percent: number; status: string }) => void) =>
+  onProgress: (callback: (data: { percent: number; status: string; speed?: string; eta?: string }) => void) =>
     api.onProgress(callback),
   getHomeDir: () => api.getHomeDir(),
   readDir: (path: string, showHidden?: boolean) => api.readDir(path, showHidden),
@@ -119,4 +122,7 @@ export const ipc: {
     api.convertArchive(inputPath, outputFormat, outputDir, password),
   selectiveExtract: (archivePath: string, internalPaths: string[], outputDir: string, password?: string) =>
     api.selectiveExtract(archivePath, internalPaths, outputDir, password),
+  pauseOperations: () => api.pauseOperations(),
+  resumeOperations: () => api.resumeOperations(),
+  cancelOperations: () => api.cancelOperations(),
 };

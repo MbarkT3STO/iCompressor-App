@@ -22,6 +22,9 @@ const IPC_CHANNELS = {
   COMPUTE_CHECKSUM: 'compressor:checksum',
   CONVERT_ARCHIVE: 'compressor:convert',
   SELECTIVE_EXTRACT: 'compressor:selective-extract',
+  PAUSE_OPERATIONS: 'compressor:pause',
+  RESUME_OPERATIONS: 'compressor:resume',
+  CANCEL_OPERATIONS: 'compressor:cancel',
   GET_HISTORY: 'history:get',
   CLEAR_HISTORY: 'history:clear',
 
@@ -78,7 +81,7 @@ export interface ICompressorAPI {
   getVersion: () => Promise<string>;
   openPath: (path: string) => Promise<{ success: boolean }>;
   showItemInFolder: (path: string) => Promise<{ success: boolean }>;
-  onProgress: (callback: (data: { percent: number; status: string }) => void) => () => void;
+  onProgress: (callback: (data: { percent: number; status: string; speed?: string; eta?: string }) => void) => () => void;
   getHomeDir: () => Promise<string>;
   getFolderSize: (path: string) => Promise<{ success: boolean; size?: number; error?: string }>;
   getHistory: () => Promise<any[]>;
@@ -101,6 +104,9 @@ export interface ICompressorAPI {
   computeChecksum: (filePath: string) => Promise<{ success: boolean; hash?: string; error?: string }>;
   convertArchive: (inputPath: string, outputFormat: string, outputDir: string, password?: string) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
   selectiveExtract: (archivePath: string, internalPaths: string[], outputDir: string, password?: string) => Promise<{ success: boolean; outputDir?: string; error?: string }>;
+  pauseOperations: () => void;
+  resumeOperations: () => void;
+  cancelOperations: () => void;
 }
 
 export interface AppSettings {
@@ -149,7 +155,7 @@ const api: ICompressorAPI = {
   openPath: (p: string) => ipcRenderer.invoke(IPC_CHANNELS.OPEN_PATH, p),
   showItemInFolder: (p: string) => ipcRenderer.invoke(IPC_CHANNELS.SHOW_ITEM_IN_FOLDER, p),
   onProgress: (callback) => {
-    const handler = (_: Electron.IpcRendererEvent, data: { percent: number; status: string }) =>
+    const handler = (_: Electron.IpcRendererEvent, data: { percent: number; status: string; speed?: string; eta?: string }) =>
       callback(data);
     ipcRenderer.on(PROGRESS_CHANNEL, handler);
     return () => {
@@ -190,6 +196,9 @@ const api: ICompressorAPI = {
     ipcRenderer.invoke(IPC_CHANNELS.CONVERT_ARCHIVE, { inputPath, outputFormat, outputDir, password }),
   selectiveExtract: (archivePath: string, internalPaths: string[], outputDir: string, password?: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.SELECTIVE_EXTRACT, { archivePath, internalPaths, outputDir, password }),
+  pauseOperations: () => ipcRenderer.send(IPC_CHANNELS.PAUSE_OPERATIONS),
+  resumeOperations: () => ipcRenderer.send(IPC_CHANNELS.RESUME_OPERATIONS),
+  cancelOperations: () => ipcRenderer.send(IPC_CHANNELS.CANCEL_OPERATIONS),
 };
 
 contextBridge.exposeInMainWorld('compressorAPI', api);
