@@ -722,7 +722,7 @@ function registerIpcHandlers(): void {
     }
   });
 
-  ipcMain.on(IPC_CHANNELS.START_NATIVE_DRAG, async (event, archivePath, internalPath, password) => {
+  ipcMain.on(IPC_CHANNELS.START_NATIVE_DRAG, async (event, archivePath, internalPath, isFolder, password) => {
     try {
       const tempRoot = app.getPath('temp');
       const sessionSubfolder = `icompressor-drag-${Date.now()}`;
@@ -730,13 +730,25 @@ function registerIpcHandlers(): void {
 
       fs.mkdirSync(extractDir, { recursive: true });
 
-      const result = await compressor.extractSingleFile(archivePath, internalPath, extractDir, password);
+      if (isFolder) {
+        // Use selective extract for folders to preserve structure
+        const result = await compressor.selectiveExtract(archivePath, [internalPath], extractDir, password);
+        
+        if (result.success && result.outputDir) {
+          event.sender.startDrag({
+            file: path.join(extractDir, internalPath),
+            icon: path.join(__dirname, '../../node_modules/app-builder-lib/templates/icons/electron-linux/64x64.png')
+          });
+        }
+      } else {
+        const result = await compressor.extractSingleFile(archivePath, internalPath, extractDir, password);
 
-      if (result.success && result.outputPath) {
-        event.sender.startDrag({
-          file: result.outputPath,
-          icon: path.join(__dirname, '../../build/icon.png')
-        });
+        if (result.success && result.outputPath) {
+          event.sender.startDrag({
+            file: result.outputPath,
+            icon: path.join(__dirname, '../../node_modules/app-builder-lib/templates/icons/electron-linux/64x64.png')
+          });
+        }
       }
     } catch (err) {
       console.error('Drag extraction error:', err);

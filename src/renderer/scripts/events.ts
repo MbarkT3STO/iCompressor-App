@@ -1178,7 +1178,7 @@ function setupExtract(): void {
           updateViewerUI();
         },
         (file) => {
-          ipc.startNativeDrag(currentViewerArchive, file.path, currentViewerPassword);
+          ipc.startNativeDrag(currentViewerArchive, file.path, file.isDirectory, currentViewerPassword);
         },
         async (file) => {
           const ext = file.name.split('.').pop()?.toLowerCase();

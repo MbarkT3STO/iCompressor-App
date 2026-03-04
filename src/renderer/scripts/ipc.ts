@@ -53,7 +53,7 @@ export const ipc: {
   closeWindow: () => void;
   getPlatform: () => string;
   onOpenWith: (callback: (data: { filePath: string; action: 'compress' | 'extract' }) => void) => () => void;
-  startNativeDrag: (archivePath: string, internalPath: string, password?: string) => void;
+  startNativeDrag: (archivePath: string, internalPath: string, isFolder: boolean, password?: string) => void;
   getHistory: () => Promise<import('../types').HistoryEntry[]>;
   clearHistory: () => Promise<void>;
   extractPreviewFile: (archivePath: string, internalPath: string, password?: string) => Promise<{ success: boolean; data?: string; type?: 'text' | 'image' | 'unsupported'; error?: string }>;
@@ -103,8 +103,8 @@ export const ipc: {
   closeWindow: () => api.closeWindow(),
   getPlatform: () => api.getPlatform(),
   onOpenWith: (callback) => api.onOpenWith(callback),
-  startNativeDrag: (archivePath: string, internalPath: string, password?: string) =>
-    api.startNativeDrag(archivePath, internalPath, password),
+  startNativeDrag: (archivePath: string, internalPath: string, isFolder: boolean, password?: string) =>
+    api.startNativeDrag(archivePath, internalPath, isFolder, password),
   getHistory: () => api.getHistory(),
   clearHistory: () => api.clearHistory(),
   extractPreviewFile: (archivePath: string, internalPath: string, password?: string) => 

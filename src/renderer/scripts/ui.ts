@@ -894,13 +894,14 @@ export function renderArchiveViewerTable(
       if (onFileClick) {
         tr.addEventListener('dblclick', () => onFileClick(file));
       }
-      if (onDragStart) {
-        tr.draggable = true;
-        tr.addEventListener('dragstart', (e) => {
-          e.preventDefault();
-          onDragStart(file);
-        });
-      }
+    }
+    
+    if (onDragStart) {
+      tr.draggable = true;
+      tr.addEventListener('dragstart', (e) => {
+        e.preventDefault();
+        onDragStart(file);
+      });
     }
 
     // Check handler

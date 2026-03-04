@@ -94,7 +94,7 @@ export interface ICompressorAPI {
   closeWindow: () => void;
   getPlatform: () => string;
   onOpenWith: (callback: (data: { filePath: string; action: 'compress' | 'extract' }) => void) => () => void;
-  startNativeDrag: (archivePath: string, internalPath: string, password?: string) => void;
+  startNativeDrag: (archivePath: string, internalPath: string, isFolder: boolean, password?: string) => void;
   setTrayEnabled: (enabled: boolean) => void;
   computeChecksum: (filePath: string) => Promise<{ success: boolean; hash?: string; error?: string }>;
   convertArchive: (inputPath: string, outputFormat: string, outputDir: string, password?: string) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
@@ -171,8 +171,8 @@ const api: ICompressorAPI = {
     ipcRenderer.on(IPC_CHANNELS.OPEN_WITH, handler);
     return () => ipcRenderer.removeListener(IPC_CHANNELS.OPEN_WITH, handler);
   },
-  startNativeDrag: (archivePath: string, internalPath: string, password?: string) => {
-    ipcRenderer.send(IPC_CHANNELS.START_NATIVE_DRAG, archivePath, internalPath, password);
+  startNativeDrag: (archivePath: string, internalPath: string, isFolder: boolean, password?: string) => {
+    ipcRenderer.send(IPC_CHANNELS.START_NATIVE_DRAG, archivePath, internalPath, isFolder, password);
   },
   setTrayEnabled: (enabled: boolean) => ipcRenderer.send(IPC_CHANNELS.SET_TRAY_ENABLED, enabled),
   getHistory: () => ipcRenderer.invoke(IPC_CHANNELS.GET_HISTORY),
