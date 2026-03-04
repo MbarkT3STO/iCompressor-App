@@ -380,6 +380,8 @@ export function renderHistory(entries: import('../types').HistoryEntry[], onShow
 export function applySettingsToForm(settings: AppSettings): void {
   const levelEl = document.getElementById('setting-compression-level') as HTMLInputElement;
   const levelValueEl = document.getElementById('compression-level-value');
+  const ramLimitEl = document.getElementById('setting-ram-limit') as HTMLInputElement;
+  const ramLimitValueEl = document.getElementById('ram-limit-value');
   const outputDirEl = document.getElementById('setting-output-dir') as HTMLInputElement;
   const autoOpenEl = document.getElementById('setting-auto-open') as HTMLInputElement;
   const minimizeTrayEl = document.getElementById('setting-minimize-tray') as HTMLInputElement;
@@ -392,8 +394,11 @@ export function applySettingsToForm(settings: AppSettings): void {
   const deleteSourcesEl = document.getElementById('setting-delete-sources') as HTMLInputElement;
   const overwriteBehaviorEl = document.getElementById('setting-overwrite-behavior') as HTMLSelectElement;
 
-  if (levelEl) levelEl.value = String(settings.compressionLevel);
-  if (levelValueEl) levelValueEl.textContent = String(settings.compressionLevel);
+  if (levelEl) levelEl.value = String(settings.compressionLevel || 6);
+  if (levelValueEl) levelValueEl.textContent = String(settings.compressionLevel || 6);
+  
+  if (ramLimitEl) ramLimitEl.value = String(settings.ramLimit || 4);
+  if (ramLimitValueEl) ramLimitValueEl.textContent = `${settings.ramLimit || 4} GB`;
   if (outputDirEl) outputDirEl.value = settings.outputDirectory || '';
   if (outputDirEl) outputDirEl.placeholder = 'Same as source';
   if (autoOpenEl) autoOpenEl.checked = settings.autoOpenResultFolder ?? true;

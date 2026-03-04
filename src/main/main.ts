@@ -252,8 +252,12 @@ function registerIpcHandlers(): void {
         level: number;
         password?: string;
         splitVolumeSize?: string;
+        sfx?: boolean;
+        threads?: number;
+        ramLimit?: number;
       }
     ) => {
+      console.log('[IPC-COMPRESS]', payload);
       try {
         const appSettings = settings.get();
 
@@ -329,6 +333,7 @@ function registerIpcHandlers(): void {
         mainWindow?.setProgressBar(-1);
         return { ...result, inputSize, outputSize: result.outputPath ? (function() { try { return fs.statSync(result.outputPath!).size; } catch { return 0; } })() : 0 };
       } catch (err) {
+        console.error('[IPC-COMPRESS-ERROR]', err);
         mainWindow?.setProgressBar(-1);
         history.addEntry({
           id: Date.now().toString(),

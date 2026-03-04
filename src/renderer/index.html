@@ -279,6 +279,28 @@
                           <option value="4480m">4.37 GB (DVD)</option>
                         </select>
                       </div>
+
+                      <div class="setting-item split">
+                        <div class="toggle-group">
+                          <label>Create SFX Archive (.exe)</label>
+                          <label class="toggle-switch-v2">
+                            <input type="checkbox" id="archive-sfx-toggle">
+                            <span class="toggle-slider-v2"></span>
+                          </label>
+                        </div>
+                      </div>
+
+                      <div class="setting-item">
+                        <label>Optimized Threads</label>
+                        <div class="slider-wrapper">
+                          <input type="range" id="thread-count-v2" min="1" max="32" value="4" step="1">
+                          <div class="slider-labels">
+                            <span>1</span>
+                            <span id="thread-count-label-v2">4</span>
+                            <span>32</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </details>
                 </div>
@@ -647,6 +669,19 @@
                 <div class="setting-control premium-slider-group">
                   <input type="range" id="setting-compression-level" class="premium-slider" min="0" max="9" value="6" step="1">
                   <span id="compression-level-value" class="setting-value">6</span>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-icon-box">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 9H9v6h6V9zm-2 4h-2v-2h2v2zm8-2h-2V9h-2V7h-2V5h-2v2h-2v2h-2v2H5v2h2v2h2v2h2v2h2v-2h2v-2h2v-2h2v-2z" /></svg>
+                  </div>
+                  <label for="setting-ram-limit">RAM Limit (GB)</label>
+                </div>
+                <div class="setting-control premium-slider-group">
+                  <input type="range" id="setting-ram-limit" class="premium-slider" min="1" max="64" value="4" step="1">
+                  <span id="ram-limit-value" class="setting-value">4 GB</span>
                 </div>
               </div>
 
@@ -1096,9 +1131,19 @@
               </div>
             </div>
           </div>
-          <div class="progress-modal-footer">
-            <button type="button" class="btn-text" id="btn-copy-checksum" aria-label="Copy checksum to clipboard">Copy Hash</button>
-            <button type="button" class="btn-primary" id="btn-close-stats" aria-label="Close stats">Done</button>
+          <div class="progress-modal-footer stats-footer">
+            <button type="button" class="btn-stats-secondary" id="btn-copy-checksum" aria-label="Copy checksum to clipboard">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+              <span>Copy Hash</span>
+            </button>
+            <button type="button" class="btn-stats-secondary" id="btn-show-in-folder-stats" aria-label="Show in folder">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
+              <span>Show in Folder</span>
+            </button>
+            <button type="button" class="btn-stats-primary" id="btn-close-stats" aria-label="Close stats">
+              <div class="btn-shine"></div>
+              <span>Done</span>
+            </button>
           </div>
         </div>
       </div>

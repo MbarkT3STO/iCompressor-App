@@ -25,6 +25,9 @@ export const ipc: {
     level: number;
     password?: string;
     splitVolumeSize?: string;
+    sfx?: boolean;
+    threads?: number;
+    ramLimit?: number;
   }) => Promise<{ success: boolean; outputPath?: string; error?: string; inputSize?: number; outputSize?: number }>;
   extract: (payload: {
     archivePath: string;
@@ -78,6 +81,9 @@ export const ipc: {
     level: number;
     password?: string;
     splitVolumeSize?: string;
+    sfx?: boolean;
+    threads?: number;
+    ramLimit?: number;
   }) => api.compress(payload),
   extract: (payload: {
     archivePath: string;

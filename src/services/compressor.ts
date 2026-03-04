@@ -85,6 +85,9 @@ export interface CompressPayload {
   level: number;
   password?: string;
   splitVolumeSize?: string;
+  sfx?: boolean;
+  threads?: number;
+  ramLimit?: number;
 }
 
 export interface CompressResult {
@@ -141,9 +144,9 @@ export class CompressorService extends EventEmitter {
       return { success: false, error: 'TAR/TAR.GZ formats do not support password encryption. Please use ZIP or 7Z.' };
     }
 
-    // Use node-7z for 7z, password-protected zips, and any split volumes
-    if (format === '7z' || (format === 'zip' && payload.password) || payload.splitVolumeSize) {
-      return this.compress7z(sources, outputPath, level, payload.password, payload.splitVolumeSize);
+    // Use node-7z for 7z, password-protected zips, and any split volumes or SFX requests
+    if (format === '7z' || (format === 'zip' && payload.password) || payload.splitVolumeSize || payload.sfx) {
+      return this.compress7z(sources, outputPath, level, payload.password, payload.splitVolumeSize, payload.sfx, payload.threads, payload.ramLimit);
     }
 
     const archiverFormat = format as 'zip' | 'tar' | 'targz';
@@ -250,7 +253,16 @@ export class CompressorService extends EventEmitter {
     });
   }
 
-  private async compress7z(sources: string[], outputPath: string, level: number, password?: string, splitVolumeSize?: string): Promise<CompressResult> {
+  private async compress7z(
+    sources: string[],
+    outputPath: string,
+    level: number,
+    password?: string,
+    splitVolumeSize?: string,
+    sfx?: boolean,
+    threads?: number,
+    ramLimit?: number
+  ): Promise<CompressResult> {
     const sizes = await Promise.all(sources.map(src => getDirSize(src)));
     const totalBytes = Math.max(1, sizes.reduce((s, size) => s + size, 0));
     const startTime = Date.now();
@@ -260,22 +272,60 @@ export class CompressorService extends EventEmitter {
 
     return new Promise((resolve) => {
       const pathTo7z = sevenBin.path7za;
+      const binDir = path.dirname(pathTo7z);
       const args = sources.map((s) => path.resolve(s));
 
       // ── Maximum Compression Strategy ────────────────────────────────────────
       const clampedLevel = Math.min(9, Math.max(0, level));
-      const rawFlags = [
+      const rawFlags: string[] = [
         `-mx=${clampedLevel}`     // Compression level
       ];
 
-      if (splitVolumeSize) {
-        rawFlags.push(`-v${splitVolumeSize}`);
+      if (sfx) {
+        let sfxModule = path.join(binDir, '7z.sfx');
+        if (!fs.existsSync(sfxModule)) {
+          // Fallback to common system paths for 7-Zip installation
+          const commonPaths = [
+            'C:\\Program Files\\7-Zip\\7z.sfx',
+            'C:\\Program Files (x86)\\7-Zip\\7z.sfx',
+            '/usr/lib/p7zip/7z.sfx',
+            '/usr/share/p7zip/7z.sfx'
+          ];
+          
+          let found = false;
+          for (const p of commonPaths) {
+            if (fs.existsSync(p)) {
+              sfxModule = p;
+              found = true;
+              break;
+            }
+          }
+
+          if (!found) {
+            return resolve({ 
+              success: false, 
+              error: 'Please download "7-Zip" from https://www.7-zip.org/download.html and install it.' 
+            });
+          }
+        }
+        // node-7z/child_process will handle quoting if there are spaces. 
+        // Manual internal quotes can cause "filename syntax is incorrect" errors on Windows.
+        rawFlags.push(`-sfx${sfxModule}`);
       }
 
-      const is7z = outputPath.toLowerCase().endsWith('.7z');
+      if (threads) {
+        rawFlags.push(`-mmt=${threads}`);
+      }
+
+      if (ramLimit) {
+        // Placeholder for future memory limit implementation
+      }
+
+      const is7z = outputPath.toLowerCase().endsWith('.7z') || sfx;
 
       if (is7z) {
-        // For 7z format only: we use LZMA2, solid mode, and large dictionary
+        // For 7z/SFX format: ensure 7z format is set
+        rawFlags.push('-t7z');
         rawFlags.push('-m0=lzma2', '-ms=on');
         
         // Dictionary size optimization
@@ -292,6 +342,8 @@ export class CompressorService extends EventEmitter {
         // For zip files, force UTF-8 for filenames
         rawFlags.push('-mcu=on');
       }
+
+      console.log('[7z-COMMAND-FLAGS]', rawFlags);
 
       const compressOptions: any = {
         $bin: pathTo7z,
@@ -363,8 +415,10 @@ export class CompressorService extends EventEmitter {
         finish(true);
       });
       stream.on('error', (err: any) => {
+        console.error('[7z-ERROR]', err);
         this.activeSevens.delete(stream);
-        finish(false, err.message || err.stderr || 'Compression failed');
+        const msg = err.message || (err.stderr ? String(err.stderr) : 'Compression failed');
+        finish(false, msg);
       });
     });
   }

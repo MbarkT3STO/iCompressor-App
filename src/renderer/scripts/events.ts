@@ -988,6 +988,41 @@ function setupCompress(): void {
   let selectedFormat = 'zip';
   const chips = document.querySelectorAll('#format-chips .chip');
   
+  // SFX Toggle
+  const sfxToggle = document.getElementById('archive-sfx-toggle') as HTMLInputElement;
+  const nameInput = document.getElementById('archive-name-v2') as HTMLInputElement;
+
+  sfxToggle?.addEventListener('change', () => {
+    if (sfxToggle.checked) {
+      playSound('click');
+      // Force 7z format visual for SFX
+      chips.forEach(c => {
+        c.classList.toggle('active', c.getAttribute('data-value') === '7z');
+      });
+      selectedFormat = '7z';
+      
+      // Update extension to .exe if name exists
+      if (nameInput && nameInput.value) {
+        const base = nameInput.value.replace(/\.(zip|7z|tar|gz|tgz|exe)$/i, '');
+        nameInput.value = `${base}.exe`;
+      }
+    } else {
+      // Revert extension to current format
+      if (nameInput && nameInput.value) {
+        const base = nameInput.value.replace(/\.exe$/i, '');
+        const ext = selectedFormat === 'targz' ? 'tar.gz' : selectedFormat;
+        nameInput.value = `${base}.${ext}`;
+      }
+    }
+  });
+
+  // Thread Count
+  const threadEl = document.getElementById('thread-count-v2') as HTMLInputElement;
+  const threadLabel = document.getElementById('thread-count-label-v2');
+  threadEl?.addEventListener('input', () => {
+    if (threadLabel) threadLabel.textContent = threadEl.value;
+  });
+
   // Restore last-used format
   ipc.getSettings().then((s: AppSettings) => {
     if (s.lastUsedFormat) {
@@ -1040,7 +1075,8 @@ function setupCompress(): void {
     }
 
     const format = selectedFormat;
-    const ext = format === 'targz' ? 'tar.gz' : format;
+    const isSFX = sfxToggle?.checked || false;
+    const ext = isSFX ? 'exe' : (format === 'targz' ? 'tar.gz' : format);
     
     const nameInput = document.getElementById('archive-name-v2') as HTMLInputElement;
     const customName = nameInput?.value.trim();
@@ -1070,6 +1106,7 @@ function setupCompress(): void {
         showGlobalProgress(data.percent, data.status, 'Compressing...', data.speed, data.eta);
       });
 
+      const settings = await ipc.getSettings();
       const result = await ipc.compress({
         sources,
         outputPath,
@@ -1077,6 +1114,9 @@ function setupCompress(): void {
         level: compressionLevel,
         password,
         splitVolumeSize: splitToggle?.checked ? (document.getElementById('split-volume-size') as HTMLSelectElement)?.value || undefined : undefined,
+        sfx: isSFX,
+        threads: threadEl ? Number(threadEl.value) : undefined,
+        ramLimit: settings.ramLimit || 4,
       });
 
       if (isOperationCancelled) return;
@@ -1116,6 +1156,16 @@ function setupCompress(): void {
           if (hashEl) hashEl.textContent = 'Computing...';
 
           statsModal?.classList.remove('hidden');
+
+          // Show in Folder button
+          const btnShowFolder = document.getElementById('btn-show-in-folder-stats');
+          if (btnShowFolder) {
+            btnShowFolder.onclick = () => {
+              if (result.outputPath) {
+                ipc.showItemInFolder(result.outputPath);
+              }
+            };
+          }
 
           // Compute checksum async
           ipc.computeChecksum(result.outputPath).then((res: any) => {
@@ -1727,6 +1777,12 @@ function setupSettings(): void {
     if (levelValueEl) levelValueEl.textContent = levelEl.value;
   });
 
+  const ramLimitEl = document.getElementById('setting-ram-limit') as HTMLInputElement;
+  const ramLimitValueEl = document.getElementById('ram-limit-value');
+  ramLimitEl?.addEventListener('input', () => {
+    if (ramLimitValueEl) ramLimitValueEl.textContent = `${ramLimitEl.value} GB`;
+  });
+
   document.getElementById('btn-select-output-dir')?.addEventListener('click', async () => {
     const dir = await ipc.selectFolder();
     if (dir) {
@@ -1770,6 +1826,7 @@ function setupSettings(): void {
 
       deleteSourcesAfterProcess: deleteSourcesEl?.checked ?? false,
       overwriteBehavior: (overwriteBehaviorEl?.value as 'overwrite' | 'skip' | 'prompt') || 'prompt',
+      ramLimit: Number(ramLimitEl?.value ?? 4),
       layout: (document.getElementById('setting-layout') as HTMLSelectElement)?.value as any || 'header',
     });
     updateBrowseUI(); // Refresh browser tab if open
@@ -1841,6 +1898,7 @@ function setupSettings(): void {
   
   document.getElementById('setting-delete-sources')?.addEventListener('change', saveSettings);
   document.getElementById('setting-overwrite-behavior')?.addEventListener('change', saveSettings);
+  document.getElementById('setting-ram-limit')?.addEventListener('change', saveSettings);
   document.getElementById('setting-auto-resize-window')?.addEventListener('change', saveSettings);
 }
 
