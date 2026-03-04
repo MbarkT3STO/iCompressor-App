@@ -1030,10 +1030,18 @@ export function showContextMenu(x: number, y: number, items: ContextMenuItem[]):
   let finalY = y;
 
   if (x + rect.width > window.innerWidth - pad) {
+    // If it overflows right, snap it to the right edge with padding
     finalX = window.innerWidth - rect.width - pad;
   }
+  
   if (y + rect.height > window.innerHeight - pad) {
-    finalY = window.innerHeight - rect.height - pad;
+    // If it overflows bottom, move it so its bottom edge aligns with the cursor's Y pos
+    // or snap it to the bottom of the window if the menu is huge.
+    finalY = Math.max(pad, y - rect.height);
+    // If aligning to cursor above pushes it off the top screen edge, snap to bottom inside window
+    if (finalY < pad) {
+      finalY = window.innerHeight - rect.height - pad;
+    }
   }
 
   menu.style.left = `${Math.max(pad, finalX)}px`;

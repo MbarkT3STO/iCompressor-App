@@ -30,6 +30,7 @@ export const IPC_CHANNELS = {
   READ_DIR: 'fs:read-dir',
   FS_DELETE: 'fs:delete',
   FS_RENAME: 'fs:rename',
+  FS_COPY: 'fs:copy',
   FS_MKDIR: 'fs:mkdir',
   GET_HOME_DIR: 'fs:get-home-dir',
   GET_FOLDER_SIZE: 'fs:get-folder-size',

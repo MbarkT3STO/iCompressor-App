@@ -31,6 +31,7 @@ const IPC_CHANNELS = {
   READ_DIR: 'fs:read-dir',
   FS_DELETE: 'fs:delete',
   FS_RENAME: 'fs:rename',
+  FS_COPY: 'fs:copy',
   FS_MKDIR: 'fs:mkdir',
   GET_HOME_DIR: 'fs:get-home-dir',
   GET_FOLDER_SIZE: 'fs:get-folder-size',
@@ -87,6 +88,7 @@ export interface ICompressorAPI {
   readDir: (path: string, showHidden?: boolean) => Promise<{ success: boolean; entries?: FileEntry[]; error?: string }>;
   deleteFile: (path: string) => Promise<{ success: boolean; error?: string }>;
   renameFile: (oldPath: string, newPath: string) => Promise<{ success: boolean; error?: string }>;
+  copyFile: (sourcePath: string, destPath: string) => Promise<{ success: boolean; error?: string }>;
   createFolder: (path: string) => Promise<{ success: boolean; error?: string }>;
   openExternal: (url: string) => Promise<{ success: boolean }>;
   minimizeWindow: () => void;
@@ -158,6 +160,7 @@ const api: ICompressorAPI = {
   readDir: (path: string, showHidden?: boolean) => ipcRenderer.invoke(IPC_CHANNELS.READ_DIR, path, showHidden),
   deleteFile: (path: string) => ipcRenderer.invoke(IPC_CHANNELS.FS_DELETE, path),
   renameFile: (oldPath: string, newPath: string) => ipcRenderer.invoke(IPC_CHANNELS.FS_RENAME, oldPath, newPath),
+  copyFile: (sourcePath: string, destPath: string) => ipcRenderer.invoke(IPC_CHANNELS.FS_COPY, sourcePath, destPath),
   createFolder: (path: string) => ipcRenderer.invoke(IPC_CHANNELS.FS_MKDIR, path),
   getFolderSize: (path: string) => ipcRenderer.invoke(IPC_CHANNELS.GET_FOLDER_SIZE, path),
   openExternal: (url: string) => ipcRenderer.invoke(IPC_CHANNELS.OPEN_EXTERNAL, url),

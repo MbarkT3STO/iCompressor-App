@@ -636,11 +636,40 @@ function registerIpcHandlers(): void {
     }
   });
 
+  ipcMain.handle(IPC_CHANNELS.FS_COPY, async (_, sourcePath: string, destPath: string) => {
+    const fs = require('fs');
+    try {
+      if (fs.existsSync(sourcePath)) {
+        fs.cpSync(sourcePath, destPath, { recursive: true });
+        return { success: true };
+      }
+      return { success: false, error: 'Source file or folder does not exist' };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    }
+  });
+
   ipcMain.handle(IPC_CHANNELS.FS_RENAME, async (_, oldPath: string, newPath: string) => {
     const fs = require('fs');
     try {
       if (fs.existsSync(oldPath)) {
-        fs.renameSync(oldPath, newPath);
+        try {
+          fs.renameSync(oldPath, newPath);
+        } catch (renameErr: any) {
+          // EXDEV error happens when renaming across different partitions/drives
+          if (renameErr.code === 'EXDEV') {
+            fs.cpSync(oldPath, newPath, { recursive: true });
+            
+            const stats = fs.statSync(oldPath);
+            if (stats.isDirectory()) {
+              fs.rmSync(oldPath, { recursive: true, force: true });
+            } else {
+              fs.unlinkSync(oldPath);
+            }
+          } else {
+            throw renameErr;
+          }
+        }
         return { success: true };
       }
       return { success: false, error: 'Source file does not exist' };

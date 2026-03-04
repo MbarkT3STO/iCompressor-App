@@ -26,6 +26,7 @@ import {
   renderTreeChildren,
   updateBrowseSelection,
   showContextMenu,
+  hideContextMenu,
   compressIcon,
   extractIcon,
   addIcon,
@@ -151,6 +152,11 @@ function setupNavigation(): void {
 // Browse
 let currentBrowsePath = '';
 let selectedBrowsePaths = new Set<string>();
+
+let browseClipboard: {
+  action: 'cut' | 'copy';
+  entries: FileEntry[];
+} | null = null;
 let browseEntries: FileEntry[] = [];
 let browseSearchQuery = '';
 let browseSortMode = 'name-asc';
@@ -345,6 +351,29 @@ function updateBrowseUI() {
   });
 
   updateBrowseButtons();
+
+  // Attach background context menu for pasting
+  const listContainer = document.getElementById('browse-list');
+  if (listContainer) {
+    listContainer.addEventListener('contextmenu', (e) => {
+      // Don't override if we clicked on an actual item
+      if ((e.target as HTMLElement).closest('.file-item, .tree-item')) return;
+      
+      e.preventDefault();
+      
+      if (browseClipboard && browseClipboard.entries.length > 0) {
+        showContextMenu(e.clientX, e.clientY, [
+          {
+            label: 'Paste Here',
+            icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 2h-4.18C14.4.84 13.3 0 12 0c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm7 18H5V4h2v3h10V4h2v16z"/></svg>`,
+            action: () => handleBrowsePaste(currentBrowsePath)
+          }
+        ]);
+      } else {
+        hideContextMenu();
+      }
+    });
+  }
 }
 
 async function handleBrowseExpand(entry: FileEntry, container: HTMLElement) {
@@ -439,7 +468,85 @@ function handleBrowseContextMenu(entry: FileEntry, x: number, y: number) {
     }
   });
 
+  items.push({
+    divider: true
+  } as any);
+
+  items.push({
+    label: 'Cut',
+    icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M9.64 7.64c.23-.5.36-1.05.36-1.64 0-2.21-1.79-4-4-4S2 3.79 2 6s1.79 4 4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36C7.14 14.13 6.59 14 6 14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1L9.64 7.64zM6 8c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm0 12c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm6-7.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zM19 3l-6 6 2 2 7-7V3z"/></svg>`,
+    action: () => {
+      browseClipboard = { action: 'cut', entries: [entry] };
+      showToast('toast-browse', 'Item cut to clipboard', 'info');
+    }
+  });
+
+  items.push({
+    label: 'Copy',
+    icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>`,
+    action: () => {
+      browseClipboard = { action: 'copy', entries: [entry] };
+      showToast('toast-browse', 'Item copied to clipboard', 'success');
+    }
+  });
+
+  if (entry.isDirectory && browseClipboard && browseClipboard.entries.length > 0) {
+    items.push({
+      label: 'Paste Here',
+      icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 2h-4.18C14.4.84 13.3 0 12 0c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm7 18H5V4h2v3h10V4h2v16z"/></svg>`,
+      action: () => handleBrowsePaste(entry.path)
+    });
+  }
+
   showContextMenu(x, y, items);
+}
+
+async function handleBrowsePaste(targetDir: string) {
+  if (!browseClipboard || browseClipboard.entries.length === 0) return;
+
+  const entries = browseClipboard.entries;
+  let successCount = 0;
+  let failCount = 0;
+
+  showGlobalProgress(0, browseClipboard.action === 'copy' ? 'Copying...' : 'Moving...', 'Please wait');
+
+  for (const entry of entries) {
+    const fileName = entry.name;
+    const destPath = joinPaths(targetDir, fileName);
+
+    // Skip if pasting into the exact same directory without renaming (handled implicitly by cpSync but better avoided)
+    if (entry.path === destPath) {
+      failCount++;
+      continue;
+    }
+
+    let result;
+    if (browseClipboard.action === 'copy') {
+      result = await ipc.copyFile(entry.path, destPath);
+    } else {
+      result = await ipc.renameFile(entry.path, destPath);
+    }
+
+    if (result.success) {
+      successCount++;
+    } else {
+      failCount++;
+    }
+  }
+
+  hideGlobalProgress();
+
+  if (browseClipboard.action === 'cut' && successCount > 0) {
+    browseClipboard = null;
+  }
+
+  if (failCount > 0) {
+    showToast('toast-browse', `${successCount} items processed, ${failCount} failed.`, 'error');
+  } else {
+    showToast('toast-browse', `Successfully ${browseClipboard?.action === 'copy' ? 'copied' : 'moved'} items.`, 'success');
+  }
+
+  loadDirectory(currentBrowsePath, false);
 }
 
 async function handleBrowseRename(entry: FileEntry) {

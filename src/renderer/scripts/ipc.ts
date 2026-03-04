@@ -45,6 +45,7 @@ export const ipc: {
   readDir: (path: string, showHidden?: boolean) => Promise<{ success: boolean; entries?: FileEntry[]; error?: string }>;
   deleteFile: (path: string) => Promise<{ success: boolean; error?: string }>;
   renameFile: (oldPath: string, newPath: string) => Promise<{ success: boolean; error?: string }>;
+  copyFile: (sourcePath: string, destPath: string) => Promise<{ success: boolean; error?: string }>;
   createFolder: (path: string) => Promise<{ success: boolean; error?: string }>;
   getFolderSize: (path: string) => Promise<{ success: boolean; size?: number; error?: string }>;
   openExternal: (url: string) => Promise<{ success: boolean }>;
@@ -95,6 +96,7 @@ export const ipc: {
   readDir: (path: string, showHidden?: boolean) => api.readDir(path, showHidden),
   deleteFile: (path: string) => api.deleteFile(path),
   renameFile: (oldPath: string, newPath: string) => api.renameFile(oldPath, newPath),
+  copyFile: (sourcePath: string, destPath: string) => api.copyFile(sourcePath, destPath),
   createFolder: (path: string) => api.createFolder(path),
   getFolderSize: (path: string) => api.getFolderSize(path),
   openExternal: (url: string) => api.openExternal(url),
