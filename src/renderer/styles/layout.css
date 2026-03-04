@@ -2501,6 +2501,7 @@ input:checked+.toggle-slider-v2:before {
   flex-direction: column;
   z-index: 1;
   position: relative;
+  min-height: 0;
 }
 
 .archive-table-container-v2 {
@@ -2509,6 +2510,7 @@ input:checked+.toggle-slider-v2:before {
   margin: 16px 0;
   padding-right: 8px;
   z-index: 1;
+  min-height: 0;
 }
 
 .archive-table-v2 {
