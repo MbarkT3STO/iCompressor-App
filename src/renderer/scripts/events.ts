@@ -22,6 +22,7 @@ import {
   playSound,
   renderBreadcrumbs,
   renderBrowseList,
+  renderBrowseTiles,
   renderBrowseTree,
   renderTreeChildren,
   updateBrowseSelection,
@@ -328,13 +329,39 @@ function updateBrowseUI() {
   });
 
   ipc.getSettings().then(settings => {
-    if (settings.browseViewMode === 'tree') {
+    const viewMode = settings.browseViewMode || 'explorer';
+    const gridHeader = document.querySelector('.browse-grid-header') as HTMLElement;
+    const browseList = document.getElementById('browse-list');
+
+    // Toggle grid header visibility based on view mode
+    if (gridHeader) {
+      gridHeader.style.display = viewMode === 'explorer' ? '' : 'none';
+    }
+
+    // Remove tiles-mode class before rendering (each renderer manages it)
+    if (browseList) browseList.classList.remove('tiles-mode');
+
+    // Sync the toolbar view toggle active state
+    document.querySelectorAll('.view-toggle-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-view') === viewMode);
+    });
+
+    if (viewMode === 'tree') {
       renderBrowseTree(
         'browse-list',
         filteredEntries,
         handleBrowseSelect,
         handleBrowseOpen,
         handleBrowseExpand,
+        (path: string) => selectedBrowsePaths.has(path),
+        handleBrowseContextMenu
+      );
+    } else if (viewMode === 'tiles') {
+      renderBrowseTiles(
+        'browse-list',
+        filteredEntries,
+        handleBrowseSelect,
+        handleBrowseOpen,
         (path: string) => selectedBrowsePaths.has(path),
         handleBrowseContextMenu
       );
@@ -352,12 +379,25 @@ function updateBrowseUI() {
 
   updateBrowseButtons();
 
+  // Update status bar
+  const itemCountEl = document.getElementById('browse-item-count');
+  const selectedCountEl = document.getElementById('browse-selected-count');
+  if (itemCountEl) {
+    const count = browseSearchQuery 
+      ? browseEntries.filter(e => e.name.toLowerCase().includes(browseSearchQuery.toLowerCase())).length
+      : browseEntries.length;
+    itemCountEl.textContent = `${count} item${count !== 1 ? 's' : ''}`;
+  }
+  if (selectedCountEl) {
+    selectedCountEl.textContent = selectedBrowsePaths.size > 0 ? `${selectedBrowsePaths.size} selected` : '';
+  }
+
   // Attach background context menu for pasting
   const listContainer = document.getElementById('browse-list');
   if (listContainer) {
     listContainer.addEventListener('contextmenu', (e) => {
       // Don't override if we clicked on an actual item
-      if ((e.target as HTMLElement).closest('.file-item, .tree-item')) return;
+      if ((e.target as HTMLElement).closest('.file-item, .tree-item, .tile-item')) return;
       
       e.preventDefault();
       
@@ -650,6 +690,12 @@ function handleBrowseSelect(entry: FileEntry, multi: boolean) {
   }
   updateBrowseSelection('browse-list', selectedBrowsePaths);
   updateBrowseButtons();
+
+  // Update status bar selected count
+  const selectedCountEl = document.getElementById('browse-selected-count');
+  if (selectedCountEl) {
+    selectedCountEl.textContent = selectedBrowsePaths.size > 0 ? `${selectedBrowsePaths.size} selected` : '';
+  }
 }
 
 function handleBrowseOpen(entry: FileEntry) {
@@ -699,6 +745,19 @@ function updateBrowseButtons() {
 }
 
 function setupBrowse() {
+  // View mode toggle buttons in toolbar
+  document.querySelectorAll('.view-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const mode = btn.getAttribute('data-view') as 'explorer' | 'tiles' | 'tree';
+      if (!mode) return;
+      document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      await ipc.saveSettings({ browseViewMode: mode });
+      playSound('click');
+      updateBrowseUI();
+    });
+  });
+
   document.getElementById('btn-browse-refresh')?.addEventListener('click', () => {
     if (currentBrowsePath) loadDirectory(currentBrowsePath);
   });

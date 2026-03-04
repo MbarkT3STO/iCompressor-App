@@ -18,7 +18,7 @@ export interface AppSettings {
   deleteSourcesAfterProcess: boolean;
   overwriteBehavior: 'overwrite' | 'skip' | 'prompt';
   themeFlavor?: 'midnight' | 'strawberry' | 'matcha' | 'ocean' | 'moonlight' | 'twilight' | 'sunset';
-  browseViewMode: 'explorer' | 'tree';
+  browseViewMode: 'explorer' | 'tree' | 'tiles';
   layout: 'header' | 'sidebar';
   sidebarCollapsed: boolean;
   showHistoryTab: boolean;

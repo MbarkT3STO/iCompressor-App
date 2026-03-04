@@ -406,6 +406,17 @@
               </div>
 
               <div class="toolbar-right">
+                <div class="browse-view-toggle" id="browse-view-toggle">
+                  <button type="button" class="view-toggle-btn active" data-view="explorer" title="List View">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+                  </button>
+                  <button type="button" class="view-toggle-btn" data-view="tiles" title="Tiles View">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z"/></svg>
+                  </button>
+                  <button type="button" class="view-toggle-btn" data-view="tree" title="Tree View">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M22 11V3h-7v3H9V3H2v8h7V8h2v10h4v3h7v-8h-7v3h-2V8h2v3h7zM7 9H4V5h3v4zm10 6h3v4h-3v-4zm0-10h3v4h-3V5z"/></svg>
+                  </button>
+                </div>
                 <div class="browse-sort-container" id="browse-sort-container">
                   <button type="button" class="btn-sort" id="btn-browse-sort" title="Sort Options">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
@@ -463,6 +474,11 @@
             </div>
             <div class="browse-list" id="browse-list">
               <!-- File items will be populated by JS -->
+            </div>
+            <div class="browse-status-bar" id="browse-status-bar">
+              <span class="status-item-count" id="browse-item-count">0 items</span>
+              <span class="status-sep">•</span>
+              <span class="status-selected" id="browse-selected-count"></span>
             </div>
           </div>
         </div>
@@ -819,6 +835,7 @@
                 <div class="setting-control">
                   <select id="setting-browse-view" class="input-modern select-modern">
                     <option value="explorer">File Explorer (Default)</option>
+                    <option value="tiles">Tiles</option>
                     <option value="tree">Tree View</option>
                   </select>
                 </div>

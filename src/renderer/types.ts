@@ -15,7 +15,7 @@ export interface AppSettings {
 
   deleteSourcesAfterProcess: boolean;
   overwriteBehavior: 'overwrite' | 'skip' | 'prompt';
-  browseViewMode: 'explorer' | 'tree';
+  browseViewMode: 'explorer' | 'tree' | 'tiles';
   layout: 'header' | 'sidebar';
   sidebarCollapsed: boolean;
   showHistoryTab: boolean;

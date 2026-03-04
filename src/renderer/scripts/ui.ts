@@ -648,6 +648,68 @@ export function renderBrowseList(
   });
 }
 
+export function renderBrowseTiles(
+  containerId: string, 
+  entries: FileEntry[], 
+  onSelect: (entry: FileEntry, multi: boolean) => void, 
+  onOpen: (entry: FileEntry) => void, 
+  isSelected: (path: string) => boolean,
+  onContextMenu: (entry: FileEntry, x: number, y: number) => void
+): void {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  container.classList.add('tiles-mode');
+
+  if (entries.length === 0) {
+    container.classList.remove('tiles-mode');
+    container.innerHTML = `
+      <div class="browse-empty-state">
+        <svg class="browse-empty-icon" viewBox="0 0 24 24">
+          <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-4H6v-2h12v2z"/>
+        </svg>
+        <h3 class="browse-empty-title">Empty Folder</h3>
+        <p class="browse-empty-text">This folder doesn't contain any files yet. Drag and drop files here to start.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const grid = document.createElement('div');
+  grid.className = 'tiles-grid';
+
+  entries.forEach((entry, i) => {
+    const tile = document.createElement('div');
+    tile.className = `tile-item animate-in ${entry.isDirectory ? 'folder' : 'file'}`;
+    tile.style.animationDelay = `${i * 0.02}s`;
+    tile.setAttribute('data-path', entry.path);
+    if (isSelected(entry.path)) tile.classList.add('selected');
+
+    tile.innerHTML = `
+      <div class="tile-icon-box">
+        ${entry.isDirectory ? folderIcon : getFileIcon(entry.name, false)}
+      </div>
+      <div class="tile-name" title="${entry.name}">${entry.name}</div>
+      <div class="tile-meta">${entry.isDirectory ? 'Folder' : formatSize(entry.size)}</div>
+    `;
+
+    tile.addEventListener('click', (e) => onSelect(entry, e.metaKey || e.ctrlKey));
+    tile.addEventListener('dblclick', () => {
+      tile.classList.add('double-click-pulse');
+      setTimeout(() => tile.classList.remove('double-click-pulse'), 400);
+      onOpen(entry);
+    });
+    tile.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      onContextMenu(entry, e.clientX, e.clientY);
+    });
+    
+    grid.appendChild(tile);
+  });
+
+  container.appendChild(grid);
+}
+
 const chevronIcon = `<svg class="tree-toggle-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M7 10l5 5 5-5z"/></svg>`;
 
 export function renderBrowseTree(
